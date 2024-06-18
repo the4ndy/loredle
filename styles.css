@@ -1,0 +1,118 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+/* #win-message {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ff69b4;
+    margin-bottom: 20px;
+} 
+*/
+
+input {
+    padding: 10px;
+    font-size: 16px;
+    margin-bottom: 20px;
+    width: 300px;
+    text-align: center;
+}
+
+#suggestions {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 300px;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+}
+
+#suggestions li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+}
+
+#suggestions li:hover {
+    background-color: #f0f0f0;
+}
+
+#game-board {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 700px;
+    margin-top: 20px;
+}
+
+.row {
+    display: flex;
+    width: 100%;
+}
+
+.cell {
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+    box-sizing: border-box;
+    width: 100px; /* fixed width to align with headers */
+}
+
+.header {
+    display: flex;
+    width: 100%;
+}
+
+.header .cell {
+    font-weight: bold;
+    background-color: #f0f0f0;
+    width: 100px; /* fixed width to align with cells */
+}
+
+.correct {
+    background-color: #4caf50; /* Material Design Green 500 */
+    color: white;
+}
+
+.incorrect {
+    background-color: #f44336; /* Material Design Red 500 */
+    color: white;
+}
+
+.close {
+    background-color: #ffeb3b; /* Material Design Yellow 500 */
+    color: black;
+}
+
+#win-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Open Sans", sans-serif;
+    font-size: 8em;
+    text-align: center;
+    color: transparent;
+    background: linear-gradient(130deg, #ff2400, #e81d1d, #e8b71d, #e3e81d, #1de840, #1ddde8, #2b1de8, #dd00f3, #dd00f3);
+    background-size: 500% 500%;
+    -webkit-background-clip: text;
+    animation-name: movebg;
+    animation-timing-function: linear;
+    animation-duration: 5s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+  }
+  
+  @keyframes movebg { 
+    from { background-position: 150% 0% }
+    to { background-position: 0% 150% }
+  }
