@@ -46,6 +46,18 @@ input {
     background-color: #f0f0f0;
 }
 
+#hovered-image {
+    display: none;
+    position: relative;
+    /*top: 30px;
+    left: 130px;*/
+    width: 200x;
+    height: 300px;
+    border: 3px solid #000;
+    background-color: white;
+    border-radius: 10px;
+}
+
 #game-board {
     display: flex;
     flex-direction: column;
