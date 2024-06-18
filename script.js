@@ -3,6 +3,7 @@ const cardInput = document.getElementById('card-input');
 const suggestions = document.getElementById('suggestions');
 const feedback = document.getElementById('feedback');
 const winMessage = document.getElementById('win-message');
+const hoveredImage = document.getElementById('hovered-image');
 const guessedCards = new Set();
 let targetCard = null;
 
@@ -17,7 +18,8 @@ async function fetchCards() {
             inkable: card.Inkable,
             color: card.Color,
             type: card.Type,
-            rarity: card.Rarity
+            rarity: card.Rarity,
+            image: card.Image
         }));
         targetCard = cards[Math.floor(Math.random() * cards.length)];
     } catch (error) {
@@ -34,6 +36,8 @@ cardInput.addEventListener('input', () => {
             const li = document.createElement('li');
             li.textContent = card.name;
             li.addEventListener('click', () => guessCard(card));
+            li.addEventListener('mouseover', () => showImage(card.image));
+            li.addEventListener('mouseout', () => hideImage());
             suggestions.appendChild(li);
         });
     }
@@ -103,6 +107,15 @@ function endGame() {
     winMessage.textContent = "YOU WIN!";
     cardInput.disabled = true;
     cardInput.placeholder = "Game Over!";
+}
+
+function showImage(imageUrl) {
+    hoveredImage.src = imageUrl;
+    hoveredImage.style.display = 'block';
+}
+
+function hideImage() {
+    hoveredImage.style.display = 'none';
 }
 
 fetchCards();
