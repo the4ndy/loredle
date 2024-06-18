@@ -4,26 +4,56 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 20px;
+    background-color: #0c0e31; 
+    color: #fff; 
 }
 
 h1 {
     margin-bottom: 20px;
+    color: #b800e6; 
 }
 
-/* #win-message {
-    font-size: 24px;
-    font-weight: bold;
-    color: #ff69b4;
+.loading-spinner {
+    display: none; /* Hide initially */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(0deg);
+    width: 100px; /* Adjust image size as needed */
+    height: 100px; /* Adjust image size as needed */
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+#input-container {
+    display: flex;
+    align-items: flex-start; /* Align items towards the top */
     margin-bottom: 20px;
-} 
-*/
+}
+
+#image-container {
+    width: 200px; /* Width of the image */
+    height: 300px; /* Height of the image */
+    margin-right: 20px; /* Adjust as needed */
+    position: relative; /* Ensure relative positioning */
+}
 
 input {
     padding: 10px;
     font-size: 16px;
+    top: 10px;
     margin-bottom: 20px;
+    margin-top: 25px;
     width: 300px;
     text-align: center;
+    border: 2px solid #2b2b2b; 
+    background-color: #0c0e31; 
+    color: #ffffff; 
 }
 
 #suggestions {
@@ -33,28 +63,30 @@ input {
     width: 300px;
     max-height: 150px;
     overflow-y: auto;
-    border: 1px solid #ccc;
+    border: 1px solid #efefef; 
+    background-color: #0c0e31; 
 }
 
 #suggestions li {
     padding: 10px;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid #444444; 
     cursor: pointer;
+    color: #ffffff; 
 }
 
 #suggestions li:hover {
-    background-color: #f0f0f0;
+    background-color: #2b2b2b; 
 }
 
 #hovered-image {
     display: none;
-    position: relative;
-    /*top: 30px;
-    left: 130px;*/
-    width: 200x;
-    height: 300px;
+    position: absolute; /* Position image within container */
+    top: 0;
+    left: 0;
+    width: 100%; /* Fill container width */
+    height: 100%; /* Fill container height */
     border: 3px solid #000;
-    background-color: white;
+    background-color: #ffffff;
     border-radius: 10px;
 }
 
@@ -74,10 +106,12 @@ input {
 
 .cell {
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid #2b2b2b; 
     text-align: center;
     box-sizing: border-box;
-    width: 100px; /* fixed width to align with headers */
+    width: 100px; /* Fixed width to align with headers */
+    background-color: #0c0e31; 
+    color: #ffffff; 
 }
 
 .header {
@@ -87,25 +121,27 @@ input {
 
 .header .cell {
     font-weight: bold;
-    background-color: #f0f0f0;
-    width: 100px; /* fixed width to align with cells */
+    background-color: #cdc39f; 
+    color: #000;
+    width: 100px; /* Fixed width to align with cells */
 }
 
 .correct {
-    background-color: #4caf50; /* Material Design Green 500 */
+    background-color: #4caf50; 
     color: white;
 }
 
 .incorrect {
-    background-color: #f44336; /* Material Design Red 500 */
+    background-color: #f44336; 
     color: white;
 }
 
 .close {
-    background-color: #ffeb3b; /* Material Design Yellow 500 */
+    background-color: #ffeb3b; 
     color: black;
 }
 
+/* win-message style adapted from codepen */
 #win-message {
     display: flex;
     align-items: center;
@@ -122,9 +158,9 @@ input {
     animation-duration: 5s;
     animation-iteration-count: infinite;
     animation-direction: alternate;
-  }
-  
-  @keyframes movebg { 
+}
+
+@keyframes movebg { 
     from { background-position: 150% 0% }
     to { background-position: 0% 150% }
-  }
+}
