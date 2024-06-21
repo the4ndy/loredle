@@ -20,6 +20,7 @@ async function fetchCards() {
         const data = await response.json();
         cards = data.map(card => ({
             name: card.Name,
+            number: card.Card_Num, // Assuming "Number" attribute is available in API response
             set: card.Set_Name,
             cost: card.Cost,
             inkable: card.Inkable,
@@ -36,8 +37,6 @@ async function fetchCards() {
         cardInput.disabled = false; // Enable input field after API call
     }
 }
-
-
 function getDailyTargetCard() {
     const today = new Date();
     const dateString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()-1}`;
@@ -72,7 +71,6 @@ cardInput.addEventListener('input', () => {
         });
     }
 });
-
 function guessCard(card) {
     if (guessedCards.has(card.name)) {
         return;
@@ -86,6 +84,7 @@ function guessCard(card) {
     row.classList.add('row');
 
     row.appendChild(createCell(card.name));
+    row.appendChild(createNumberCell(card.number, targetCard.number));
     row.appendChild(createCell(card.set, targetCard.set));
     row.appendChild(createCell(card.cost, targetCard.cost));
     row.appendChild(createCell(card.inkable, targetCard.inkable));
@@ -98,6 +97,37 @@ function guessCard(card) {
     if (card.name === targetCard.name) {
         endGame();
     }
+}
+
+function createNumberCell(value, targetValue) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell', 'number-cell');
+    cell.textContent = value;
+
+    if (value === targetValue) {
+        cell.classList.add('correct');
+    } else {
+        const maxDifference = 204; // Maximum difference in numbers
+        const difference = Math.abs(value - targetValue);
+        const percentage = difference / maxDifference;
+
+        // Set background color based on the percentage
+        if (percentage > 0.75) {
+            cell.style.backgroundColor = '#f44336'; // Red
+        } else if (percentage > 0.25) {
+            cell.style.backgroundColor = '#fbc02d'; // Yellow
+        } else {
+            cell.style.backgroundColor = '#8bc34a'; // Green, not quite the same green as correct
+        }
+
+        // Add arrow emoji
+        if (value > targetValue) {
+            cell.textContent += ' 🔽';
+        } else {
+            cell.textContent += ' 🔼';
+        }
+    }
+    return cell;
 }
 
 function createCell(value, targetValue = null) {
