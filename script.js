@@ -38,17 +38,12 @@ async function fetchCards() {
 }
 
 
-console.log(cards);
 function getDailyTargetCard() {
     const today = new Date();
     const dateString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()-1}`;
     const salt = "CobraBubblesEnchanted"; // A constant salt for complexity
-    //console.log(dateString);
     const hash = hashString(dateString + salt);
-    //console.log(hash);
     const index = (Math.abs(hash) % cards.length); // Ensures index is non-negative
-    //console.log(index);
-    //console.log(cards[index]);
     return cards[index];
 }
 
