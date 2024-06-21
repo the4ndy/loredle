@@ -106,19 +106,9 @@ function createNumberCell(value, targetValue) {
 
     if (value === targetValue) {
         cell.classList.add('correct');
+        cell.style.backgroundColor = '#8bc34a'; // Green for correct guess
     } else {
-        const maxDifference = 204; // Maximum difference in numbers
-        const difference = Math.abs(value - targetValue);
-        const percentage = difference / maxDifference;
-
-        // Set background color based on the percentage
-        if (percentage > 0.75) {
-            cell.style.backgroundColor = '#f44336'; // Red
-        } else if (percentage > 0.25) {
-            cell.style.backgroundColor = '#fbc02d'; // Yellow
-        } else {
-            cell.style.backgroundColor = '#8bc34a'; // Green, not quite the same green as correct
-        }
+        cell.style.backgroundColor = '#f44336'; // Red for incorrect guess
 
         // Add arrow emoji
         if (value > targetValue) {
