@@ -107,7 +107,7 @@ function createNumberCell(value, targetValue) {
 
     if (value === targetValue) {
         cell.classList.add('correct');
-        cell.style.backgroundColor = '#8bc34a'; // Green for correct guess
+        cell.style.backgroundColor = '#4caf50'; // Green for correct guess
     } else {
         cell.style.backgroundColor = '#f44336'; // Red for incorrect guess
 
@@ -181,7 +181,13 @@ function endGame() {
         // Emoji numbers: 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟
         const emojiNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
         const guessNumberCell = document.createElement('span');
-        guessNumberCell.textContent = emojiNumbers[index] + ' ';
+        
+        if (index < 10) {
+            guessNumberCell.textContent = emojiNumbers[index] + ' ';
+        } else {
+            guessNumberCell.textContent = (index + 1) + ' ';
+        }
+        
         emojiRow.appendChild(guessNumberCell);
         
         // Skip the first cell (Name column) in each row
@@ -203,6 +209,12 @@ function endGame() {
         emojiFeedbackContainer.appendChild(emojiRow);
     });
 
+    // Add the URL below the emoji results
+    const url = document.createElement('div');
+    url.classList.add('emoji-row');
+    url.textContent = 'the4ndy.github.io/loredle';
+    emojiFeedbackContainer.appendChild(url);
+
     const copyButton = document.getElementById('copy-emoji-button');
     copyButton.addEventListener('click', () => {
         let emojiText = '🅻🅾🆁🅴🅳🅻🅴\n' + dateString + '\n';
@@ -211,6 +223,7 @@ function endGame() {
                 emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n'; // Get text content including emojis, adding spaces
             }
         });
+
         navigator.clipboard.writeText(emojiText) // Copy to clipboard
             .then(() => showToast('Copied to clipboard!'))
             .catch(err => showToast('Failed to copy to clipboard.'));

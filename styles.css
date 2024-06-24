@@ -175,6 +175,38 @@ input {
     background-color: #0056b3; /* Darker shade on hover */
 }
 
+#credit  {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #fff;
+    padding: 10px 0;
+}
+
+#credit a {
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #fff;
+    text-decoration: none;
+
+}
+
+#credit a:hover {
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #00AEEF;
+    text-decoration: none;
+
+}
+
+
+
+
 .cell.number-cell {
     font-weight: bold;
 }
