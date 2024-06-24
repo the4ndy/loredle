@@ -5,6 +5,7 @@ const feedback = document.getElementById('feedback');
 const winMessage = document.getElementById('win-message');
 const imageContainer = document.getElementById('image-container');
 const hoveredImage = document.getElementById('hovered-image');
+document.getElementById("toast").addEventListener("click", hideToast);
 const guessedCards = new Set();
 let targetCard = null;
 
@@ -156,7 +157,75 @@ function endGame() {
     winMessage.textContent = "YOU WIN!";
     cardInput.disabled = true;
     cardInput.placeholder = "Game Over!";
+    
+    const emojiFeedbackContainer = document.getElementById('emoji-feedback-container');
+    emojiFeedbackContainer.innerHTML = ''; // Clear previous feedback
+
+    let guessNumber = 0; // Start guess number from 1
+    feedback.childNodes.forEach((row, index) => {
+        if (index > 0) { // Skip the first row (Name column)
+            const emojiRow = document.createElement('div');
+            emojiRow.classList.add('emoji-row');
+            
+            // Emoji numbers: 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟
+            const emojiNumber = document.createElement('span');
+            emojiNumber.textContent = getEmojiNumber(guessNumber) + ' ';
+            emojiRow.appendChild(emojiNumber);
+            guessNumber++;
+
+            row.childNodes.forEach((cell, cellIndex) => {
+                if (cellIndex > 0) { // Skip the first cell (Name)
+                    const emojiCell = document.createElement('span');
+                    if (cell.classList.contains('correct')) {
+                        emojiCell.textContent = '🟩'; // Green square for correct guess
+                    } else if (cell.classList.contains('close')) {
+                        emojiCell.textContent = '🟨'; // Yellow square for close guess
+                    } else {
+                        emojiCell.textContent = '🟥'; // Red square for incorrect guess
+                    }
+                    emojiCell.textContent += ' '; // Add space after each emoji
+                    emojiRow.appendChild(emojiCell);
+                }
+            });
+            
+            emojiFeedbackContainer.appendChild(emojiRow);
+        }
+    });
+
+    const copyButton = document.getElementById('copy-emoji-button');
+    copyButton.addEventListener('click', () => {
+        let emojiText = '';
+        emojiFeedbackContainer.childNodes.forEach(row => {
+            emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n'; // Get text content including emojis, adding spaces
+        });
+        navigator.clipboard.writeText(emojiText) // Copy to clipboard
+            .then(() => showToast('Copied to clipboard!'))
+            .catch(err => showToast('Failed to copy to clipboard.'));
+    });
+
+    document.getElementById('emoji-feedback').style.display = 'block'; // Show emoji feedback section
 }
+
+// Function to get emoji number
+function getEmojiNumber(number) {
+    const emojiNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+    return emojiNumbers[number]; // Adjust index for zero-based array
+}
+
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = "toast show";
+    setTimeout(() => {
+        hideToast();
+    }, 3000);
+}
+
+function hideToast() {
+    const toast = document.getElementById("toast");
+    toast.className = "toast hide";
+}
+
 
 function showImage(imageUrl) {
     hoveredImage.src = imageUrl;

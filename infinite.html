@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loredle</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="infinite.css">
 </head>
 <body>
-    <h1><img src="img/logo.png"></h1>
+    <h1><img src="img/infinite_logo.png"></h1>
     <div id="win-message"></div>
     <div id="input-container">
         <div id="image-container">
@@ -35,17 +35,16 @@
         <div id="feedback"></div>
     </div>
 
-    <div id="emoji-feedback" style="display: none; margin-top: 20px;">
+<!--     <div id="emoji-feedback">
         <p id="emoji-feedback-text">Your Emoji Feedback:</p>
-        <div id="emoji-feedback-container" style="margin-bottom: 10px;"></div>
-        <button id="copy-emoji-button" style="margin-top: 10px;">This Is Broken :(</button>
-    </div>
-    
+        <div id="emoji-row"></div>
+        <button id="copy-emoji-button">Copy Emoji</button>
+    </div> -->
 
-   <button onclick="location.href='infinite.html'" id="floating-button">Infinite Mode</button>
-   <div id="toast" class="toast">Copied to clipboard!</div>
+    <button onclick="location.href='index.html'" id="floating-button">Daily Mode</button>
+    <button onclick="location.reload()" id="newGame-button">New Game</button>
+    <button id="cheatbutton">Cheat</button>
 
-
-    <script src="script.js"></script>
+    <script src="infinite.js"></script>
 </body>
 </html>
