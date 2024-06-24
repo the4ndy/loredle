@@ -161,42 +161,55 @@ function endGame() {
     const emojiFeedbackContainer = document.getElementById('emoji-feedback-container');
     emojiFeedbackContainer.innerHTML = ''; // Clear previous feedback
 
-    let guessNumber = 0; // Start guess number from 1
-    feedback.childNodes.forEach((row, index) => {
-        if (index > 0) { // Skip the first row (Name column)
-            const emojiRow = document.createElement('div');
-            emojiRow.classList.add('emoji-row');
-            
-            // Emoji numbers: 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟
-            const emojiNumber = document.createElement('span');
-            emojiNumber.textContent = getEmojiNumber(guessNumber) + ' ';
-            emojiRow.appendChild(emojiNumber);
-            guessNumber++;
+    // Add LOREDLE with emoji and today's date
+    const title = document.createElement('div');
+    title.classList.add('emoji-row');
+    title.innerHTML = '🅻 🅾 🆁 🅴 🅳 🅻 🅴<br>';
 
-            row.childNodes.forEach((cell, cellIndex) => {
-                if (cellIndex > 0) { // Skip the first cell (Name)
-                    const emojiCell = document.createElement('span');
-                    if (cell.classList.contains('correct')) {
-                        emojiCell.textContent = '🟩'; // Green square for correct guess
-                    } else if (cell.classList.contains('close')) {
-                        emojiCell.textContent = '🟨'; // Yellow square for close guess
-                    } else {
-                        emojiCell.textContent = '🟥'; // Red square for incorrect guess
-                    }
-                    emojiCell.textContent += ' '; // Add space after each emoji
-                    emojiRow.appendChild(emojiCell);
+    const today = new Date();
+    const dateString = today.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+    const date = document.createElement('div');
+    date.classList.add('emoji-row');
+    date.textContent = dateString;
+    title.appendChild(date);
+    emojiFeedbackContainer.appendChild(title);
+
+    feedback.childNodes.forEach((row, index) => {
+        const emojiRow = document.createElement('div');
+        emojiRow.classList.add('emoji-row');
+        
+        // Emoji numbers: 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟
+        const emojiNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+        const guessNumberCell = document.createElement('span');
+        guessNumberCell.textContent = emojiNumbers[index] + ' ';
+        emojiRow.appendChild(guessNumberCell);
+        
+        // Skip the first cell (Name column) in each row
+        row.childNodes.forEach((cell, cellIndex) => {
+            if (cellIndex > 0) { // Skip the first cell (Name)
+                const emojiCell = document.createElement('span');
+                if (cell.classList.contains('correct')) {
+                    emojiCell.textContent = '🟩'; // Green square for correct guess
+                } else if (cell.classList.contains('close')) {
+                    emojiCell.textContent = '🟨'; // Yellow square for close guess
+                } else {
+                    emojiCell.textContent = '🟥'; // Red square for incorrect guess
                 }
-            });
-            
-            emojiFeedbackContainer.appendChild(emojiRow);
-        }
+                emojiCell.textContent += ' '; // Add space after each emoji
+                emojiRow.appendChild(emojiCell);
+            }
+        });
+        
+        emojiFeedbackContainer.appendChild(emojiRow);
     });
 
     const copyButton = document.getElementById('copy-emoji-button');
     copyButton.addEventListener('click', () => {
-        let emojiText = '';
-        emojiFeedbackContainer.childNodes.forEach(row => {
-            emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n'; // Get text content including emojis, adding spaces
+        let emojiText = '🅻🅾🆁🅴🅳🅻🅴\n' + dateString + '\n';
+        emojiFeedbackContainer.childNodes.forEach((row, rowIndex) => {
+            if (rowIndex > 0) { // Skip the first row, which contains the title and date
+                emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n'; // Get text content including emojis, adding spaces
+            }
         });
         navigator.clipboard.writeText(emojiText) // Copy to clipboard
             .then(() => showToast('Copied to clipboard!'))
@@ -209,7 +222,7 @@ function endGame() {
 // Function to get emoji number
 function getEmojiNumber(number) {
     const emojiNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-    return emojiNumbers[number]; // Adjust index for zero-based array
+    return emojiNumbers[number - 1]; // Adjust index for zero-based array
 }
 
 function showToast(message) {
