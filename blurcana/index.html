@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Guessing Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card-display">
+            <img id="blurred-card" src="" alt="Blurred Card" class="blurred">
+        </div>
+        <div class="input-container">
+            <input type="text" id="guess-input" placeholder="Type your guess here...">
+            <div id="autocomplete-list" class="autocomplete-items"></div>
+        </div>
+        <ul id="guessed-cards"></ul>
+        <div id="game-over"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
