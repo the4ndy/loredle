@@ -51,7 +51,7 @@
         } else {
             listItem.classList.add('incorrect');
             listItem.innerHTML += ' ❌';
-            blurAmount = Math.max(blurAmount - 5, 0);
+            blurAmount = Math.max(blurAmount - 3, 0);
             blurredCardImg.style.filter = `blur(${blurAmount}px)`;
 
             if (blurAmount === 0) {
@@ -71,7 +71,7 @@
         if (won) {
             gameOverDiv.textContent = 'Congratulations! You guessed the card!';
         } else {
-            gameOverDiv.textContent = `Game Over! The card was ${currentCard.name}.`;
+            gameOverDiv.textContent = `Game Over! The card was ${currentCard.Name}.`;
         }
         blurredCardImg.style.filter = 'blur(0px)';
     }
