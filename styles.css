@@ -60,8 +60,8 @@ input {
     list-style: none;
     padding: 0;
     margin: 0;
-    width: 300px;
-    max-height: 150px;
+    width: 310px;
+    max-height: 200px;
     overflow-y: auto;
     border: 1px solid #efefef; 
     background-color: #0c0e31; 
@@ -204,9 +204,6 @@ input {
 
 }
 
-
-
-
 .cell.number-cell {
     font-weight: bold;
 }
@@ -277,6 +274,80 @@ input {
     opacity: 0;
     transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
 }
+
+/* HELP BUTTON AND POP OVER */
+.help-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.help-button:hover {
+    width: 150px;
+    border-radius: 25px;
+}
+
+.help-button span {
+    transition: all 0.3s ease;
+    font-size: 1.5em;
+    line-height: 40px; /* Ensure the text is centered vertically */
+    padding-left: 25%;
+}
+.help-button:hover span{
+    padding-left: 0px;
+}
+.help-button::after {
+    content: 'How to Play';
+    display: inline-block;
+    opacity: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    padding-left: 10px;
+    font-size: 1em;
+    line-height: 40px; /* Ensure the text is centered vertically */
+}
+
+.help-button:hover::after {
+    opacity: 1;
+}
+
+.popover {
+    display: none;
+    position: fixed;
+    top: 25%; /* Adjusted to be 25% from the top */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    color: black;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 350px; /* Updated width */
+    max-height: 300px; /* Updated max-height */
+    overflow-y: auto;
+}
+
+.popover p {
+    padding-left: 20%;
+    text-align: left;
+}
+.popover h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
 
 /* win-message style adapted from codepen */
 #win-message {

@@ -9,6 +9,23 @@ document.getElementById("toast").addEventListener("click", hideToast);
 const guessedCards = new Set();
 let targetCard = null;
 
+
+// script.js
+document.getElementById('help-button').addEventListener('click', function() {
+    var popover = document.getElementById('popover');
+    popover.style.display = 'block';
+});
+
+// Close the popover when clicking outside of it
+document.addEventListener('click', function(event) {
+    var popover = document.getElementById('popover');
+    var helpButton = document.getElementById('help-button');
+    if (!popover.contains(event.target) && !helpButton.contains(event.target)) {
+        popover.style.display = 'none';
+    }
+});
+
+
 async function fetchCards() {
     const loadingImage = document.getElementById('loading-image');
     const cardInput = document.getElementById('card-input');
@@ -56,6 +73,22 @@ function hashString(str) {
     }
     return hash;
 }
+const colorMap = {
+    amber: '#f3b500',
+    amethyst: '#813679',
+    emerald: '#278a30',
+    ruby: '#d30931',
+    sapphire: '#028ac6',
+    steel: '#9facb5'
+};
+
+const rarityImages = {
+    common: 'img/common.png',
+    uncommon: 'img/uncommon.png',
+    rare: 'img/rare.png',
+    super_rare: 'img/super_rare.png',
+    legendary: 'img/legendary.png'
+};
 
 cardInput.addEventListener('input', () => {
     const query = cardInput.value.toLowerCase();
@@ -65,6 +98,13 @@ cardInput.addEventListener('input', () => {
         matches.forEach(card => {
             const li = document.createElement('li');
             li.textContent = card.name;
+
+            // Set the background color based on the card's color attribute
+            const cardColor = card.color.toLowerCase();
+            if (colorMap[cardColor]) {
+                li.style.backgroundColor = colorMap[cardColor];
+            }
+
             li.addEventListener('click', () => guessCard(card));
             li.addEventListener('mouseover', () => showImage(card.image));
             li.addEventListener('mouseout', () => hideImage());
@@ -72,6 +112,8 @@ cardInput.addEventListener('input', () => {
         });
     }
 });
+
+
 function guessCard(card) {
     if (guessedCards.has(card.name)) {
         return;
