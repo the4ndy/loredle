@@ -1,5 +1,5 @@
 
-    const API_URL = 'https://api.lorcana-api.com/cards/all'; // Replace with the actual API URL
+    const API_URL = 'https://api.lorcana-api.com/bulk/cards'; // Replace with the actual API URL
     const guessInput = document.getElementById('guess-input');
     const autocompleteList = document.getElementById('autocomplete-list');
     const guessedCardsList = document.getElementById('guessed-cards');

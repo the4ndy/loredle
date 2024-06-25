@@ -21,7 +21,7 @@ async function fetchCards() {
         cardInput.disabled = true; // Disable input field during API call
         loadingImage.style.display = 'inline-block'; // Show loading image
 
-        const response = await fetch('https://api.lorcana-api.com/cards/all'); // Replace with your API endpoint
+        const response = await fetch('https://api.lorcana-api.com/bulk/cards'); // Replace with your API endpoint
         const data = await response.json();
         cards = data.map(card => ({
             name: card.Name,
