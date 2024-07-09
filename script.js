@@ -254,7 +254,7 @@ function endGame() {
     // Add the URL below the emoji results
     const url = document.createElement('div');
     url.classList.add('emoji-row');
-    url.textContent = 'the4ndy.github.io/loredle';
+    url.textContent = 'loredle.ink';
     emojiFeedbackContainer.appendChild(url);
 
     const copyButton = document.getElementById('copy-emoji-button');
