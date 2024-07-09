@@ -13,6 +13,8 @@ h1 {
     color: #d157dd; 
 }
 
+
+
 .loading-spinner {
     display: none; /* Hide initially */
     position: absolute;
@@ -334,18 +336,30 @@ input {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     padding: 20px;
-    width: 350px; /* Updated width */
-    max-height: 300px; /* Updated max-height */
+    width: 500px; /* Updated width */
+    max-height: 400px; /* Updated max-height */
     overflow-y: auto;
 }
 
 .popover p {
-    padding-left: 20%;
+    padding-left: 27%;
     text-align: left;
 }
 .popover h2 {
     margin-top: 0;
     text-align: center;
+}
+
+#rov {
+    font-family: "Kode mono";
+    font-size: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    padding-left: 15%;
+    color: #16ff9e;
+    text-shadow: #8c00ff 2.5px 2.5px 2px;
+    -webkit-text-stroke: 1px black;
+    
 }
 
 
