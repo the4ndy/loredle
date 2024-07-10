@@ -239,7 +239,7 @@ function endGame() {
                 if (cell.classList.contains('correct')) {
                     emojiCell.textContent = '🟩'; // Green square for correct guess
                 } else if (cell.classList.contains('close')) {
-                    emojiCell.textContent = '🟨'; // Yellow square for close guess
+                    emojiCell.textContent = '🟥'; // Yellow square for close guess ** Changed to Red Squre to avoid spoilers, leaving code in place for change back as needed 🟨
                 } else {
                     emojiCell.textContent = '🟥'; // Red square for incorrect guess
                 }

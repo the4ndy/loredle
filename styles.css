@@ -363,6 +363,17 @@ input {
 }
 
 
+#blurcana:hover {
+/*     position: fixed; 
+    bottom: 5px; 
+    right: 35px;  */
+    color: transparent;
+    text-shadow: 0 0 2px rgba(0, 195, 255, 0.904);
+    text-decoration: none;
+    cursor: none;
+ }
+
+
 /* win-message style adapted from codepen */
 #win-message {
     display: flex;
