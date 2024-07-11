@@ -374,6 +374,35 @@ input {
  }
 
 
+ #disclaimover {
+    display: none;
+    position: fixed;
+    top: 25%; /* Adjusted to be 25% from the top */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    color: black;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 500px; /* Updated width */
+    max-height: 400px; /* Updated max-height */
+    overflow-y: auto;
+}
+
+#disclaimover p {
+    padding-left: 0%;
+    text-align: left;
+}
+#disclaimover h2 {
+    margin-top: 0;
+    text-align: center;
+}
+#disclaimer{
+    cursor:pointer;
+
+}
+
 /* win-message style adapted from codepen */
 #win-message {
     display: flex;

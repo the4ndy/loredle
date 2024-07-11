@@ -26,6 +26,23 @@ document.addEventListener('click', function(event) {
 });
 
 
+// Disclaimer Popover
+document.getElementById('disclaimer').addEventListener('click', function() {
+    var disclaimover = document.getElementById('disclaimover');
+    disclaimover.style.display = 'block';
+});
+
+// Close the disclaim popover when clicking outside of it
+document.addEventListener('click', function(event) {
+    var disclaimover = document.getElementById('disclaimover');
+    var disclaimer = document.getElementById('disclaimer');
+    if (!disclaimover.contains(event.target) && !disclaimer.contains(event.target)) {
+        disclaimover.style.display = 'none';
+    }
+});
+
+
+
 async function fetchCards() {
     const loadingImage = document.getElementById('loading-image');
     const cardInput = document.getElementById('card-input');
