@@ -9,53 +9,34 @@ document.getElementById("toast").addEventListener("click", hideToast);
 const guessedCards = new Set();
 let targetCard = null;
 
+// Show and hide help popover
+document.getElementById('help-button').addEventListener('click', () => togglePopover('popover', true));
+document.addEventListener('click', (event) => togglePopover('popover', false, event));
 
-// script.js
-document.getElementById('help-button').addEventListener('click', function() {
-    var popover = document.getElementById('popover');
-    popover.style.display = 'block';
-});
+// Show and hide disclaimer popover
+document.getElementById('disclaimer').addEventListener('click', () => togglePopover('disclaimover', true));
+document.addEventListener('click', (event) => togglePopover('disclaimover', false, event));
 
-// Close the popover when clicking outside of it
-document.addEventListener('click', function(event) {
-    var popover = document.getElementById('popover');
-    var helpButton = document.getElementById('help-button');
-    if (!popover.contains(event.target) && !helpButton.contains(event.target)) {
-        popover.style.display = 'none';
+function togglePopover(id, show, event = null) {
+    const popover = document.getElementById(id);
+    const button = document.getElementById(id === 'popover' ? 'help-button' : 'disclaimer');
+    if (show || (event && !popover.contains(event.target) && !button.contains(event.target))) {
+        popover.style.display = show ? 'block' : 'none';
     }
-});
+}
 
-
-// Disclaimer Popover
-document.getElementById('disclaimer').addEventListener('click', function() {
-    var disclaimover = document.getElementById('disclaimover');
-    disclaimover.style.display = 'block';
-});
-
-// Close the disclaim popover when clicking outside of it
-document.addEventListener('click', function(event) {
-    var disclaimover = document.getElementById('disclaimover');
-    var disclaimer = document.getElementById('disclaimer');
-    if (!disclaimover.contains(event.target) && !disclaimer.contains(event.target)) {
-        disclaimover.style.display = 'none';
-    }
-});
-
-
-
+// Fetch cards data
 async function fetchCards() {
     const loadingImage = document.getElementById('loading-image');
     const cardInput = document.getElementById('card-input');
-
     try {
-        cardInput.disabled = true; // Disable input field during API call
-        loadingImage.style.display = 'inline-block'; // Show loading image
-
-        const response = await fetch('https://api.lorcana-api.com/bulk/cards'); // Replace with your API endpoint
+        cardInput.disabled = true;
+        loadingImage.style.display = 'inline-block';
+        const response = await fetch('https://api.lorcana-api.com/bulk/cards');
         const data = await response.json();
         cards = data.map(card => ({
             name: card.Name,
-            number: card.Card_Num, // Assuming "Number" attribute is available in API response
+            number: card.Card_Num,
             set: card.Set_Name,
             cost: card.Cost,
             inkable: card.Inkable,
@@ -68,16 +49,18 @@ async function fetchCards() {
     } catch (error) {
         console.error('Error fetching cards:', error);
     } finally {
-        loadingImage.style.display = 'none'; // Hide loading image after API call
-        cardInput.disabled = false; // Enable input field after API call
+        loadingImage.style.display = 'none';
+        cardInput.disabled = false;
     }
 }
+
+// Calculate the daily target card
 function getDailyTargetCard() {
     const today = new Date();
-    const dateString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()-1}`;
-    const salt = "CobraBubblesEnchanted"; // A constant salt for complexity
+    const dateString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate() - 1}`;
+    const salt = "CobraBubblesEnchanted";
     const hash = hashString(dateString + salt);
-    const index = (Math.abs(hash) % cards.length); // Ensures index is non-negative
+    const index = Math.abs(hash) % cards.length;
     return cards[index];
 }
 
@@ -86,10 +69,11 @@ function hashString(str) {
     for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
         hash = (hash << 5) - hash + char;
-        hash |= 0; // Convert to 32-bit integer
+        hash |= 0;
     }
     return hash;
 }
+
 const colorMap = {
     amber: '#f3b500',
     amethyst: '#813679',
@@ -107,7 +91,16 @@ const rarityImages = {
     legendary: 'img/legendary.png'
 };
 
-cardInput.addEventListener('input', () => {
+// Debounce function to limit the rate of function execution
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+cardInput.addEventListener('input', debounce(() => {
     const query = cardInput.value.toLowerCase();
     suggestions.innerHTML = '';
     if (query) {
@@ -115,34 +108,22 @@ cardInput.addEventListener('input', () => {
         matches.forEach(card => {
             const li = document.createElement('li');
             li.textContent = card.name;
-
-            // Set the background color based on the card's color attribute
-            const cardColor = card.color.toLowerCase();
-            if (colorMap[cardColor]) {
-                li.style.backgroundColor = colorMap[cardColor];
-            }
-
+            li.style.backgroundColor = colorMap[card.color.toLowerCase()] || 'transparent';
             li.addEventListener('click', () => guessCard(card));
             li.addEventListener('mouseover', () => showImage(card.image));
-            li.addEventListener('mouseout', () => hideImage());
+            li.addEventListener('mouseout', hideImage);
             suggestions.appendChild(li);
         });
     }
-});
-
+}, 300));
 
 function guessCard(card) {
-    if (guessedCards.has(card.name)) {
-        return;
-    }
+    if (guessedCards.has(card.name)) return;
     guessedCards.add(card.name);
-
     suggestions.innerHTML = '';
     cardInput.value = '';
-
     const row = document.createElement('div');
     row.classList.add('row');
-
     row.appendChild(createCell(card.name));
     row.appendChild(createNumberCell(card.number, targetCard.number));
     row.appendChild(createCell(card.set, targetCard.set));
@@ -151,31 +132,17 @@ function guessCard(card) {
     row.appendChild(createCell(card.color, targetCard.color));
     row.appendChild(createTypeCell(card.type, targetCard.type));
     row.appendChild(createCell(card.rarity, targetCard.rarity));
-
     feedback.appendChild(row);
-
-    if (card.name === targetCard.name) {
-        endGame();
-    }
+    if (card.name === targetCard.name) endGame();
 }
 
 function createNumberCell(value, targetValue) {
     const cell = document.createElement('div');
     cell.classList.add('cell', 'number-cell');
     cell.textContent = value;
-
-    if (value === targetValue) {
-        cell.classList.add('correct');
-        cell.style.backgroundColor = '#4caf50'; // Green for correct guess
-    } else {
-        cell.style.backgroundColor = '#f44336'; // Red for incorrect guess
-
-        // Add arrow emoji
-        if (value > targetValue) {
-            cell.textContent += ' 🔽';
-        } else {
-            cell.textContent += ' 🔼';
-        }
+    cell.style.backgroundColor = value === targetValue ? '#4caf50' : '#f44336';
+    if (value !== targetValue) {
+        cell.textContent += value > targetValue ? ' 🔽' : ' 🔼';
     }
     return cell;
 }
@@ -183,11 +150,9 @@ function createNumberCell(value, targetValue) {
 function createCell(value, targetValue = null) {
     const cell = document.createElement('div');
     cell.classList.add('cell');
+    cell.textContent = value;
     if (targetValue !== null) {
-        cell.textContent = value;
         cell.classList.add(value === targetValue ? 'correct' : 'incorrect');
-    } else {
-        cell.textContent = value;
     }
     return cell;
 }
@@ -196,7 +161,6 @@ function createTypeCell(guessedType, targetType) {
     const cell = document.createElement('div');
     cell.classList.add('cell');
     cell.textContent = guessedType;
-
     if (guessedType === targetType) {
         cell.classList.add('correct');
     } else if ((guessedType === "Action - Song" && targetType === "Action") || 
@@ -204,11 +168,9 @@ function createTypeCell(guessedType, targetType) {
                (guessedType === "Action - Song" && targetType === "Song") || 
                (guessedType === "Song" && targetType === "Action - Song")) {
         cell.classList.add('close');
-        cell.textContent = guessedType;
     } else {
         cell.classList.add('incorrect');
     }
-
     return cell;
 }
 
@@ -216,15 +178,11 @@ function endGame() {
     winMessage.textContent = "YOU WIN!";
     cardInput.disabled = true;
     cardInput.placeholder = "Game Over!";
-    
     const emojiFeedbackContainer = document.getElementById('emoji-feedback-container');
-    emojiFeedbackContainer.innerHTML = ''; // Clear previous feedback
-
-    // Add LOREDLE with emoji and today's date
+    emojiFeedbackContainer.innerHTML = '';
     const title = document.createElement('div');
     title.classList.add('emoji-row');
     title.innerHTML = '🅻 🅾 🆁 🅴 🅳 🅻 🅴<br>';
-
     const today = new Date();
     const dateString = today.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
     const date = document.createElement('div');
@@ -232,69 +190,40 @@ function endGame() {
     date.textContent = dateString;
     title.appendChild(date);
     emojiFeedbackContainer.appendChild(title);
-
     feedback.childNodes.forEach((row, index) => {
         const emojiRow = document.createElement('div');
         emojiRow.classList.add('emoji-row');
-        
-        // Emoji numbers: 1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟
         const emojiNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
         const guessNumberCell = document.createElement('span');
-        
-        if (index < 10) {
-            guessNumberCell.textContent = emojiNumbers[index] + ' ';
-        } else {
-            guessNumberCell.textContent = (index + 1) + ' ';
-        }
-        
+        guessNumberCell.textContent = index < 10 ? emojiNumbers[index] + ' ' : (index + 1) + ' ';
         emojiRow.appendChild(guessNumberCell);
-        
-        // Skip the first cell (Name column) in each row
         row.childNodes.forEach((cell, cellIndex) => {
-            if (cellIndex > 0) { // Skip the first cell (Name)
+            if (cellIndex > 0) {
                 const emojiCell = document.createElement('span');
-                if (cell.classList.contains('correct')) {
-                    emojiCell.textContent = '🟩'; // Green square for correct guess
-                } else if (cell.classList.contains('close')) {
-                    emojiCell.textContent = '🟥'; // Yellow square for close guess ** Changed to Red Squre to avoid spoilers, leaving code in place for change back as needed 🟨
-                } else {
-                    emojiCell.textContent = '🟥'; // Red square for incorrect guess
-                }
-                emojiCell.textContent += ' '; // Add space after each emoji
+                emojiCell.textContent = cell.classList.contains('correct') ? '🟩' : cell.classList.contains('close') ? '🟥' : '🟥';
+                emojiCell.textContent += ' ';
                 emojiRow.appendChild(emojiCell);
             }
         });
-        
         emojiFeedbackContainer.appendChild(emojiRow);
     });
-
-    // Add the URL below the emoji results
     const url = document.createElement('div');
     url.classList.add('emoji-row');
     url.textContent = 'loredle.ink';
     emojiFeedbackContainer.appendChild(url);
-
     const copyButton = document.getElementById('copy-emoji-button');
     copyButton.addEventListener('click', () => {
         let emojiText = '🅻🅾🆁🅴🅳🅻🅴\n' + dateString + '\n';
         emojiFeedbackContainer.childNodes.forEach((row, rowIndex) => {
-            if (rowIndex > 0) { // Skip the first row, which contains the title and date
-                emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n'; // Get text content including emojis, adding spaces
+            if (rowIndex > 0) {
+                emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n';
             }
         });
-
-        navigator.clipboard.writeText(emojiText) // Copy to clipboard
+        navigator.clipboard.writeText(emojiText)
             .then(() => showToast('Copied to clipboard!'))
             .catch(err => showToast('Failed to copy to clipboard.'));
     });
-
-    document.getElementById('emoji-feedback').style.display = 'block'; // Show emoji feedback section
-}
-
-// Function to get emoji number
-function getEmojiNumber(number) {
-    const emojiNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-    return emojiNumbers[number - 1]; // Adjust index for zero-based array
+    document.getElementById('emoji-feedback').style.display = 'block';
 }
 
 function showToast(message) {
@@ -310,7 +239,6 @@ function hideToast() {
     const toast = document.getElementById("toast");
     toast.className = "toast hide";
 }
-
 
 function showImage(imageUrl) {
     hoveredImage.src = imageUrl;
