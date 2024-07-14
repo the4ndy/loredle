@@ -439,7 +439,7 @@ input {
 /* Mobile Optimizations */
 
 /* Styles for smaller screens */
-@media (max-width: 767px) {
+@media (max-width: 900px) {
     #game-board {
         display: flex;
         flex-direction: column;
