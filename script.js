@@ -140,9 +140,18 @@ function createNumberCell(value, targetValue) {
     const cell = document.createElement('div');
     cell.classList.add('cell', 'number-cell');
     cell.textContent = value;
-    cell.style.backgroundColor = value === targetValue ? '#4caf50' : '#f44336';
-    if (value !== targetValue) {
-        cell.textContent += value > targetValue ? ' 🔽' : ' 🔼';
+    if (value === targetValue) {
+        cell.classList.add('correct');
+        cell.style.backgroundColor = '#4caf50'; // Green for correct guess
+    } else {
+        cell.style.backgroundColor = '#f44336'; // Red for incorrect guess
+
+        // Add arrow emoji
+        if (value > targetValue) {
+            cell.textContent += ' 🔽';
+        } else {
+            cell.textContent += ' 🔼';
+        }
     }
     return cell;
 }
@@ -200,8 +209,14 @@ function endGame() {
         row.childNodes.forEach((cell, cellIndex) => {
             if (cellIndex > 0) {
                 const emojiCell = document.createElement('span');
-                emojiCell.textContent = cell.classList.contains('correct') ? '🟩' : cell.classList.contains('close') ? '🟥' : '🟥';
-                emojiCell.textContent += ' ';
+                if (cell.classList.contains('correct')) {
+                    emojiCell.textContent = '🟩'; // Green square for correct guess
+                } else if (cell.classList.contains('close')) {
+                    emojiCell.textContent = '🟥'; // Yellow square for close guess ** Changed to Red Squre to avoid spoilers, leaving code in place for change back as needed 🟨
+                } else {
+                    emojiCell.textContent = '🟥'; // Red square for incorrect guess
+                }
+                emojiCell.textContent += ' '; // Add space after each emoji
                 emojiRow.appendChild(emojiCell);
             }
         });
