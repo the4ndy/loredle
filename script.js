@@ -184,7 +184,7 @@ function createTypeCell(guessedType, targetType) {
 }
 
 function endGame() {
-    winMessage.textContent = "YOU WIN!";
+    youWin();
     cardInput.disabled = true;
     cardInput.placeholder = "Game Over!";
     const emojiFeedbackContainer = document.getElementById('emoji-feedback-container');
@@ -265,3 +265,89 @@ function hideImage() {
 }
 
 fetchCards();
+
+
+function youWin(){
+
+const confettiColors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#8B00FF'];
+const shapes = ['square', 'circle', 'triangle'];
+const winnerContainer = document.getElementById('winner-container');
+winnerContainer.style.visibility = "visible";
+
+let lastMouseX = 0;
+let lastMouseY = 0;
+let lastMoveTime = Date.now();
+let confettiBurstRate = 1;
+
+function createConfettiPiece() {
+    const confetti = document.createElement('div');
+    confetti.classList.add('confetti');
+
+    const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+    if (randomShape === 'circle') {
+        confetti.classList.add('circle');
+    } else if (randomShape === 'triangle') {
+        confetti.classList.add('triangle');
+    }
+
+    confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+    confetti.style.top = '-10px';
+    confetti.style.left = `${Math.random() * 100}%`;
+    confetti.style.width = `${Math.random() * 10 + 5}px`;
+    confetti.style.height = randomShape === 'triangle' ? '0' : `${Math.random() * 10 + 5}px`;
+
+    winnerContainer.appendChild(confetti);
+
+    const animationDuration = Math.random() * 2 + 3; // 3 to 5 seconds
+    const animationDirection = Math.random() * 360; // 0 to 360 degrees
+    const animationDistance = Math.random() * 500 + 500; // 500 to 1000 pixels
+
+    confetti.animate([
+        { transform: `translateY(0) rotate(0)` },
+        { transform: `translate(${animationDistance * Math.cos(animationDirection)}px, ${animationDistance * Math.sin(animationDirection)}px) rotate(${Math.random() * 360}deg)` }
+    ], {
+        duration: animationDuration * 1000,
+        easing: 'ease-out',
+        iterations: 1,
+        fill: 'forwards'
+    });
+
+    setTimeout(() => {
+        confetti.remove();
+    }, animationDuration * 1000);
+}
+
+function initialBurst() {
+    for (let i = 0; i < 100; i++) {
+        createConfettiPiece();
+    }
+}
+
+function generateConfettiBasedOnMouseSpeed(event) {
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastMoveTime;
+    lastMoveTime = currentTime;
+
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    const distance = Math.sqrt((mouseX - lastMouseX) ** 2 + (mouseY - lastMouseY) ** 2);
+    lastMouseX = mouseX;
+    lastMouseY = mouseY;
+
+    const speed = distance / timeDiff;
+
+    const newBurstRate = Math.min(Math.max(Math.floor(speed * 10), 1), 100);
+
+    if (newBurstRate > confettiBurstRate) {
+        for (let i = 0; i < newBurstRate - confettiBurstRate; i++) {
+            createConfettiPiece();
+        }
+    }
+
+    confettiBurstRate = newBurstRate;
+}
+
+initialBurst();
+document.addEventListener('mousemove', generateConfettiBasedOnMouseSpeed);
+
+}

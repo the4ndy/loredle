@@ -1,4 +1,7 @@
 /* Body */
+body, html {
+    overflow-x: hidden;
+}
 body {
     font-family: Arial, sans-serif;
     display: flex;
@@ -94,6 +97,7 @@ input {
     border: 3px solid #000;
     background-color: #ffffff;
     border-radius: 10px;
+    z-index: -1;
 }
 
 
@@ -435,6 +439,48 @@ input {
     to { background-position: 0% 150% }
 }
 
+#winner-container {
+    position: relative;
+    font-size: 5rem;
+    font-weight: bold;
+    color: transparent;
+    visibility: hidden;
+    background: linear-gradient(130deg, #ff2400, #e81d1d, #e8b71d, #e3e81d, #1de840, #1ddde8, #2b1de8, #dd00f3, #dd00f3);
+    background-size: 500% 500%;
+    -webkit-background-clip: text;
+    animation-name: movebg;
+    animation-timing-function: linear;
+    animation-duration: 5s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes movebg { 
+    from { background-position: 150% 0% }
+    to { background-position: 0% 150% }
+}
+
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    opacity: 0.8;
+}
+
+.circle {
+    border-radius: 50%;
+}
+
+.triangle {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 10px solid;
+}
+
+
 
 /* Mobile Optimizations */
 
@@ -566,6 +612,146 @@ input {
     border: 3px solid #000;
     background-color: #ffffff;
     border-radius: 10px;
+    z-index: -1;
+}   
+}
+
+
+
+/* Styles for even smaller screens */
+@media (max-width: 580px) {
+    #game-board {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 700px;
+        margin-top: 20px;
+        padding-left: 5%;
+    }
+    
+    .row {
+        display: flex;
+        width: 100%;
+    }
+    
+    .cell {
+        padding: 10px;
+        border: 1px solid #2b2b2b; 
+        text-align: center;
+        box-sizing: border-box;
+        font-size: .65em;
+        width: 50px; /* Fixed width to align with headers */
+        background-color: #0c0e31; 
+        color: #ffffff; 
+        padding: 5px;
+
+    }
+    
+    .header {
+        display: flex;
+    
+    }
+    
+    .header .cell {
+        font-weight: bold;
+        background: linear-gradient(145deg, #cdc39f 20%, #bcb392 20%, #bcb392 40%, #cdc39f 40%, #cdc39f 60%, #bcb392 60%, #bcb392 80%, #cdc39f 80%);
+        background-size: 20px 20px;
+        position: relative;
+        color: #000;
+        width: 50px; /* Fixed width to align with cells */
+        padding: 5px;
+        font-size: 10px;
+
+    }
+    
+    .header .cell::after {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+        opacity: 0.1; /* Make the texture more subtle */
+    }
+    .correct {
+        background-color: #4caf50; 
+        color: white;
+    }
+    
+    .incorrect {
+        background-color: #f44336; 
+        color: white;
+    }
+    
+    .close {
+        background-color: #fbc02d; 
+        color: black;
+    }
+
+    /* Input container Mobile */
+    
+#input-container {
+    display: flex;
+    align-items: flex-start; /* Align items towards the top */
+    margin-bottom: 20px;
+}
+
+#image-container {
+    width: 200px; /* Width of the image */
+    height: 300px; /* Height of the image */
+    margin-right: 20px; /* Adjust as needed */
+    position: relative; /* Ensure relative positioning */
+}
+
+input {
+    padding: 10px;
+    font-size: 16px;
+    top: 10px;
+    margin-bottom: 20px;
+    margin-top: 25px;
+    width: 250px;
+    text-align: center;
+    border: 2px solid #2b2b2b; 
+    background-color: #0c0e31; 
+    color: #ffffff; 
+}
+
+#suggestions {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 250px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #efefef; 
+    background-color: #0c0e31; 
+}
+
+#suggestions li {
+    padding: 10px;
+    border-bottom: 1px solid #444444; 
+    cursor: pointer;
+    color: #ffffff; 
+}
+
+#suggestions li:hover {
+    background-color: #2b2b2b; 
+}
+
+#hovered-image {
+    display: none;
+    position: absolute; /* Position image within container */
+    top: 0;
+    left: 2%;
+    width: 100%; /* Fill container width */
+    height: 100%; /* Fill container height */
+    border: 3px solid #000;
+    background-color: #ffffff;
+    border-radius: 10px;
+    z-index: -1;
 }
 
     
