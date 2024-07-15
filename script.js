@@ -318,7 +318,13 @@ function createConfettiPiece() {
 }
 
 function initialBurst() {
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 500; i++) {
+        createConfettiPiece();
+    }
+}
+
+function clickBurst() {
+    for (let i = 0; i < 50; i++) {
         createConfettiPiece();
     }
 }
@@ -348,6 +354,6 @@ function generateConfettiBasedOnMouseSpeed(event) {
 }
 
 initialBurst();
-document.addEventListener('mousemove', generateConfettiBasedOnMouseSpeed);
+document.addEventListener('click', clickBurst);
 
 }
