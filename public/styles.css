@@ -173,69 +173,58 @@ h1 {
     background-color: #333 !important;
 }
 
-
+/* --- The New Rigid Grid System --- */
 #game-board {
     display: flex;
     flex-direction: column;
-    gap: 6px;
     width: 100%;
-    max-width: 1200px;
-    /* Increased massively to let the board breathe */
-    /* overflow-x: auto; has been completely removed */
+    align-items: center;
+    /* Centers the whole board on the screen */
 }
 
 .row {
-    display: flex;
-    width: 100%;
-    /* min-width constraint removed so it cleanly snaps to the container */
-    gap: 4px;
-    margin-bottom: 4px;
+    display: grid;
+    /* Column 1 (Name) gets 130px. Columns 2-8 get 85px to make uniform squares */
+    grid-template-columns: 130px repeat(7, 85px);
+    gap: 6px;
+    /* Space between the tiles */
+    margin-bottom: 6px;
 }
 
+.cell {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 2px solid #2a2a2a;
+    /* Gives it that defined game-tile border */
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 
-/* Adjust column ratios for the new wider row */
-.cell:nth-child(1) {
-    flex: 2.8;
-    white-space: pre-line;
-    /* Allows Name \n Subname */
+    min-height: 85px;
+    /* Forces the box to be a square */
+
+    /* This allows text to stack natively inside the box like the reference image */
+    white-space: normal;
+    word-wrap: break-word;
     line-height: 1.2;
 }
 
-.cell:nth-child(2) {
-    flex: 0.8;
+/* Make the header row look more like titles and less like game tiles */
+.header .cell {
+    min-height: 40px;
+    background-color: transparent !important;
+    border: none;
+    border-bottom: 2px solid var(--primary-color);
+    border-radius: 0;
+    align-items: flex-end;
+    /* Pushes header text to the bottom edge */
+    padding-bottom: 8px;
 }
-
-/* Number */
-.cell:nth-child(3) {
-    flex: 1.5;
-}
-
-/* Set (Wider for long names) */
-.cell:nth-child(4) {
-    flex: 0.7;
-}
-
-/* Cost */
-.cell:nth-child(5) {
-    flex: 0.9;
-}
-
-/* Inkable */
-.cell:nth-child(6) {
-    flex: 1;
-}
-
-/* Color */
-.cell:nth-child(7) {
-    flex: 1.5;
-}
-
-/* Type (Wider for Action - Song) */
-.cell:nth-child(8) {
-    flex: 1.2;
-}
-
-/* Rarity */
 
 /* Gameplay Cell Highlighting */
 .correct {
