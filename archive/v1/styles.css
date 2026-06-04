@@ -1,0 +1,842 @@
+/* Body */
+body,
+html {
+    overflow-x: hidden;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #0c0e31;
+    color: #fff;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: #d157dd;
+}
+
+
+/* Loading spinner */
+.loading-spinner {
+    display: none;
+    /* Hide initially */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(0deg);
+    width: 100px;
+    /* Adjust image size as needed */
+    height: 100px;
+    /* Adjust image size as needed */
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+
+
+/* Guessing Input Text Field */
+
+#input-container {
+    display: flex;
+    align-items: flex-start;
+    /* Align items towards the top */
+    margin-bottom: 20px;
+}
+
+#image-container {
+    width: 300px;
+    /* Width of the image */
+    height: 419px;
+    /* Height of the image */
+    margin-right: 20px;
+    /* Adjust as needed */
+    position: relative;
+    /* Ensure relative positioning */
+}
+
+input {
+    padding: 10px;
+    font-size: 16px;
+    top: 10px;
+    margin-bottom: 20px;
+    margin-top: 25px;
+    width: 300px;
+    text-align: center;
+    border: 2px solid #2b2b2b;
+    background-color: #0c0e31;
+    color: #ffffff;
+}
+
+#suggestions {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 310px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #efefef;
+    background-color: #0c0e31;
+}
+
+#suggestions li {
+    padding: 10px;
+    border-bottom: 1px solid #444444;
+    cursor: pointer;
+    color: #ffffff;
+}
+
+#suggestions li:hover {
+    background-color: #2b2b2b;
+}
+
+#hovered-image {
+    display: none;
+    position: absolute;
+    /* Position image within container */
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* Fill container width */
+    height: 100%;
+    /* Fill container height */
+    border: 3px solid #000;
+    background-color: #ffffff;
+    border-radius: 10px;
+    z-index: -1;
+}
+
+
+
+/* Results */
+
+#game-board {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 700px;
+    margin-top: 20px;
+}
+
+.row {
+    display: flex;
+    width: 100%;
+}
+
+.cell {
+    padding: 10px;
+    border: 1px solid #2b2b2b;
+    text-align: center;
+    box-sizing: border-box;
+    width: 100px;
+    /* Fixed width to align with headers */
+    background-color: #0c0e31;
+    color: #ffffff;
+}
+
+.header {
+    display: flex;
+
+}
+
+.header .cell {
+    font-weight: bold;
+    background: linear-gradient(145deg, #cdc39f 20%, #bcb392 20%, #bcb392 40%, #cdc39f 40%, #cdc39f 60%, #bcb392 60%, #bcb392 80%, #cdc39f 80%);
+    background-size: 20px 20px;
+    position: relative;
+    color: #000;
+    width: 100px;
+    /* Fixed width to align with cells */
+}
+
+.header .cell::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+    opacity: 0.1;
+    /* Make the texture more subtle */
+}
+
+
+.correct {
+    background-color: #4caf50;
+    color: white;
+}
+
+.incorrect {
+    background-color: #f44336;
+    color: white;
+}
+
+.close {
+    background-color: #fbc02d;
+    color: black;
+}
+
+#floating-button {
+    position: fixed;
+    /* Position fixed to the viewport */
+    bottom: 20px;
+    /* Distance from the bottom of the viewport */
+    right: 20px;
+    /* Distance from the right side of the viewport */
+    padding: 10px 20px;
+    /* Padding for the button */
+    background-color: #007bff;
+    /* Button background color */
+    color: white;
+    /* Button text color */
+    border: none;
+    /* Remove border */
+    border-radius: 5px;
+    /* Rounded corners */
+    cursor: pointer;
+    /* Pointer cursor on hover */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Optional shadow for better visibility */
+    z-index: 1000;
+    /* Ensure the button is above other elements */
+    transition: background-color 0.3s;
+    /* Smooth background color transition */
+}
+
+#floating-button:hover {
+    background-color: #0056b3;
+    /* Darker shade on hover */
+}
+
+#credit {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #fff;
+    padding: 10px 0;
+}
+
+#credit a {
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #fff;
+    text-decoration: none;
+
+}
+
+#credit a:hover {
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: #00AEEF;
+    text-decoration: none;
+
+}
+
+.cell.number-cell {
+    font-weight: bold;
+}
+
+.cell.number-cell.arrow-up::after {
+    color: #f44336;
+}
+
+.cell.number-cell.arrow-down::after {
+    color: #4caf50;
+}
+
+#emoji-feedback {
+    margin-top: 20px;
+    text-align: center;
+}
+
+#emoji-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+#copy-emoji-button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#copy-emoji-button:hover {
+    background-color: #0056b3;
+}
+
+.toast {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: 0;
+    /* Align to the left edge */
+    background-color: #0c0e31;
+    /* background: linear-gradient(#0c0e31, #7f69a9); */
+    color: #d157dd;
+    /* Match the text color of the site */
+    text-align: center;
+    border-radius: 5px;
+    border: 2px solid #262dbe;
+    /* Add a 2px border */
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    left: 20px;
+    /* Distance from the left side of the viewport */
+    bottom: 20px;
+    /* Distance from the bottom of the viewport */
+    font-size: 17px;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Add a shadow for better visibility */
+}
+
+.toast.show {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+    visibility: visible;
+}
+
+.toast.hide {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+}
+
+/* HELP BUTTON AND POP OVER */
+.help-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.help-button:hover {
+    width: 150px;
+    border-radius: 25px;
+}
+
+.help-button span {
+    transition: all 0.3s ease;
+    font-size: 1.5em;
+    line-height: 40px;
+    /* Ensure the text is centered vertically */
+    padding-left: 25%;
+}
+
+.help-button:hover span {
+    padding-left: 0px;
+}
+
+.help-button::after {
+    content: 'How to Play';
+    display: inline-block;
+    opacity: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    padding-left: 10px;
+    font-size: 1em;
+    line-height: 40px;
+    /* Ensure the text is centered vertically */
+}
+
+.help-button:hover::after {
+    opacity: 1;
+}
+
+.popover {
+    display: none;
+    position: fixed;
+    top: 25%;
+    /* Adjusted to be 25% from the top */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    color: black;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 500px;
+    /* Updated width */
+    max-height: 400px;
+    /* Updated max-height */
+    overflow-y: auto;
+}
+
+.popover p {
+    padding-left: 27%;
+    text-align: left;
+}
+
+.popover h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+#rov {
+    font-family: "Kode mono";
+    font-size: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    padding-left: 15%;
+    color: #16ff9e;
+    text-shadow: #8c00ff 2.5px 2.5px 2px;
+    -webkit-text-stroke: 1px black;
+
+}
+
+
+#blurcana:hover {
+    /*     position: fixed; 
+    bottom: 5px; 
+    right: 35px;  */
+    color: transparent;
+    text-shadow: 0 0 2px rgba(0, 195, 255, 0.904);
+    text-decoration: none;
+    cursor: none;
+}
+
+
+#disclaimover {
+    display: none;
+    position: fixed;
+    top: 25%;
+    /* Adjusted to be 25% from the top */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    color: black;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 500px;
+    /* Updated width */
+    max-height: 400px;
+    /* Updated max-height */
+    overflow-y: auto;
+}
+
+#disclaimover p {
+    padding-left: 0%;
+    text-align: left;
+}
+
+#disclaimover h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+#disclaimer {
+    cursor: pointer;
+
+}
+
+/* win-message style adapted from codepen */
+#win-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Open Sans", sans-serif;
+    font-size: 8em;
+    text-align: center;
+    color: transparent;
+    background: linear-gradient(130deg, #ff2400, #e81d1d, #e8b71d, #e3e81d, #1de840, #1ddde8, #2b1de8, #dd00f3, #dd00f3);
+    background-size: 500% 500%;
+    -webkit-background-clip: text;
+    animation-name: movebg;
+    animation-timing-function: linear;
+    animation-duration: 5s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes movebg {
+    from {
+        background-position: 150% 0%
+    }
+
+    to {
+        background-position: 0% 150%
+    }
+}
+
+#winner-container {
+    position: relative;
+    font-size: 5rem;
+    font-weight: bold;
+    color: transparent;
+    visibility: hidden;
+    background: linear-gradient(130deg, #ff2400, #e81d1d, #e8b71d, #e3e81d, #1de840, #1ddde8, #2b1de8, #dd00f3, #dd00f3);
+    background-size: 500% 500%;
+    -webkit-background-clip: text;
+    animation-name: movebg;
+    animation-timing-function: linear;
+    animation-duration: 5s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes movebg {
+    from {
+        background-position: 150% 0%
+    }
+
+    to {
+        background-position: 0% 150%
+    }
+}
+
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    opacity: 0.8;
+}
+
+.circle {
+    border-radius: 50%;
+}
+
+.triangle {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 10px solid;
+}
+
+
+
+/* Mobile Optimizations */
+
+/* Styles for smaller screens */
+@media (max-width: 900px) {
+    #game-board {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 700px;
+        margin-top: 20px;
+        padding-left: 5%;
+    }
+
+    .row {
+        display: flex;
+        width: 100%;
+    }
+
+    .cell {
+        padding: 10px;
+        border: 1px solid #2b2b2b;
+        text-align: center;
+        box-sizing: border-box;
+        font-size: .65em;
+        width: 64px;
+        /* Fixed width to align with headers */
+        background-color: #0c0e31;
+        color: #ffffff;
+    }
+
+    .header {
+        display: flex;
+
+    }
+
+    .header .cell {
+        font-weight: bold;
+        background: linear-gradient(145deg, #cdc39f 20%, #bcb392 20%, #bcb392 40%, #cdc39f 40%, #cdc39f 60%, #bcb392 60%, #bcb392 80%, #cdc39f 80%);
+        background-size: 20px 20px;
+        position: relative;
+        color: #000;
+        width: 64px;
+        /* Fixed width to align with cells */
+    }
+
+    .header .cell::after {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+        opacity: 0.1;
+        /* Make the texture more subtle */
+    }
+
+    .correct {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .incorrect {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .close {
+        background-color: #fbc02d;
+        color: black;
+    }
+
+    /* Input container Mobile */
+
+    #input-container {
+        display: flex;
+        align-items: flex-start;
+        /* Align items towards the top */
+        margin-bottom: 20px;
+    }
+
+    #image-container {
+        width: 200px;
+        /* Width of the image */
+        height: 300px;
+        /* Height of the image */
+        margin-right: 20px;
+        /* Adjust as needed */
+        position: relative;
+        /* Ensure relative positioning */
+    }
+
+    input {
+        padding: 10px;
+        font-size: 16px;
+        top: 10px;
+        margin-bottom: 20px;
+        margin-top: 25px;
+        width: 250px;
+        text-align: center;
+        border: 2px solid #2b2b2b;
+        background-color: #0c0e31;
+        color: #ffffff;
+    }
+
+    #suggestions {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: 250px;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #efefef;
+        background-color: #0c0e31;
+    }
+
+    #suggestions li {
+        padding: 10px;
+        border-bottom: 1px solid #444444;
+        cursor: pointer;
+        color: #ffffff;
+    }
+
+    #suggestions li:hover {
+        background-color: #2b2b2b;
+    }
+
+    #hovered-image {
+        display: none;
+        position: absolute;
+        /* Position image within container */
+        top: 0;
+        left: 2%;
+        width: 100%;
+        /* Fill container width */
+        height: 100%;
+        /* Fill container height */
+        border: 3px solid #000;
+        background-color: #ffffff;
+        border-radius: 10px;
+        z-index: -1;
+    }
+}
+
+
+
+/* Styles for even smaller screens */
+@media (max-width: 580px) {
+    #game-board {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 700px;
+        margin-top: 20px;
+        padding-left: 5%;
+    }
+
+    .row {
+        display: flex;
+        width: 100%;
+    }
+
+    .cell {
+        padding: 10px;
+        border: 1px solid #2b2b2b;
+        text-align: center;
+        box-sizing: border-box;
+        font-size: .65em;
+        width: 50px;
+        /* Fixed width to align with headers */
+        background-color: #0c0e31;
+        color: #ffffff;
+        padding: 5px;
+
+    }
+
+    .header {
+        display: flex;
+
+    }
+
+    .header .cell {
+        font-weight: bold;
+        background: linear-gradient(145deg, #cdc39f 20%, #bcb392 20%, #bcb392 40%, #cdc39f 40%, #cdc39f 60%, #bcb392 60%, #bcb392 80%, #cdc39f 80%);
+        background-size: 20px 20px;
+        position: relative;
+        color: #000;
+        width: 50px;
+        /* Fixed width to align with cells */
+        padding: 5px;
+        font-size: 10px;
+
+    }
+
+    .header .cell::after {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+        opacity: 0.1;
+        /* Make the texture more subtle */
+    }
+
+    .correct {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .incorrect {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .close {
+        background-color: #fbc02d;
+        color: black;
+    }
+
+    /* Input container Mobile */
+
+    #input-container {
+        display: flex;
+        align-items: flex-start;
+        /* Align items towards the top */
+        margin-bottom: 20px;
+    }
+
+    #image-container {
+        width: 200px;
+        /* Width of the image */
+        height: 300px;
+        /* Height of the image */
+        margin-right: 20px;
+        /* Adjust as needed */
+        position: relative;
+        /* Ensure relative positioning */
+    }
+
+    input {
+        padding: 10px;
+        font-size: 16px;
+        top: 10px;
+        margin-bottom: 20px;
+        margin-top: 25px;
+        width: 250px;
+        text-align: center;
+        border: 2px solid #2b2b2b;
+        background-color: #0c0e31;
+        color: #ffffff;
+    }
+
+    #suggestions {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: 250px;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #efefef;
+        background-color: #0c0e31;
+    }
+
+    #suggestions li {
+        padding: 10px;
+        border-bottom: 1px solid #444444;
+        cursor: pointer;
+        color: #ffffff;
+    }
+
+    #suggestions li:hover {
+        background-color: #2b2b2b;
+    }
+
+    #hovered-image {
+        display: none;
+        position: absolute;
+        /* Position image within container */
+        top: 0;
+        left: 2%;
+        width: 100%;
+        /* Fill container width */
+        height: 100%;
+        /* Fill container height */
+        border: 3px solid #000;
+        background-color: #ffffff;
+        border-radius: 10px;
+        z-index: -1;
+    }
+
+
+}

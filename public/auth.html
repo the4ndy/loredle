@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loredle - Authentication</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="menu-container">
+        <h2 id="auth-title" style="color: var(--primary-color); margin-top: 0;">Login</h2>
+
+        <form id="auth-form" class="button-group">
+            <input type="text" id="username" placeholder="Username" required class="input-field">
+            <input type="password" id="password" placeholder="Password" required class="input-field">
+            <button type="submit" class="btn primary-btn" id="submit-btn">Login</button>
+        </form>
+
+        <p id="error-msg" style="color: var(--incorrect); font-size: 0.9rem; min-height: 20px;"></p>
+
+        <div class="button-group" style="margin-top: 15px;">
+            <button id="toggle-auth" class="btn minimal-btn">Need an account? Register here.</button>
+            <button onclick="location.href='/index.html'" class="btn secondary-btn">Back to Home</button>
+        </div>
+    </div>
+
+    <script>
+        let isLogin = true;
+        const title = document.getElementById('auth-title');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleBtn = document.getElementById('toggle-auth');
+        const errorMsg = document.getElementById('error-msg');
+        const form = document.getElementById('auth-form');
+
+        // Toggle between Login and Register UI
+        toggleBtn.addEventListener('click', () => {
+            isLogin = !isLogin;
+            title.textContent = isLogin ? 'Login' : 'Create Account';
+            submitBtn.textContent = isLogin ? 'Login' : 'Register';
+            toggleBtn.textContent = isLogin ? 'Need an account? Register here.' : 'Already have an account? Login here.';
+            errorMsg.textContent = '';
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const endpoint = isLogin ? '/api/login' : '/api/register';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Save credentials locally and go to home screen
+                    localStorage.setItem('loredle_token', data.token);
+                    localStorage.setItem('loredle_username', data.username);
+                    window.location.href = '/index.html';
+                } else {
+                    errorMsg.textContent = data.error;
+                }
+            } catch (err) {
+                errorMsg.textContent = "Server error. Please try again later.";
+            }
+        });
+    </script>
+</body>
+
+</html>
