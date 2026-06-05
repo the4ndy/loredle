@@ -26,7 +26,7 @@ html {
     min-height: 100vh;
     padding-top: 20px;
     padding-bottom: 80px;
-    /* <-- Adds your breathing room */
+    /* overflow-x: hidden; REMOVED: This was causing the right-side clipping! */
 }
 
 /* Menu Hub Layout */
@@ -173,29 +173,46 @@ h1 {
     background-color: #333 !important;
 }
 
-/* --- The New Rigid Grid System --- */
+/* 1. The Main Scrolling Container */
 #game-board {
+    width: max-content;
+    max-width: 95vw;
+    margin: 0 auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#game-board::-webkit-scrollbar {
+    display: none;
+}
+
+/* 2. The Feedback Wrapper */
+#feedback {
+    width: max-content;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    align-items: center;
-    /* Centers the whole board on the screen */
 }
 
+/* 3. Lock BOTH Header and Rows to the Exact Same Grid */
+.header,
 .row {
     display: grid;
-    /* Column 1 (Name) gets 130px. Columns 2-8 get 85px to make uniform squares */
-    grid-template-columns: 130px repeat(7, 85px);
+    grid-template-columns: 155px repeat(7, 85px);
     gap: 6px;
-    /* Space between the tiles */
     margin-bottom: 6px;
+    width: max-content;
 }
 
+/* 4. The Squares */
 .cell {
+    box-sizing: border-box;
+    /* THE MAGIC FIX: Forces borders/padding to face inward */
+
     background-color: var(--bg-card);
     color: var(--text-primary);
     border: 2px solid #2a2a2a;
-    /* Gives it that defined game-tile border */
     border-radius: 4px;
     padding: 4px;
     font-size: 0.8rem;
@@ -206,15 +223,12 @@ h1 {
     text-align: center;
 
     min-height: 85px;
-    /* Forces the box to be a square */
-
-    /* This allows text to stack natively inside the box like the reference image */
     white-space: normal;
     word-wrap: break-word;
     line-height: 1.2;
 }
 
-/* Make the header row look more like titles and less like game tiles */
+/* 5. The Titles */
 .header .cell {
     min-height: 40px;
     background-color: transparent !important;
@@ -222,8 +236,35 @@ h1 {
     border-bottom: 2px solid var(--primary-color);
     border-radius: 0;
     align-items: flex-end;
-    /* Pushes header text to the bottom edge */
     padding-bottom: 8px;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+    #game-board {
+        align-items: flex-start;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .header,
+    .row {
+        /* Shrinks the tiles for mobile screens */
+        grid-template-columns: 100px repeat(7, 65px);
+        gap: 4px;
+    }
+
+    .cell {
+        min-height: 65px;
+        font-size: 0.65rem;
+        padding: 2px;
+        border-width: 1px;
+    }
+
+    .header .cell {
+        min-height: 30px;
+        font-size: 0.7rem;
+    }
 }
 
 /* Gameplay Cell Highlighting */
