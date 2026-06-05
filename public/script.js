@@ -184,27 +184,12 @@ function createTypeCell(guessedType, targetType) {
 
 // Add this to the very top of your endGame() function inside script.js
 function endGame() {
-    // --- NEW: Submit score to leaderboard ---
-    const username = localStorage.getItem('loredle_username');
-    if (username) {
-        fetch('/api/submit-score', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: username,
-                tries: guessedCards.size // Accurately counts how many guesses they made
-            })
-        })
-            .then(res => res.json())
-            .then(data => console.log('Score submitted:', data))
-            .catch(err => console.error('Error submitting score:', err));
-    }
-    // ----------------------------------------
-
+    // 1. Lock the board and show the winning card
     youWin();
     cardInput.disabled = true;
     cardInput.placeholder = "Game Over!";
 
+    // 2. Build the visual Emoji Feedback HTML
     const emojiFeedbackContainer = document.getElementById('emoji-feedback-container');
     emojiFeedbackContainer.innerHTML = '';
 
@@ -228,6 +213,7 @@ function endGame() {
         const guessNumberCell = document.createElement('span');
         guessNumberCell.textContent = index < 10 ? emojiNumbers[index] + ' ' : (index + 1) + ' ';
         emojiRow.appendChild(guessNumberCell);
+
         row.childNodes.forEach((cell, cellIndex) => {
             if (cellIndex > 0) {
                 const emojiCell = document.createElement('span');
@@ -250,21 +236,41 @@ function endGame() {
     url.textContent = 'loredle.villainy.ink';
     emojiFeedbackContainer.appendChild(url);
 
+    // 3. GENERATE THE SHARE TEXT STRING IMMEDIATELY
+    let emojiText = '🅻🅾🆁🅴🅳🅻🅴\n' + dateString + '\n';
+    emojiFeedbackContainer.childNodes.forEach((row, rowIndex) => {
+        if (rowIndex > 0) {
+            emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n';
+        }
+    });
+
+    // 4. SUBMIT SCORE TO LEADERBOARD & DISCORD
+    const username = localStorage.getItem('loredle_username');
+    if (username) {
+        fetch('/api/submit-score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: username,
+                tries: guessedCards.size,
+                shareText: emojiText // The text is now ready and passed correctly!
+            })
+        })
+            .then(res => res.json())
+            .then(data => console.log('Score submitted:', data))
+            .catch(err => console.error('Error submitting score:', err));
+    }
+
+    // 5. HOOK UP THE COPY BUTTON
     const copyButton = document.getElementById('copy-emoji-button');
-    // Ensure we don't attach multiple listeners if endGame runs more than once
-    copyButton.replaceWith(copyButton.cloneNode(true));
+    copyButton.replaceWith(copyButton.cloneNode(true)); // Clears old event listeners
     document.getElementById('copy-emoji-button').addEventListener('click', () => {
-        let emojiText = '🅻🅾🆁🅴🅳🅻🅴\n' + dateString + '\n';
-        emojiFeedbackContainer.childNodes.forEach((row, rowIndex) => {
-            if (rowIndex > 0) {
-                emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n';
-            }
-        });
         navigator.clipboard.writeText(emojiText)
             .then(() => showToast('Copied to clipboard!'))
             .catch(err => showToast('Failed to copy to clipboard.'));
     });
 
+    // Reveal the feedback container
     document.getElementById('emoji-feedback').style.display = 'block';
 }
 

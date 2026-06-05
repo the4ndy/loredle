@@ -71,7 +71,8 @@ app.post('/api/login', async (req, res) => {
 // --- LEADERBOARD ROUTES ---
 app.post('/api/submit-score', async (req, res) => {
     try {
-        const { username, tries } = req.body;
+        // 1. Destructure the new shareText variable from the incoming request
+        const { username, tries, shareText } = req.body;
         const today = new Date().toISOString().split('T')[0];
 
         const existingScore = await Score.findOne({ username, date: today });
@@ -80,18 +81,34 @@ app.post('/api/submit-score', async (req, res) => {
         const newScore = new Score({ username, date: today, tries });
         await newScore.save();
 
-        // --- NEW: Send Alert to Discord ---
+        // --- NEW: Discord Webhook with Emoji Filtering ---
         if (process.env.DISCORD_WEBHOOK_URL) {
+            let emojiGrid = "";
+
+            // If the frontend successfully passed the clipboard text
+            if (shareText) {
+                // Split the massive text block into individual lines
+                const lines = shareText.split('\n');
+
+                // Keep ONLY the lines that contain a red, green, or yellow square
+                const gridLines = lines.filter(line =>
+                    line.includes('🟥') || line.includes('🟩') || line.includes('🟨')
+                );
+
+                // Stitch those specific lines back together
+                emojiGrid = gridLines.join('\n');
+            }
+
+            // Fire it off to Discord
             fetch(process.env.DISCORD_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    // The 'content' field is the actual text message Discord will display
-                    content: `🚨 **${username}** just conquered today's Loredle in **${tries}** tries!`
+                    content: `🚨 **${username}** completed today's Loredle!\n${emojiGrid}`
                 })
             }).catch(err => console.error("Discord Webhook Failed:", err));
         }
-        // ----------------------------------
+        // -------------------------------------------------
 
         res.status(201).json({ message: "Score saved successfully!" });
     } catch (err) {
