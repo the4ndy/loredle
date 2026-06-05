@@ -72,14 +72,27 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/submit-score', async (req, res) => {
     try {
         const { username, tries } = req.body;
-        const today = new Date().toISOString().split('T')[0]; // Current date YYYY-MM-DD
+        const today = new Date().toISOString().split('T')[0];
 
-        // Prevent duplicate daily entries
         const existingScore = await Score.findOne({ username, date: today });
         if (existingScore) return res.status(400).json({ error: "You already submitted today's score!" });
 
         const newScore = new Score({ username, date: today, tries });
         await newScore.save();
+
+        // --- NEW: Send Alert to Discord ---
+        if (process.env.DISCORD_WEBHOOK_URL) {
+            fetch(process.env.DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    // The 'content' field is the actual text message Discord will display
+                    content: `🚨 **${username}** just conquered today's Loredle in **${tries}** tries!`
+                })
+            }).catch(err => console.error("Discord Webhook Failed:", err));
+        }
+        // ----------------------------------
+
         res.status(201).json({ message: "Score saved successfully!" });
     } catch (err) {
         res.status(500).json({ error: "Failed to save score." });
