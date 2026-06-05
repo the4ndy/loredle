@@ -247,7 +247,7 @@ function endGame() {
 
     const url = document.createElement('div');
     url.classList.add('emoji-row');
-    url.textContent = 'loredle.ink';
+    url.textContent = 'loredle.villainy.ink';
     emojiFeedbackContainer.appendChild(url);
 
     const copyButton = document.getElementById('copy-emoji-button');

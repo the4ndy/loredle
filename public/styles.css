@@ -240,32 +240,44 @@ h1 {
 }
 
 /* --- Mobile Responsiveness --- */
+/* --- Mobile Responsiveness --- */
 @media (max-width: 768px) {
     #game-board {
-        align-items: flex-start;
-        padding-left: 15px;
-        padding-right: 15px;
+        align-items: center;
+        /* Re-centers the board since it now fits the screen */
+        padding-left: 2px;
+        padding-right: 2px;
     }
 
     .header,
     .row {
-        /* Shrinks the tiles for mobile screens */
-        grid-template-columns: 100px repeat(7, 65px);
-        gap: 4px;
+        /* Math: 85px + (7 * 40px) + (7 gaps * 2px) = 379px Total Width */
+        /* This guarantees it fits naturally on 99% of modern smartphones! */
+        grid-template-columns: 85px repeat(7, 40px);
+        gap: 2px;
     }
 
     .cell {
-        min-height: 65px;
-        font-size: 0.65rem;
-        padding: 2px;
+        min-height: 50px;
+        /* Reduced height to keep them looking like squares */
+        font-size: 0.55rem;
+        /* Smaller font to fit inside 40px boxes */
+        padding: 1px;
+        /* Removes internal padding to maximize text space */
         border-width: 1px;
+
+        /* Forces longer words (like "Uncommon") to cleanly break to the next line */
+        word-break: break-word;
+        line-height: 1.1;
     }
 
     .header .cell {
         min-height: 30px;
-        font-size: 0.7rem;
+        font-size: 0.55rem;
+        padding-bottom: 4px;
     }
 }
+
 
 /* Gameplay Cell Highlighting */
 .correct {
