@@ -1,136 +1,180 @@
-// server.js
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const path = require('path');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
 const app = express();
-app.use(express.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(express.static('public'));
 
-// Connect to Database (MongoDB Atlas URL will go in Render environment variables)
+// --- MONGODB CONNECTION ---
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log("Connected to Loredle Database"))
-    .catch(err => console.error("Database connection error:", err));
+    .then(() => console.log('Connected to Loredle Database'))
+    .catch(err => console.error('Database connection error:', err));
 
-// --- SCHEMAS ---
+// --- DATABASE SCHEMAS ---
 const userSchema = new mongoose.Schema({
-    username: { type: String, unique: true, required: true, lowercase: true, trim: true },
-    password: { type: String, required: true }
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    avatar: { type: String, default: 'default' }
 });
+const User = mongoose.model('User', userSchema);
 
 const scoreSchema = new mongoose.Schema({
     username: { type: String, required: true },
-    date: { type: String, required: true }, // Format: YYYY-MM-DD
+    date: { type: String, required: true },
     tries: { type: Number, required: true }
 });
-
-const User = mongoose.model('User', userSchema);
 const Score = mongoose.model('Score', scoreSchema);
 
-// --- AUTHENTICATION ROUTES ---
+// --- HELPER FUNCTION: GET CST DATE ---
+function getCSTDate() {
+    // Formats strictly as YYYY-MM-DD using US Central Time
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Chicago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(new Date());
+}
+
+// --- ROUTES ---
+
+// Auth: Register
 app.post('/api/register', async (req, res) => {
     try {
         const { username, password } = req.body;
         const existingUser = await User.findOne({ username });
-        if (existingUser) return res.status(400).json({ error: "Username already taken." });
+        if (existingUser) return res.status(400).json({ error: 'Username already taken.' });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({ username, password: hashedPassword });
         await newUser.save();
 
-        // If this next line fails, it usually means process.env.JWT_SECRET is undefined
-        const token = jwt.sign({ username: newUser.username }, process.env.JWT_SECRET);
-        res.status(201).json({ token, username: newUser.username });
+        res.status(201).json({ message: 'Registration successful!', avatar: newUser.avatar });
     } catch (err) {
-        console.error("Registration Crash Details:", err); // <-- Added this to expose the exact issue in the console
-        res.status(500).json({ error: "Error creating account. Check server console." });
+        res.status(500).json({ error: 'Server error during registration.' });
     }
 });
 
+// Auth: Login
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         const user = await User.findOne({ username });
-        if (!user) return res.status(400).json({ error: "Invalid username or password." });
+        if (!user) return res.status(400).json({ error: 'User not found.' });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ error: "Invalid username or password." });
+        if (!isMatch) return res.status(400).json({ error: 'Invalid password.' });
 
-        const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET);
-        res.json({ token, username: user.username });
+        res.status(200).json({ message: 'Login successful!', avatar: user.avatar });
     } catch (err) {
-        res.status(500).json({ error: "Login failed." });
+        res.status(500).json({ error: 'Server error during login.' });
     }
 });
 
-// --- LEADERBOARD ROUTES ---
+// Hub: Get Global Daily Leaderboard
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const today = getCSTDate();
+
+        const scores = await Score.find({ date: today }).sort({ tries: 1 }).limit(10).lean();
+
+        for (let score of scores) {
+            const user = await User.findOne({ username: score.username }).lean();
+            score.avatar = user ? user.avatar : 'default';
+        }
+
+        res.status(200).json(scores);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch leaderboard.' });
+    }
+});
+
+// Settings: Change Password
+app.put('/api/user/change-password', async (req, res) => {
+    try {
+        const { username, currentPassword, newPassword } = req.body;
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) return res.status(400).json({ error: 'Current password is incorrect.' });
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        await user.save();
+        res.status(200).json({ message: 'Password updated successfully!' });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error.' });
+    }
+});
+
+// Settings: Update Avatar
+app.put('/api/user/avatar', async (req, res) => {
+    try {
+        const { username, avatar } = req.body;
+        const user = await User.findOne({ username });
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+
+        user.avatar = avatar;
+        await user.save();
+        res.status(200).json({ message: 'Avatar updated!', avatar: user.avatar });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error.' });
+    }
+});
+
+// Settings: Get User History
+app.get('/api/user/history/:username', async (req, res) => {
+    try {
+        const scores = await Score.find({ username: req.params.username }).sort({ date: -1 });
+        res.status(200).json(scores);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch history.' });
+    }
+});
+
+// Gameplay: Submit Score & Webhook
 app.post('/api/submit-score', async (req, res) => {
     try {
-        // 1. Destructure the new shareText variable from the incoming request
         const { username, tries, shareText } = req.body;
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCSTDate();
 
-        const existingScore = await Score.findOne({ username, date: today });
-        if (existingScore) return res.status(400).json({ error: "You already submitted today's score!" });
+        const isAnonymous = !username || username === 'Anonymous User';
+        const displayUsername = isAnonymous ? 'Anonymous User' : username;
 
-        const newScore = new Score({ username, date: today, tries });
-        await newScore.save();
+        if (!isAnonymous) {
+            const existingScore = await Score.findOne({ username, date: today });
+            if (existingScore) return res.status(400).json({ error: "You already submitted today's score!" });
 
-        // --- NEW: Discord Webhook with Emoji Filtering ---
-        if (process.env.DISCORD_WEBHOOK_URL) {
+            const newScore = new Score({ username, date: today, tries });
+            await newScore.save();
+        }
+
+        if (process.env.DISCORD_WEBHOOK_URL && shareText) {
             let emojiGrid = "";
+            const lines = shareText.split('\n');
+            const gridLines = lines.filter(line => line.includes('🟥') || line.includes('🟩') || line.includes('🟨'));
+            emojiGrid = gridLines.join('\n');
 
-            // If the frontend successfully passed the clipboard text
-            if (shareText) {
-                // Split the massive text block into individual lines
-                const lines = shareText.split('\n');
-
-                // Keep ONLY the lines that contain a red, green, or yellow square
-                const gridLines = lines.filter(line =>
-                    line.includes('🟥') || line.includes('🟩') || line.includes('🟨')
-                );
-
-                // Stitch those specific lines back together
-                emojiGrid = gridLines.join('\n');
-            }
-
-            // Fire it off to Discord
             fetch(process.env.DISCORD_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    content: `🚨 **${username}** completed today's Loredle!\n${emojiGrid}`
+                    content: `🚨 **${displayUsername}** completed today's Loredle!\n${emojiGrid}`
                 })
             }).catch(err => console.error("Discord Webhook Failed:", err));
         }
-        // -------------------------------------------------
 
-        res.status(201).json({ message: "Score saved successfully!" });
+        res.status(201).json({ message: "Score processed successfully!" });
     } catch (err) {
-        res.status(500).json({ error: "Failed to save score." });
+        res.status(500).json({ error: "Failed to process score." });
     }
-});
-
-app.get('/api/leaderboard', async (req, res) => {
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        // Fetch today's scores, sorted by lowest number of tries first
-        const dailyScores = await Score.find({ date: today }).sort({ tries: 1 }).limit(100);
-        res.json(dailyScores);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to fetch leaderboard." });
-    }
-});
-
-// Fallback to serve index.html for main routes
-app.get(/(.*)/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server sprinting on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server sprinting on port ${PORT}`);
+});

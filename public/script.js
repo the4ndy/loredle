@@ -1,34 +1,309 @@
+// Global State Variables
 let cards = [];
-const cardInput = document.getElementById('card-input');
-const suggestions = document.getElementById('suggestions');
-const feedback = document.getElementById('feedback');
-const winMessage = document.getElementById('win-message');
-const imageContainer = document.getElementById('image-container');
-const hoveredImage = document.getElementById('hovered-image');
-document.getElementById("toast").addEventListener("click", hideToast);
-const guessedCards = new Set();
 let targetCard = null;
+let guessedCards = new Set();
+let currentUser = localStorage.getItem('loredle_username');
+let currentAvatar = localStorage.getItem('loredle_avatar') || 'default';
+let userHistory = [];
+let historySortDesc = true;
 
-// Show and hide help popover
-// document.getElementById('help-button').addEventListener('click', () => togglePopover('popover', true));
-// document.addEventListener('click', (event) => togglePopover('popover', false, event));
+const availableAvatars = [
+    'default',
+    'https://wiki.mushureport.com/images/2/2c/Emerald-Ink.png',
+    'https://wiki.mushureport.com/images/a/ad/Sapphire-Ink.png',
+    'https://wiki.mushureport.com/images/3/31/Steel-Ink.png',
+    'https://wiki.mushureport.com/images/4/43/Amber-Ink.png',
+    'https://wiki.mushureport.com/images/d/db/Ruby-Ink.png',
+    'http://wiki.mushureport.com/images/c/cc/Amethyst-Ink.png'
+];
 
-// Show and hide disclaimer popover
-// document.getElementById('disclaimer').addEventListener('click', () => togglePopover('disclaimover', true));
-// document.addEventListener('click', (event) => togglePopover('disclaimover', false, event));
+// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    renderNavbar();
 
-function togglePopover(id, show, event = null) {
-    const popover = document.getElementById(id);
-    const button = document.getElementById(id === 'popover' ? 'help-button' : 'disclaimer');
-    if (show || (event && !popover.contains(event.target) && !button.contains(event.target))) {
-        popover.style.display = show ? 'block' : 'none';
+    if (document.getElementById('hub-container')) {
+        setupHubPage();
+    }
+
+    if (document.getElementById('game-board')) {
+        fetchCards();
+    }
+
+    if (document.getElementById('settings-container')) {
+        if (!currentUser) window.location.href = 'index.html';
+        setupAvatarGrid();
+        fetchUserHistory();
+    }
+});
+
+// --- GLOBAL NAVBAR LOGIC ---
+function renderNavbar() {
+    const authContainer = document.getElementById('nav-auth-container');
+    if (!authContainer) return;
+
+    authContainer.innerHTML = '';
+
+    if (currentUser) {
+        const avatarDiv = document.createElement('div');
+        avatarDiv.classList.add('avatar-circle');
+        avatarDiv.onclick = toggleDropdown;
+
+        if (currentAvatar === 'default') {
+            avatarDiv.textContent = currentUser.charAt(0).toUpperCase();
+        } else {
+            avatarDiv.style.backgroundImage = `url('${currentAvatar}')`;
+            avatarDiv.style.backgroundColor = 'transparent';
+        }
+
+        authContainer.appendChild(avatarDiv);
+    } else {
+        authContainer.innerHTML = `
+            <button class="btn secondary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.location.href='index.html'">Log In</button>
+            <button class="btn primary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.location.href='index.html'">Sign Up</button>
+        `;
     }
 }
 
-// Fetch cards data
-// Cleaned up fetchCards function
+function toggleDropdown() {
+    const dropdown = document.getElementById('nav-dropdown');
+    dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function logOut() {
+    localStorage.removeItem('loredle_username');
+    localStorage.removeItem('loredle_avatar');
+    window.location.href = 'index.html';
+}
+
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('nav-dropdown');
+    const avatar = document.querySelector('.avatar-circle');
+    if (dropdown && dropdown.style.display === 'flex' && !dropdown.contains(e.target) && (!avatar || !avatar.contains(e.target))) {
+        dropdown.style.display = 'none';
+    }
+});
+
+
+// --- HUB PAGE LOGIC (index.html) ---
+function setupHubPage() {
+    fetchGlobalLeaderboard();
+
+    document.getElementById('play-section').style.display = 'block';
+
+    if (currentUser) {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('welcome-message').textContent = `Welcome back, ${currentUser}!`;
+    } else {
+        document.getElementById('auth-section').style.display = 'block';
+        document.getElementById('welcome-message').textContent = `Ready to play?`;
+    }
+}
+
+async function loginUser() {
+    const usernameInput = document.getElementById('auth-username').value;
+    const passwordInput = document.getElementById('auth-password').value;
+    const msg = document.getElementById('auth-message');
+
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: usernameInput, password: passwordInput })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            localStorage.setItem('loredle_username', usernameInput);
+            localStorage.setItem('loredle_avatar', data.avatar || 'default');
+            window.location.href = 'index.html';
+        } else {
+            msg.textContent = data.error;
+        }
+    } catch (err) {
+        msg.textContent = "Server error.";
+    }
+}
+
+async function registerUser() {
+    const usernameInput = document.getElementById('auth-username').value;
+    const passwordInput = document.getElementById('auth-password').value;
+    const msg = document.getElementById('auth-message');
+
+    try {
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: usernameInput, password: passwordInput })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            localStorage.setItem('loredle_username', usernameInput);
+            localStorage.setItem('loredle_avatar', data.avatar || 'default');
+            window.location.href = 'index.html';
+        } else {
+            msg.textContent = data.error;
+        }
+    } catch (err) {
+        msg.textContent = "Server error.";
+    }
+}
+
+async function fetchGlobalLeaderboard() {
+    try {
+        const res = await fetch('/api/leaderboard');
+        const scores = await res.json();
+        const tbody = document.getElementById('global-leaderboard-body');
+        tbody.innerHTML = '';
+
+        if (scores.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-secondary);">No scores for today yet!</td></tr>';
+            return;
+        }
+
+        scores.forEach((score, index) => {
+            const tr = document.createElement('tr');
+
+            let avatarHTML = '';
+            if (score.avatar === 'default' || !score.avatar) {
+                avatarHTML = `<div class="mini-avatar">${score.username.charAt(0).toUpperCase()}</div>`;
+            } else {
+                avatarHTML = `<div class="mini-avatar" style="background-image: url('${score.avatar}'); background-color: transparent;"></div>`;
+            }
+
+            tr.innerHTML = `
+                <td>#${index + 1}</td>
+                <td style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    ${avatarHTML} <span>${score.username}</span>
+                </td>
+                <td>${score.tries}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error("Failed to load global leaderboard.");
+    }
+}
+
+
+// --- SETTINGS PAGE LOGIC (settings.html) ---
+function setupAvatarGrid() {
+    const grid = document.getElementById('avatar-grid');
+    grid.innerHTML = '';
+
+    availableAvatars.forEach(url => {
+        const option = document.createElement('div');
+        option.classList.add('avatar-option');
+
+        if (url === 'default') {
+            option.textContent = currentUser ? currentUser.charAt(0).toUpperCase() : '?';
+        } else {
+            option.style.backgroundImage = `url('${url}')`;
+            option.style.backgroundColor = 'transparent';
+        }
+
+        if (url === currentAvatar) option.classList.add('selected');
+        option.onclick = () => saveAvatar(url);
+        grid.appendChild(option);
+    });
+}
+
+async function saveAvatar(url) {
+    if (!currentUser) return;
+    try {
+        const res = await fetch('/api/user/avatar', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUser, avatar: url })
+        });
+        if (res.ok) {
+            currentAvatar = url;
+            localStorage.setItem('loredle_avatar', url);
+            setupAvatarGrid();
+            renderNavbar();
+            showToast('Avatar updated!');
+        }
+    } catch (err) {
+        showToast('Failed to update avatar.');
+    }
+}
+
+async function submitPasswordChange() {
+    const current = document.getElementById('current-password').value;
+    const newPass = document.getElementById('new-password').value;
+
+    if (!current || !newPass) return showToast('Please fill out both fields.');
+
+    try {
+        const res = await fetch('/api/user/change-password', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUser, currentPassword: current, newPassword: newPass })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('Password updated!');
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+        } else {
+            showToast(data.error || 'Failed to update password.');
+        }
+    } catch (err) {
+        showToast('Server error.');
+    }
+}
+
+async function fetchUserHistory() {
+    try {
+        const res = await fetch(`/api/user/history/${currentUser}`);
+        userHistory = await res.json();
+        renderHistoryTable();
+    } catch (err) {
+        document.getElementById('history-table-body').innerHTML = '<tr><td colspan="2">Failed to load history.</td></tr>';
+    }
+}
+
+function toggleHistorySort() {
+    historySortDesc = !historySortDesc;
+    document.getElementById('sort-label').textContent = historySortDesc ? 'Newest' : 'Oldest';
+    userHistory.reverse();
+    renderHistoryTable();
+}
+
+function renderHistoryTable() {
+    const tbody = document.getElementById('history-table-body');
+    tbody.innerHTML = '';
+
+    if (userHistory.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" style="color: var(--text-secondary);">No games played yet.</td></tr>';
+        return;
+    }
+
+    userHistory.forEach(score => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${score.date}</td><td>${score.tries}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+
+// --- GAME PAGE LOGIC (game.html) ---
+
+function getDailyTargetCard() {
+    // Force the hash to strictly use CST/CDT time
+    const options = { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' };
+    const todayCST = new Intl.DateTimeFormat('en-CA', options).format(new Date());
+
+    let hash = 0;
+    for (let i = 0; i < todayCST.length; i++) {
+        hash = todayCST.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % cards.length;
+    return cards[index];
+}
+
 async function fetchCards() {
-    const cardInput = document.getElementById('card-input');
     try {
         const response = await fetch('https://api.lorcast.com/v0/cards/search?q=""');
         const data = await response.json();
@@ -42,154 +317,156 @@ async function fetchCards() {
             color: card.ink || 'Colorless',
             type: card.type ? card.type.join(' - ') : 'Unknown',
             rarity: card.rarity,
-            image: card.image_uris?.digital?.normal || 'https://lorcanahq.com/wp-content/uploads/2022/09/Official-Lorcana-Logo.png'
+            image: card.image_uris?.digital?.normal || ''
         }));
 
+        // CRITICAL FIX: Sort the array alphabetically to guarantee the order never changes
+        cards.sort((a, b) => a.name.localeCompare(b.name));
+
         targetCard = getDailyTargetCard();
+        setupInputListener();
     } catch (error) {
         console.error('Error fetching cards:', error);
     }
 }
 
-// Calculate the daily target card
-function getDailyTargetCard() {
-    const today = new Date();
-    const dateString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate() - 1}`;
-    const salt = "CobraBubblesEnchanted";
-    const hash = hashString(dateString + salt);
-    const index = Math.abs(hash) % cards.length;
-    return cards[index];
+function setupInputListener() {
+    const cardInput = document.getElementById('card-input');
+    const suggestions = document.getElementById('suggestions');
+    if (!cardInput || !suggestions) return;
+
+    cardInput.addEventListener('input', (e) => {
+        const value = e.target.value.toLowerCase();
+        suggestions.innerHTML = '';
+        if (value) {
+            const filteredCards = cards.filter(card =>
+                card.name.toLowerCase().includes(value) && !guessedCards.has(card.name)
+            );
+            filteredCards.slice(0, 5).forEach(card => {
+                const li = document.createElement('li');
+                li.textContent = card.name;
+                li.onclick = () => {
+                    cardInput.value = '';
+                    suggestions.innerHTML = '';
+                    guessCard(card);
+                };
+                suggestions.appendChild(li);
+            });
+        }
+    });
+
+    const imageContainer = document.getElementById('image-container');
+    const hoveredImage = document.getElementById('hovered-image');
+
+    suggestions.addEventListener('mouseover', (e) => {
+        if (e.target.tagName === 'LI') {
+            const cardName = e.target.textContent;
+            const card = cards.find(c => c.name === cardName);
+            if (card && card.image) {
+                hoveredImage.src = card.image;
+                hoveredImage.style.display = 'block';
+            }
+        }
+    });
+
+    suggestions.addEventListener('mouseout', () => {
+        if (!cardInput.disabled) {
+            hoveredImage.style.display = 'none';
+        }
+    });
 }
-
-function hashString(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash |= 0;
-    }
-    return hash;
-}
-
-const colorMap = {
-    amber: '#f3b500',
-    amethyst: '#813679',
-    emerald: '#278a30',
-    ruby: '#d30931',
-    sapphire: '#028ac6',
-    steel: '#9facb5'
-};
-
-const rarityImages = {
-    common: 'img/common.png',
-    uncommon: 'img/uncommon.png',
-    rare: 'img/rare.png',
-    super_rare: 'img/super_rare.png',
-    legendary: 'img/legendary.png'
-};
-
-// Debounce function to limit the rate of function execution
-function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-}
-
-cardInput.addEventListener('input', debounce(() => {
-    const query = cardInput.value.toLowerCase();
-    suggestions.innerHTML = '';
-    if (query) {
-        const matches = cards.filter(card => card.name.toLowerCase().includes(query) && !guessedCards.has(card.name));
-        matches.forEach(card => {
-            const li = document.createElement('li');
-            li.textContent = card.name;
-            li.style.backgroundColor = colorMap[card.color.toLowerCase()] || 'transparent';
-            li.addEventListener('click', () => guessCard(card));
-            li.addEventListener('mouseover', () => showImage(card.image));
-            li.addEventListener('mouseout', hideImage);
-            suggestions.appendChild(li);
-        });
-    }
-}, 300));
 
 function guessCard(card) {
-    if (guessedCards.has(card.name)) return;
     guessedCards.add(card.name);
-    suggestions.innerHTML = '';
-    cardInput.value = '';
+    const feedback = document.getElementById('game-board');
+
     const row = document.createElement('div');
     row.classList.add('row');
 
     row.appendChild(createCell(card.name.replace(' - ', '\n'), targetCard.name.replace(' - ', '\n')));
-    row.appendChild(createNumberCell(card.number, targetCard.number)); // <-- THIS WAS MISSING!
+    row.appendChild(createNumberCell(card.number, targetCard.number));
     row.appendChild(createCell(card.set, targetCard.set));
     row.appendChild(createCell(card.cost, targetCard.cost));
-    row.appendChild(createCell(card.inkable, targetCard.inkable));
+    row.appendChild(createCell(String(card.inkable), String(targetCard.inkable)));
     row.appendChild(createCell(card.color, targetCard.color));
     row.appendChild(createTypeCell(card.type, targetCard.type));
     row.appendChild(createCell(card.rarity, targetCard.rarity));
 
-    feedback.appendChild(row);
-    if (card.name === targetCard.name) endGame();
-}
+    feedback.insertBefore(row, feedback.firstChild);
 
-function createNumberCell(value, targetValue) {
-    const cell = document.createElement('div');
-    cell.classList.add('cell', 'number-cell');
-    cell.textContent = value;
-    if (value === targetValue) {
-        cell.classList.add('correct');
-        cell.style.backgroundColor = '#4caf50'; // Green for correct guess
-    } else {
-        cell.style.backgroundColor = '#f44336'; // Red for incorrect guess
-
-        // Add arrow emoji
-        if (value > targetValue) {
-            cell.textContent += ' 🔽';
-        } else {
-            cell.textContent += ' 🔼';
-        }
+    if (card.name === targetCard.name) {
+        endGame();
     }
-    return cell;
 }
 
-function createCell(value, targetValue = null) {
+function createCell(guessValue, targetValue) {
     const cell = document.createElement('div');
     cell.classList.add('cell');
-    cell.textContent = value;
-    if (targetValue !== null) {
-        cell.classList.add(value === targetValue ? 'correct' : 'incorrect');
-    }
-    return cell;
-}
-
-function createTypeCell(guessedType, targetType) {
-    const cell = document.createElement('div');
-    cell.classList.add('cell');
-    cell.textContent = guessedType;
-    if (guessedType === targetType) {
+    cell.textContent = guessValue;
+    if (guessValue === targetValue) {
         cell.classList.add('correct');
-    } else if ((guessedType === "Action - Song" && targetType === "Action") ||
-        (guessedType === "Action" && targetType === "Action - Song") ||
-        (guessedType === "Action - Song" && targetType === "Song") ||
-        (guessedType === "Song" && targetType === "Action - Song")) {
-        cell.classList.add('close');
     } else {
         cell.classList.add('incorrect');
     }
     return cell;
 }
 
-// Add this to the very top of your endGame() function inside script.js
+function createNumberCell(guessValue, targetValue) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+
+    if (guessValue === targetValue) {
+        cell.textContent = guessValue;
+        cell.classList.add('correct');
+    } else {
+        const arrow = guessValue < targetValue ? ' ⬆️' : ' ⬇️';
+        cell.textContent = guessValue + arrow;
+        if (Math.abs(guessValue - targetValue) <= 10) {
+            cell.classList.add('close');
+        } else {
+            cell.classList.add('incorrect');
+        }
+    }
+    return cell;
+}
+
+function createTypeCell(guessValue, targetValue) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+    cell.textContent = guessValue;
+
+    if (guessValue === targetValue) {
+        cell.classList.add('correct');
+    } else {
+        const guessWords = guessValue.split(/[\s-]+/);
+        const targetWords = targetValue.split(/[\s-]+/);
+        const hasOverlap = guessWords.some(word => targetWords.includes(word));
+
+        if (hasOverlap) {
+            cell.classList.add('close');
+        } else {
+            cell.classList.add('incorrect');
+        }
+    }
+    return cell;
+}
+
+function youWin() {
+    const img = document.getElementById('hovered-image');
+    img.src = targetCard.image;
+    img.style.display = 'block';
+    img.style.borderColor = 'var(--correct)';
+    img.style.boxShadow = '0 0 25px var(--correct)';
+    img.style.borderStyle = 'solid';
+    img.style.borderWidth = '4px';
+}
+
 function endGame() {
-    // 1. Lock the board and show the winning card
     youWin();
+    const cardInput = document.getElementById('card-input');
     cardInput.disabled = true;
     cardInput.placeholder = "Game Over!";
 
-    // 2. Build the visual Emoji Feedback HTML
     const emojiFeedbackContainer = document.getElementById('emoji-feedback-container');
     emojiFeedbackContainer.innerHTML = '';
 
@@ -197,16 +474,20 @@ function endGame() {
     title.classList.add('emoji-row');
     title.innerHTML = '🅻 🅾 🆁 🅴 🅳 🅻 🅴<br>';
 
-    const today = new Date();
-    const dateString = today.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+    // Fix clipboard output to use strictly CST so everyone sees the same date
+    const options = { timeZone: 'America/Chicago', day: 'numeric', month: 'long', year: 'numeric' };
+    const dateStringCST = new Intl.DateTimeFormat('en-US', options).format(new Date());
 
     const date = document.createElement('div');
     date.classList.add('emoji-row');
-    date.textContent = dateString;
+    date.textContent = dateStringCST;
     title.appendChild(date);
     emojiFeedbackContainer.appendChild(title);
 
-    feedback.childNodes.forEach((row, index) => {
+    const feedback = document.getElementById('game-board');
+    const rowsArray = Array.from(feedback.childNodes).reverse();
+
+    rowsArray.forEach((row, index) => {
         const emojiRow = document.createElement('div');
         emojiRow.classList.add('emoji-row');
         const emojiNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
@@ -220,7 +501,7 @@ function endGame() {
                 if (cell.classList.contains('correct')) {
                     emojiCell.textContent = '🟩';
                 } else if (cell.classList.contains('close')) {
-                    emojiCell.textContent = '🟥';
+                    emojiCell.textContent = '🟨';
                 } else {
                     emojiCell.textContent = '🟥';
                 }
@@ -236,118 +517,39 @@ function endGame() {
     url.textContent = 'loredle.villainy.ink';
     emojiFeedbackContainer.appendChild(url);
 
-    // 3. GENERATE THE SHARE TEXT STRING IMMEDIATELY
-    let emojiText = '🅻🅾🆁🅴🅳🅻🅴\n' + dateString + '\n';
+    let emojiText = '🅻🅾🆁🅴🅳🅻🅴\n' + dateStringCST + '\n';
     emojiFeedbackContainer.childNodes.forEach((row, rowIndex) => {
         if (rowIndex > 0) {
             emojiText += row.innerText.trim().replace(/\s+/g, ' ') + '\n';
         }
     });
 
-    // 4. SUBMIT SCORE TO LEADERBOARD & DISCORD
-    const username = localStorage.getItem('loredle_username');
-    if (username) {
-        fetch('/api/submit-score', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: username,
-                tries: guessedCards.size,
-                shareText: emojiText // The text is now ready and passed correctly!
-            })
+    fetch('/api/submit-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            username: currentUser || 'Anonymous User',
+            tries: guessedCards.size,
+            shareText: emojiText
         })
-            .then(res => res.json())
-            .then(data => console.log('Score submitted:', data))
-            .catch(err => console.error('Error submitting score:', err));
-    }
+    }).catch(err => console.error('Error submitting score:', err));
 
-    // 5. HOOK UP THE COPY BUTTON
     const copyButton = document.getElementById('copy-emoji-button');
-    copyButton.replaceWith(copyButton.cloneNode(true)); // Clears old event listeners
+    copyButton.replaceWith(copyButton.cloneNode(true));
     document.getElementById('copy-emoji-button').addEventListener('click', () => {
         navigator.clipboard.writeText(emojiText)
             .then(() => showToast('Copied to clipboard!'))
-            .catch(err => showToast('Failed to copy to clipboard.'));
+            .catch(err => showToast('Failed to copy.'));
     });
 
-    // Reveal the feedback container
     document.getElementById('emoji-feedback').style.display = 'block';
 }
 
 function showToast(message) {
-    const toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.className = "toast show";
-    setTimeout(() => {
-        hideToast();
-    }, 3000);
-}
-
-function hideToast() {
-    const toast = document.getElementById("toast");
-    toast.className = "toast hide";
-}
-
-function showImage(imageUrl) {
-    hoveredImage.src = imageUrl;
-    hoveredImage.style.display = 'block';
-}
-
-function hideImage() {
-    // Prevent hiding the card if the game is won
-    if (cardInput.disabled && cardInput.placeholder === "Game Over!") return;
-    hoveredImage.style.display = 'none';
-}
-
-fetchCards();
-
-
-function youWin() {
-    const img = document.getElementById('hovered-image');
-    img.src = targetCard.image;
-    img.style.display = 'block';
-
-    // Highlight the card box in glowing green
-    img.style.borderColor = 'var(--correct)';
-    img.style.boxShadow = '0 0 25px var(--correct)';
-}
-
-function initialBurst() {
-    for (let i = 0; i < 500; i++) {
-        createConfettiPiece();
+    const toast = document.getElementById('toast');
+    if (toast) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
     }
 }
-
-function clickBurst() {
-    for (let i = 0; i < 50; i++) {
-        createConfettiPiece();
-    }
-}
-
-function generateConfettiBasedOnMouseSpeed(event) {
-    const currentTime = Date.now();
-    const timeDiff = currentTime - lastMoveTime;
-    lastMoveTime = currentTime;
-
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-    const distance = Math.sqrt((mouseX - lastMouseX) ** 2 + (mouseY - lastMouseY) ** 2);
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
-
-    const speed = distance / timeDiff;
-
-    const newBurstRate = Math.min(Math.max(Math.floor(speed * 10), 1), 100);
-
-    if (newBurstRate > confettiBurstRate) {
-        for (let i = 0; i < newBurstRate - confettiBurstRate; i++) {
-            createConfettiPiece();
-        }
-    }
-
-    confettiBurstRate = newBurstRate;
-}
-
-initialBurst();
-document.addEventListener('click', clickBurst);
-

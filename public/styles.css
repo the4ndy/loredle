@@ -21,15 +21,108 @@ html {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
     align-items: center;
     min-height: 100vh;
-    padding-top: 20px;
+    padding-top: 80px;
     padding-bottom: 80px;
-    /* overflow-x: hidden; REMOVED: This was causing the right-side clipping! */
 }
 
-/* Menu Hub Layout */
+/* --- TOP NAVBAR --- */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    z-index: 1000;
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    letter-spacing: 2px;
+}
+
+.nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.avatar-circle:hover {
+    border-color: #fff;
+}
+
+.mini-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #000;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+}
+
+.nav-dropdown {
+    position: absolute;
+    top: 65px;
+    right: 20px;
+    background-color: var(--bg-card);
+    border: 1px solid #444;
+    border-radius: 8px;
+    display: none;
+    flex-direction: column;
+    min-width: 150px;
+    z-index: 1001;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #333;
+}
+
+/* --- HUB & SETTINGS CONTAINERS --- */
 .menu-container {
     background-color: var(--bg-surface);
     padding: 40px;
@@ -42,6 +135,7 @@ html {
 
 h1 {
     font-size: 3rem;
+    margin-top: 0;
     margin-bottom: 10px;
     letter-spacing: 2px;
     color: var(--primary-color);
@@ -68,13 +162,178 @@ h1 {
     line-height: 1.5;
 }
 
-.auth-status {
-    font-size: 0.85rem;
-    color: var(--secondary-color);
-    margin-bottom: 20px;
+/* --- SETTINGS SPECIFICS --- */
+.settings-section {
+    text-align: left;
 }
 
-/* Material Buttons */
+.settings-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+}
+
+.avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.avatar-option {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    cursor: pointer;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid #444;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: #000;
+    background-color: var(--primary-color);
+    transition: transform 0.2s;
+}
+
+.avatar-option:hover {
+    transform: scale(1.05);
+}
+
+.avatar-option.selected {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 10px var(--secondary-color);
+}
+
+/* --- GAME BOARD GRID --- */
+#game-board {
+    width: max-content;
+    max-width: 95vw;
+    margin: 0 auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#game-board::-webkit-scrollbar {
+    display: none;
+}
+
+#feedback {
+    width: max-content;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+}
+
+.header,
+.row {
+    display: grid;
+    grid-template-columns: 155px repeat(7, 85px);
+    gap: 6px;
+    margin-bottom: 6px;
+    width: max-content;
+}
+
+.cell {
+    box-sizing: border-box;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 2px solid #2a2a2a;
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 85px;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.2;
+}
+
+.header .cell {
+    min-height: 40px;
+    background-color: transparent !important;
+    border: none;
+    border-bottom: 2px solid var(--primary-color);
+    border-radius: 0;
+    align-items: flex-end;
+    padding-bottom: 8px;
+}
+
+/* Gameplay Cell Highlighting */
+.correct {
+    background-color: var(--correct) !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+
+.incorrect {
+    background-color: var(--incorrect) !important;
+    color: #000 !important;
+}
+
+.close {
+    background-color: var(--close) !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+
+/* Suggestions Box Overrides */
+#suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-card);
+    border: 1px solid #444;
+    border-radius: 0 0 8px 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+#suggestions li {
+    padding: 12px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+    color: var(--text-primary);
+    text-align: left;
+    transition: background-color 0.1s;
+}
+
+/* RESTORED: Dropdown Hover Highlight */
+#suggestions li:hover {
+    background-color: var(--primary-color) !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+
+/* Material Buttons & Inputs */
+.input-field {
+    padding: 12px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
 .button-group {
     display: flex;
     flex-direction: column;
@@ -82,7 +341,7 @@ h1 {
 }
 
 .btn {
-    padding: 14px;
+    padding: 12px;
     font-size: 1rem;
     font-weight: 600;
     border: none;
@@ -115,196 +374,42 @@ h1 {
 .minimal-btn {
     background: transparent;
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
 }
 
 .minimal-btn:hover {
-    color: var(--text-primary);
-}
-
-
-/* Forms & Tables */
-.input-field {
-    padding: 12px;
-    border: 1px solid #444;
-    border-radius: 8px;
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-    font-size: 1rem;
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 10px;
-}
-
-.input-field:focus {
-    outline: none;
-    border-color: var(--primary-color);
+    color: #fff;
+    border-color: #fff;
 }
 
 .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
 }
 
 .leaderboard-table th,
 .leaderboard-table td {
-    padding: 12px;
+    padding: 10px;
     border-bottom: 1px solid #444;
     text-align: center;
+    font-size: 0.9rem;
 }
 
 .leaderboard-table th {
     color: var(--primary-color);
-    font-weight: 600;
 }
 
-/* Suggestions Box Overrides */
-#suggestions li {
-    padding: 12px;
-    border-bottom: 1px solid #333;
-    cursor: pointer;
-    color: var(--text-primary);
-    list-style-type: none;
-    text-align: left;
-}
-
-#suggestions li:hover {
-    background-color: #333 !important;
-}
-
-/* 1. The Main Scrolling Container */
-#game-board {
-    width: max-content;
-    max-width: 95vw;
-    margin: 0 auto;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-#game-board::-webkit-scrollbar {
-    display: none;
-}
-
-/* 2. The Feedback Wrapper */
-#feedback {
-    width: max-content;
-    display: flex;
-    flex-direction: column;
-}
-
-/* 3. Lock BOTH Header and Rows to the Exact Same Grid */
-.header,
-.row {
-    display: grid;
-    grid-template-columns: 155px repeat(7, 85px);
-    gap: 6px;
-    margin-bottom: 6px;
-    width: max-content;
-}
-
-/* 4. The Squares */
-.cell {
-    box-sizing: border-box;
-    /* THE MAGIC FIX: Forces borders/padding to face inward */
-
-    background-color: var(--bg-card);
-    color: var(--text-primary);
-    border: 2px solid #2a2a2a;
-    border-radius: 4px;
-    padding: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-
-    min-height: 85px;
-    white-space: normal;
-    word-wrap: break-word;
-    line-height: 1.2;
-}
-
-/* 5. The Titles */
-.header .cell {
-    min-height: 40px;
-    background-color: transparent !important;
-    border: none;
-    border-bottom: 2px solid var(--primary-color);
-    border-radius: 0;
-    align-items: flex-end;
-    padding-bottom: 8px;
-}
-
-/* --- Mobile Responsiveness --- */
-/* --- Mobile Responsiveness --- */
-@media (max-width: 768px) {
-    #game-board {
-        align-items: center;
-        /* Re-centers the board since it now fits the screen */
-        padding-left: 2px;
-        padding-right: 2px;
-    }
-
-    .header,
-    .row {
-        /* Math: 85px + (7 * 40px) + (7 gaps * 2px) = 379px Total Width */
-        /* This guarantees it fits naturally on 99% of modern smartphones! */
-        grid-template-columns: 85px repeat(7, 40px);
-        gap: 2px;
-    }
-
-    .cell {
-        min-height: 50px;
-        /* Reduced height to keep them looking like squares */
-        font-size: 0.55rem;
-        /* Smaller font to fit inside 40px boxes */
-        padding: 1px;
-        /* Removes internal padding to maximize text space */
-        border-width: 1px;
-
-        /* Forces longer words (like "Uncommon") to cleanly break to the next line */
-        word-break: break-word;
-        line-height: 1.1;
-    }
-
-    .header .cell {
-        min-height: 30px;
-        font-size: 0.55rem;
-        padding-bottom: 4px;
-    }
-}
-
-
-/* Gameplay Cell Highlighting */
-.correct {
-    background-color: var(--correct) !important;
-    color: #000 !important;
-    font-weight: bold;
-}
-
-.incorrect {
-    background-color: var(--incorrect) !important;
-    color: #000 !important;
-}
-
-.close {
-    background-color: var(--close) !important;
-    color: #000 !important;
-    font-weight: bold;
-}
-
-/* Share Section Styling */
+/* Share Styling */
 .emoji-row {
     letter-spacing: 3px;
     font-size: 1.1rem;
     margin: 4px 0;
 }
 
-/* Toast Notification (Hidden by default) */
 .toast {
     visibility: hidden;
     opacity: 0;
@@ -324,4 +429,34 @@ h1 {
 .toast.show {
     visibility: visible;
     opacity: 1;
+}
+
+/* Mobile Query */
+@media (max-width: 768px) {
+    #game-board {
+        align-items: center;
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+
+    .header,
+    .row {
+        grid-template-columns: 85px repeat(7, 40px);
+        gap: 2px;
+    }
+
+    .cell {
+        min-height: 50px;
+        font-size: 0.55rem;
+        padding: 1px;
+        border-width: 1px;
+        word-break: break-word;
+        line-height: 1.1;
+    }
+
+    .header .cell {
+        min-height: 30px;
+        font-size: 0.55rem;
+        padding-bottom: 4px;
+    }
 }

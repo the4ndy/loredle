@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loredle - Settings</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
+        <div id="nav-auth-container" class="nav-auth"></div>
+    </nav>
+
+    <div id="nav-dropdown" class="nav-dropdown">
+        <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
+        <div class="dropdown-item" onclick="logOut()">Log Out</div>
+    </div>
+
+    <div class="menu-container" id="settings-container" style="max-width: 600px; width: 95%;">
+        <h1
+            style="font-size: 2rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-bottom: 30px;">
+            User Settings</h1>
+
+        <div class="settings-section">
+            <h3>Choose Avatar</h3>
+            <div class="avatar-grid" id="avatar-grid">
+            </div>
+        </div>
+
+        <div class="settings-section" style="margin-top: 40px;">
+            <h3>Change Password</h3>
+            <input type="password" id="current-password" class="input-field" placeholder="Current Password">
+            <input type="password" id="new-password" class="input-field" placeholder="New Password">
+            <button onclick="submitPasswordChange()" class="btn primary-btn" style="width: 100%;">Update
+                Password</button>
+        </div>
+
+        <div class="settings-section" style="margin-top: 40px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0;">Your Play History</h3>
+                <button onclick="toggleHistorySort()" class="btn minimal-btn">Sort: <span id="sort-label">Newest</span>
+                    ↕</button>
+            </div>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Tries</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr>
+                        <td colspan="2" style="color: var(--text-secondary);">Loading history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Message</div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

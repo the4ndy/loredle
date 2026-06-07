@@ -4,49 +4,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loredle - Home</title>
+    <title>Loredle - Hub</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <div class="menu-container">
+    <nav class="navbar">
+        <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
+        <div id="nav-auth-container" class="nav-auth"></div>
+    </nav>
+
+    <div id="nav-dropdown" class="nav-dropdown">
+        <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
+        <div class="dropdown-item" onclick="logOut()">Log Out</div>
+    </div>
+
+    <div class="menu-container" id="hub-container">
         <h1>Loredle</h1>
 
         <div class="rules-card">
             <h2>How to Play</h2>
-            <p>🔮 Guess a Disney Lorcana card in as few tries as possible.</p>
-            <p>🟩 Correct | 🟨 Close | 🟥 Wrong</p>
-            <p>🔽 Go Lower | 🔼 Go Higher (For stats like Cost/Number)</p>
+            <p>Guess the daily Lorcana card! Type a card name to search. After each guess, the tiles will change color
+                to show how close you are to the actual card's stats.</p>
+            <p>🟩 Green = Exact Match</p>
+            <p>🟨 Yellow = Partial Match (Type or Close Number)</p>
+            <p>🟥 Red = No Match</p>
         </div>
 
-        <div class="auth-status" id="auth-status-text">
-            <!-- Dynamically populated via JS: "Playing as Guest" or "Logged in as [User]" -->
+        <div id="auth-section">
+            <h3 style="margin-bottom: 10px;">Login or Sign Up</h3>
+            <input type="text" id="auth-username" class="input-field" placeholder="Username">
+            <input type="password" id="auth-password" class="input-field" placeholder="Password">
+            <div class="button-group">
+                <button onclick="loginUser()" class="btn primary-btn">Login</button>
+                <button onclick="registerUser()" class="btn secondary-btn">Register</button>
+            </div>
+            <p id="auth-message" class="auth-status"></p>
         </div>
 
-        <div class="button-group">
-            <button onclick="location.href='/game.html'" class="btn primary-btn">Play Today's Loredle</button>
-            <button onclick="location.href='/leaderboard.html'" class="btn secondary-btn">View Leaderboard</button>
-            <button id="auth-btn" class="btn minimal-btn">Create Account / Login</button>
+        <div id="play-section" style="display: none; margin-top: 20px;">
+            <h3 id="welcome-message" style="color: var(--secondary-color);"></h3>
+            <button onclick="window.location.href='game.html'" class="btn primary-btn"
+                style="width: 100%; font-size: 1.2rem; padding: 20px;">START GAME</button>
         </div>
+
+        <h3 style="margin-top: 40px; color: var(--primary-color);">Daily Leaderboard</h3>
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Tries</th>
+                </tr>
+            </thead>
+            <tbody id="global-leaderboard-body">
+                <tr>
+                    <td colspan="3" style="color: var(--text-secondary);">Loading scores...</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
-    <script>
-        const username = localStorage.getItem('loredle_username');
-        const authStatus = document.getElementById('auth-status-text');
-        const authBtn = document.getElementById('auth-btn');
+    <div id="toast" class="toast">Message</div>
 
-        if (username) {
-            authStatus.textContent = `Logged in as: ${username}`;
-            authBtn.textContent = "Log Out";
-            authBtn.onclick = () => {
-                localStorage.clear();
-                window.location.reload();
-            };
-        } else {
-            authStatus.textContent = "Playing anonymously (Scores won't save to Leaderboard)";
-            authBtn.onclick = () => location.href = '/auth.html';
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 
 </html>
