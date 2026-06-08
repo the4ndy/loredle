@@ -291,7 +291,6 @@ function renderHistoryTable() {
 // --- GAME PAGE LOGIC (game.html) ---
 
 function getDailyTargetCard() {
-    // Force the hash to strictly use CST/CDT time
     const options = { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' };
     const todayCST = new Intl.DateTimeFormat('en-CA', options).format(new Date());
 
@@ -320,7 +319,6 @@ async function fetchCards() {
             image: card.image_uris?.digital?.normal || ''
         }));
 
-        // CRITICAL FIX: Sort the array alphabetically to guarantee the order never changes
         cards.sort((a, b) => a.name.localeCompare(b.name));
 
         targetCard = getDailyTargetCard();
@@ -342,7 +340,8 @@ function setupInputListener() {
             const filteredCards = cards.filter(card =>
                 card.name.toLowerCase().includes(value) && !guessedCards.has(card.name)
             );
-            filteredCards.slice(0, 5).forEach(card => {
+
+            filteredCards.forEach(card => {
                 const li = document.createElement('li');
                 li.textContent = card.name;
                 li.onclick = () => {
@@ -392,7 +391,8 @@ function guessCard(card) {
     row.appendChild(createTypeCell(card.type, targetCard.type));
     row.appendChild(createCell(card.rarity, targetCard.rarity));
 
-    feedback.insertBefore(row, feedback.firstChild);
+    // THE FIX: Appends the guess to the bottom of the list instead of prepending to the top!
+    feedback.appendChild(row);
 
     if (card.name === targetCard.name) {
         endGame();
@@ -474,7 +474,6 @@ function endGame() {
     title.classList.add('emoji-row');
     title.innerHTML = '🅻 🅾 🆁 🅴 🅳 🅻 🅴<br>';
 
-    // Fix clipboard output to use strictly CST so everyone sees the same date
     const options = { timeZone: 'America/Chicago', day: 'numeric', month: 'long', year: 'numeric' };
     const dateStringCST = new Intl.DateTimeFormat('en-US', options).format(new Date());
 
@@ -485,7 +484,8 @@ function endGame() {
     emojiFeedbackContainer.appendChild(title);
 
     const feedback = document.getElementById('game-board');
-    const rowsArray = Array.from(feedback.childNodes).reverse();
+    // THE FIX: Removed the .reverse() command, so the array is mapped in natural chronological order!
+    const rowsArray = Array.from(feedback.childNodes);
 
     rowsArray.forEach((row, index) => {
         const emojiRow = document.createElement('div');
