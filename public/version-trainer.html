@@ -6,10 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arcade: Version Trainer</title>
     <link rel="stylesheet" href="styles.css">
+
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+
+    <style>
+        /* Customizing the external emoji picker to match our dark theme */
+        emoji-picker {
+            --background: var(--bg-main);
+            --border-color: #444;
+            --button-hover-background: #444;
+            --button-active-background: #555;
+            --indicator-color: var(--secondary-color);
+            --input-border-color: #555;
+            --input-font-color: white;
+            --category-font-color: var(--secondary-color);
+            width: 100%;
+            max-width: 350px;
+            height: 300px;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- TOP NAVIGATION BAR (Themed specifically for VT) -->
     <nav class="navbar">
         <div class="nav-brand" style="color: var(--secondary-color);">Version Trainer</div>
         <div class="nav-auth">
@@ -17,7 +37,6 @@
         </div>
     </nav>
 
-    <!-- HUB VIEW -->
     <div class="menu-container" id="vt-hub" style="max-width: 600px; margin-top: 20px;">
         <h1 style="color: var(--secondary-color);">Version Trainer</h1>
         <p style="color: var(--text-secondary); margin-bottom: 30px;">Get the Version, guess the Card. How many can you
@@ -31,7 +50,7 @@
             <thead>
                 <tr>
                     <th>Rank</th>
-                    <th style="color: var(--secondary-color);">Initials</th>
+                    <th style="color: var(--secondary-color);">Player</th>
                     <th style="color: var(--secondary-color);">Streak</th>
                 </tr>
             </thead>
@@ -43,7 +62,6 @@
         </table>
     </div>
 
-    <!-- IN-GAME VIEW -->
     <div id="vt-game"
         style="display: none; flex-direction: column; align-items: center; width: 100%; margin-top: 20px;">
         <div style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 20px; font-weight: bold;">
@@ -69,36 +87,44 @@
         </div>
     </div>
 
-    <!-- END GAME / SUBMISSION VIEW -->
-    <div class="menu-container" id="vt-end" style="display: none; max-width: 500px; margin-top: 20px;">
+    <div class="menu-container" id="vt-end"
+        style="display: none; flex-direction: column; align-items: center; max-width: 500px; margin-top: 20px;">
         <h2 id="end-title" style="font-size: 2.5rem; color: var(--error-color); margin-top: 0;">Game Over!</h2>
         <div style="font-size: 1.5rem; margin-bottom: 30px;">Your streak ended at <strong id="final-right"
                 style="color: var(--success-color);">0</strong>.</div>
 
         <div id="arcade-submission"
-            style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <h3 style="margin-top: 0; color: var(--secondary-color);">Enter Initials</h3>
-            <input type="text" id="arcade-initials" class="input-field" maxlength="3" placeholder="AAA"
-                style="font-size: 2rem; width: 120px; text-align: center; text-transform: uppercase; letter-spacing: 5px; margin: 0 auto 15px auto; display: block;"
-                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')">
+            style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; margin-bottom: 30px; width: 100%; box-sizing: border-box;">
+            <h3 style="margin-top: 0; color: var(--secondary-color);">Choose 3 Emojis</h3>
+
+            <input type="text" id="arcade-emojis" class="input-field" readonly placeholder=""
+                style="font-size: 2rem; width: 170px; height: 60px; text-align: center; letter-spacing: 5px; margin: 0 auto 10px auto; display: block; cursor: default; background: var(--bg-main);">
+
+            <button class="btn minimal-btn" style="margin-bottom: 15px; width: 120px;" onclick="backspaceEmoji()">⌫
+                Backspace</button>
+
+            <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 20px;">
+                <emoji-picker class="dark"></emoji-picker>
+            </div>
+
             <button class="btn secondary-btn" id="submit-score-btn" style="width: 100%;"
                 onclick="submitArcadeScore()">Save Score</button>
             <p id="arcade-msg" style="color: var(--success-color); display: none; margin-top: 15px; font-weight: bold;">
                 Score Saved to Global DB!</p>
         </div>
 
-        <div style="display: flex; gap: 15px;">
+        <div style="display: flex; gap: 15px; width: 100%;">
             <button class="btn secondary-btn" style="flex: 1;" onclick="resetVTGame()">Play Again</button>
             <button class="btn minimal-btn" style="flex: 1;" onclick="window.location.reload()">Back to Hub</button>
         </div>
     </div>
 
-    <!-- SILOED VT LOGIC -->
     <script>
         let uniqueBaseNames = [];
         let questionPool = [];
         let currentRound = 0;
         let score = 0;
+        let selectedEmojis = [];
 
         const vtHub = document.getElementById('vt-hub');
         const vtGame = document.getElementById('vt-game');
@@ -125,6 +151,29 @@
             }
         };
 
+        // --- NEW EMOJI PICKER EVENT LISTENER ---
+        document.querySelector('emoji-picker').addEventListener('emoji-click', event => {
+            addEmoji(event.detail.unicode);
+        });
+
+        function addEmoji(emoji) {
+            if (selectedEmojis.length < 3) {
+                selectedEmojis.push(emoji);
+                updateEmojiDisplay();
+            }
+        }
+
+        function backspaceEmoji() {
+            if (selectedEmojis.length > 0) {
+                selectedEmojis.pop();
+                updateEmojiDisplay();
+            }
+        }
+
+        function updateEmojiDisplay() {
+            document.getElementById('arcade-emojis').value = selectedEmojis.join('');
+        }
+
         async function fetchArcadeLeaderboard() {
             try {
                 const res = await fetch('/api/arcade-leaderboard');
@@ -141,7 +190,7 @@
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>#${index + 1}</td>
-                        <td style="letter-spacing: 2px; font-weight: bold; color: var(--secondary-color);">${score.initials}</td>
+                        <td style="letter-spacing: 2px; font-size: 1.5rem;">${score.emojis}</td>
                         <td style="font-weight: bold;">${score.score}</td>
                     `;
                     tbody.appendChild(tr);
@@ -236,7 +285,7 @@
 
         function endVTGame(isWin) {
             vtGame.style.display = 'none';
-            vtEnd.style.display = 'block';
+            vtEnd.style.display = 'flex'; // Triggers the flex layout (which we safely told to be 'column' in the HTML now!)
 
             const title = document.getElementById('end-title');
             if (isWin) {
@@ -249,18 +298,21 @@
         }
 
         async function submitArcadeScore() {
-            const initials = document.getElementById('arcade-initials').value;
             const btn = document.getElementById('submit-score-btn');
             const msg = document.getElementById('arcade-msg');
 
-            if (initials.length < 1) return;
+            if (selectedEmojis.length !== 3) {
+                alert("Please select exactly 3 emojis!");
+                return;
+            }
+
             btn.disabled = true;
 
             try {
                 const res = await fetch('/api/arcade-score', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ initials: initials, score: score })
+                    body: JSON.stringify({ emojis: selectedEmojis.join(''), score: score })
                 });
 
                 if (res.ok) {
@@ -273,10 +325,14 @@
         }
 
         function resetVTGame() {
-            document.getElementById('arcade-initials').value = "";
+            // Reset the emoji picker array for the next game
+            selectedEmojis = [];
+            updateEmojiDisplay();
+
             document.getElementById('submit-score-btn').style.display = 'block';
             document.getElementById('submit-score-btn').disabled = false;
             document.getElementById('arcade-msg').style.display = 'none';
+
             startVTGame();
         }
     </script>

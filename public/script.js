@@ -61,7 +61,6 @@ function renderNavbar() {
 
     authContainer.innerHTML = '';
 
-    // Arcade Link (Visible to everyone)
     const vtLink = document.createElement('a');
     vtLink.href = 'version-trainer.html';
     vtLink.className = 'auth-link';
@@ -83,7 +82,6 @@ function renderNavbar() {
 
         authContainer.appendChild(avatarDiv);
     } else {
-        // Combined Login/Register button
         authContainer.innerHTML += `
             <button class="btn primary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openAuthModal()">Login / Register</button>
         `;
@@ -123,10 +121,9 @@ function closeAuthModal() {
 // --- HUB PAGE LOGIC (index.html) ---
 function setupHubPage() {
     fetchGlobalLeaderboard();
+    fetchArcadeLeaderboard();
 
     document.getElementById('play-section').style.display = 'block';
-
-    // Inject Today's Date
     document.getElementById('welcome-message').textContent = getFormattedDateCST();
 }
 
@@ -213,6 +210,32 @@ async function fetchGlobalLeaderboard() {
         });
     } catch (err) {
         console.error("Failed to load global leaderboard.");
+    }
+}
+
+async function fetchArcadeLeaderboard() {
+    try {
+        const res = await fetch('/api/arcade-leaderboard');
+        const scores = await res.json();
+        const tbody = document.getElementById('arcade-leaderboard-body');
+        tbody.innerHTML = '';
+
+        if (scores.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-secondary);">No scores yet! Be the first!</td></tr>';
+            return;
+        }
+
+        scores.forEach((score, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>#${index + 1}</td>
+                <td style="letter-spacing: 2px; font-size: 1.5rem;">${score.emojis}</td>
+                <td style="font-weight: bold;">${score.score}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error("Failed to load arcade leaderboard.");
     }
 }
 

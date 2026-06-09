@@ -29,9 +29,9 @@ const scoreSchema = new mongoose.Schema({
 });
 const Score = mongoose.model('Score', scoreSchema);
 
-// NEW: Arcade Score Schema (All-time high scores)
+// UPDATED: Arcade Score Schema (Uses emojis instead of initials)
 const arcadeScoreSchema = new mongoose.Schema({
-    initials: { type: String, required: true, uppercase: true, maxlength: 3 },
+    emojis: { type: String, required: true },
     score: { type: Number, required: true },
     date: { type: Date, default: Date.now }
 });
@@ -181,14 +181,14 @@ app.post('/api/submit-score', async (req, res) => {
     }
 });
 
-// --- NEW ARCADE ROUTES ---
+// --- ARCADE ROUTES ---
 
 // Submit Arcade Score
 app.post('/api/arcade-score', async (req, res) => {
     try {
-        const { initials, score } = req.body;
-        const newScore = new ArcadeScore({ initials, score });
-        await newScore.save(); // Saves every single score permanently
+        const { emojis, score } = req.body;
+        const newScore = new ArcadeScore({ emojis, score });
+        await newScore.save();
         res.status(201).json({ message: "Arcade score saved!" });
     } catch (err) {
         res.status(500).json({ error: "Failed to save arcade score." });
@@ -198,7 +198,6 @@ app.post('/api/arcade-score', async (req, res) => {
 // Get Top 25 Arcade Leaderboard
 app.get('/api/arcade-leaderboard', async (req, res) => {
     try {
-        // Sorts by Highest Score first, then Oldest Date if there's a tie
         const scores = await ArcadeScore.find().sort({ score: -1, date: 1 }).limit(25);
         res.status(200).json(scores);
     } catch (err) {
