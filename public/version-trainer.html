@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade: Version Trainer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- TOP NAVIGATION BAR (Themed specifically for VT) -->
+    <nav class="navbar">
+        <div class="nav-brand" style="color: var(--secondary-color);">Version Trainer</div>
+        <div class="nav-auth">
+            <a href="index.html" class="auth-link">← Back to Loredle</a>
+        </div>
+    </nav>
+
+    <!-- HUB VIEW -->
+    <div class="menu-container" id="vt-hub" style="max-width: 600px; margin-top: 20px;">
+        <h1 style="color: var(--secondary-color);">Version Trainer</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">Get the Version, guess the Card. How many can you
+            guess in a row?!</p>
+
+        <button class="btn secondary-btn" style="width: 100%; font-size: 1.2rem; padding: 15px;"
+            onclick="startVTGame()">PLAY NOW</button>
+
+        <h3 style="color: var(--secondary-color); margin-top: 40px; margin-bottom: 10px;">All-Time Top 25</h3>
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th style="color: var(--secondary-color);">Initials</th>
+                    <th style="color: var(--secondary-color);">Streak</th>
+                </tr>
+            </thead>
+            <tbody id="arcade-leaderboard-body">
+                <tr>
+                    <td colspan="3" style="color: var(--text-secondary);">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- IN-GAME VIEW -->
+    <div id="vt-game"
+        style="display: none; flex-direction: column; align-items: center; width: 100%; margin-top: 20px;">
+        <div style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 20px; font-weight: bold;">
+            Streak: <span id="score-right" style="color: var(--success-color);">0</span>
+        </div>
+
+        <div class="menu-container" style="max-width: 500px; padding: 40px;">
+            <div id="question-text"
+                style="font-size: 2rem; font-weight: bold; color: var(--secondary-color); margin-bottom: 30px; line-height: 1.4;">
+                "Loading version..."</div>
+
+            <div style="position: relative; margin-bottom: 20px;">
+                <input type="text" id="guess-input" class="input-field" placeholder="Type a Character or Location..."
+                    autocomplete="off" style="text-align: center;">
+                <ul id="suggestions" class="suggestions-list" style="display: none;"></ul>
+            </div>
+
+            <button id="submit-btn" class="btn secondary-btn" style="width: 100%;" onclick="handleGuess()">Submit
+                Guess</button>
+            <div id="correct-answer-display"
+                style="display: none; color: var(--error-color); font-weight: bold; margin-top: 20px; font-size: 1.2rem;">
+            </div>
+        </div>
+    </div>
+
+    <!-- END GAME / SUBMISSION VIEW -->
+    <div class="menu-container" id="vt-end" style="display: none; max-width: 500px; margin-top: 20px;">
+        <h2 id="end-title" style="font-size: 2.5rem; color: var(--error-color); margin-top: 0;">Game Over!</h2>
+        <div style="font-size: 1.5rem; margin-bottom: 30px;">Your streak ended at <strong id="final-right"
+                style="color: var(--success-color);">0</strong>.</div>
+
+        <div id="arcade-submission"
+            style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <h3 style="margin-top: 0; color: var(--secondary-color);">Enter Initials</h3>
+            <input type="text" id="arcade-initials" class="input-field" maxlength="3" placeholder="AAA"
+                style="font-size: 2rem; width: 120px; text-align: center; text-transform: uppercase; letter-spacing: 5px; margin: 0 auto 15px auto; display: block;"
+                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')">
+            <button class="btn secondary-btn" id="submit-score-btn" style="width: 100%;"
+                onclick="submitArcadeScore()">Save Score</button>
+            <p id="arcade-msg" style="color: var(--success-color); display: none; margin-top: 15px; font-weight: bold;">
+                Score Saved to Global DB!</p>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <button class="btn secondary-btn" style="flex: 1;" onclick="resetVTGame()">Play Again</button>
+            <button class="btn minimal-btn" style="flex: 1;" onclick="window.location.reload()">Back to Hub</button>
+        </div>
+    </div>
+
+    <!-- SILOED VT LOGIC -->
+    <script>
+        let uniqueBaseNames = [];
+        let questionPool = [];
+        let currentRound = 0;
+        let score = 0;
+
+        const vtHub = document.getElementById('vt-hub');
+        const vtGame = document.getElementById('vt-game');
+        const vtEnd = document.getElementById('vt-end');
+
+        const questionText = document.getElementById('question-text');
+        const guessInput = document.getElementById('guess-input');
+        const suggestions = document.getElementById('suggestions');
+        const correctAnswerDisplay = document.getElementById('correct-answer-display');
+        const submitBtn = document.getElementById('submit-btn');
+        const scoreRightDisplay = document.getElementById('score-right');
+
+        // Fetch DB Leaderboard & Lorcast API on load
+        window.onload = async () => {
+            fetchArcadeLeaderboard();
+            try {
+                let response = await fetch('https://api.lorcast.com/v0/cards/search?q=""');
+                const data = await response.json();
+                const validCards = data.results.filter(c => c.version && c.name);
+                uniqueBaseNames = [...new Set(validCards.map(c => c.name))].sort();
+                questionPool = validCards;
+            } catch (e) {
+                console.error("API error", e);
+            }
+        };
+
+        async function fetchArcadeLeaderboard() {
+            try {
+                const res = await fetch('/api/arcade-leaderboard');
+                const scores = await res.json();
+                const tbody = document.getElementById('arcade-leaderboard-body');
+                tbody.innerHTML = '';
+
+                if (scores.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-secondary);">No scores yet! Be the first!</td></tr>';
+                    return;
+                }
+
+                scores.forEach((score, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${index + 1}</td>
+                        <td style="letter-spacing: 2px; font-weight: bold; color: var(--secondary-color);">${score.initials}</td>
+                        <td style="font-weight: bold;">${score.score}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error("Failed to load arcade leaderboard.");
+            }
+        }
+
+        function startVTGame() {
+            if (questionPool.length === 0) return alert("Still loading cards, please wait 1 second...");
+            questionPool.sort(() => Math.random() - 0.5);
+            currentRound = 0;
+            score = 0;
+
+            vtHub.style.display = 'none';
+            vtEnd.style.display = 'none';
+            vtGame.style.display = 'flex';
+
+            updateStatsUI();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentRound >= questionPool.length) return endVTGame(true);
+
+            guessInput.value = "";
+            guessInput.disabled = false;
+            guessInput.classList.remove('input-correct', 'input-incorrect');
+
+            correctAnswerDisplay.style.display = 'none';
+            suggestions.style.display = "none";
+            submitBtn.disabled = false;
+
+            guessInput.focus();
+            questionText.textContent = `"${questionPool[currentRound].version}"`;
+        }
+
+        // Dropdown Auto-Complete
+        guessInput.addEventListener('input', function () {
+            const val = this.value.trim().toLowerCase();
+            suggestions.innerHTML = '';
+
+            if (!val) { suggestions.style.display = 'none'; return; }
+
+            const matches = uniqueBaseNames.filter(name => name.toLowerCase().includes(val));
+            if (matches.length > 0) {
+                suggestions.style.display = 'block';
+                matches.forEach(match => {
+                    const li = document.createElement('li');
+                    li.textContent = match;
+                    li.addEventListener('click', () => {
+                        guessInput.value = match;
+                        suggestions.style.display = 'none';
+                        guessInput.focus();
+                    });
+                    suggestions.appendChild(li);
+                });
+            } else {
+                suggestions.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', (e) => { if (e.target !== guessInput) suggestions.style.display = 'none'; });
+        guessInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !guessInput.disabled) { suggestions.style.display = 'none'; handleGuess(); } });
+
+        function handleGuess() {
+            const guess = guessInput.value.trim().toLowerCase();
+            const correctAnswer = questionPool[currentRound].name;
+
+            guessInput.disabled = true;
+            submitBtn.disabled = true;
+
+            if (guess === correctAnswer.toLowerCase()) {
+                guessInput.classList.add('input-correct');
+                score++;
+                updateStatsUI();
+                currentRound++;
+                setTimeout(loadQuestion, 1000);
+            } else {
+                guessInput.classList.add('input-incorrect');
+                correctAnswerDisplay.textContent = `Correct Answer: ${correctAnswer}`;
+                correctAnswerDisplay.style.display = 'block';
+                setTimeout(() => endVTGame(false), 1500);
+            }
+        }
+
+        function updateStatsUI() {
+            scoreRightDisplay.innerText = score;
+            document.getElementById('final-right').innerText = score;
+        }
+
+        function endVTGame(isWin) {
+            vtGame.style.display = 'none';
+            vtEnd.style.display = 'block';
+
+            const title = document.getElementById('end-title');
+            if (isWin) {
+                title.style.color = 'var(--success-color)';
+                title.textContent = "Flawless Victory!";
+            } else {
+                title.style.color = 'var(--error-color)';
+                title.textContent = "Game Over!";
+            }
+        }
+
+        async function submitArcadeScore() {
+            const initials = document.getElementById('arcade-initials').value;
+            const btn = document.getElementById('submit-score-btn');
+            const msg = document.getElementById('arcade-msg');
+
+            if (initials.length < 1) return;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/arcade-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initials: initials, score: score })
+                });
+
+                if (res.ok) {
+                    msg.style.display = 'block';
+                    btn.style.display = 'none';
+                }
+            } catch (e) {
+                btn.disabled = false;
+            }
+        }
+
+        function resetVTGame() {
+            document.getElementById('arcade-initials').value = "";
+            document.getElementById('submit-score-btn').style.display = 'block';
+            document.getElementById('submit-score-btn').disabled = false;
+            document.getElementById('arcade-msg').style.display = 'none';
+            startVTGame();
+        }
+    </script>
+</body>
+
+</html>

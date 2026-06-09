@@ -9,62 +9,75 @@
 </head>
 
 <body>
+    <!-- TOP NAVIGATION BAR -->
     <nav class="navbar">
         <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
         <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
+    <!-- AVATAR DROPDOWN -->
     <div id="nav-dropdown" class="nav-dropdown">
         <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
         <div class="dropdown-item" onclick="logOut()">Log Out</div>
     </div>
 
-    <div class="menu-container" id="hub-container">
+    <!-- MAIN HUB CONTAINER -->
+    <div class="menu-container" id="hub-container" style="max-width: 600px;">
         <h1>Loredle</h1>
 
-        <div class="rules-card">
-            <h2>How to Play</h2>
-            <p>Guess the daily Lorcana card! Type a card name to search. After each guess, the tiles will change color
-                to show how close you are to the actual card's stats.</p>
-            <p>🟩 Green = Exact Match</p>
-            <p>🟨 Yellow = Partial Match (Type or Close Number)</p>
-            <p>🟥 Red = No Match</p>
-        </div>
+        <div id="play-section" style="margin-top: 20px;">
+            <h3 id="welcome-message" style="color: var(--secondary-color); font-size: 1.3rem;"></h3>
 
-        <div id="auth-section">
-            <h3 style="margin-bottom: 10px;">Login or Sign Up</h3>
-            <input type="text" id="auth-username" class="input-field" placeholder="Username">
-            <input type="password" id="auth-password" class="input-field" placeholder="Password">
-            <div class="button-group">
-                <button onclick="loginUser()" class="btn primary-btn">Login</button>
-                <button onclick="registerUser()" class="btn secondary-btn">Register</button>
+            <!-- LOREDLE GAME CARD -->
+            <div class="rules-card">
+                <p>Guess the daily Disney Lorcana card! Wordle but for Disney Lorcana.</p>
+                <button onclick="window.location.href='game.html'" class="btn primary-btn"
+                    style="width: 100%; font-size: 1.2rem; padding: 15px; margin-top: 10px;">PLAY LOREDLE</button>
             </div>
-            <p id="auth-message" class="auth-status"></p>
         </div>
 
-        <div id="play-section" style="display: none; margin-top: 20px;">
-            <h3 id="welcome-message" style="color: var(--secondary-color);"></h3>
-            <button onclick="window.location.href='game.html'" class="btn primary-btn"
-                style="width: 100%; font-size: 1.2rem; padding: 20px;">START GAME</button>
+        <!-- LEADERBOARDS -->
+        <div style="display: flex; flex-direction: column; gap: 40px; margin-top: 40px;">
+            <div>
+                <h3 style="color: var(--primary-color); margin-bottom: 10px;">Loredle Daily Leaderboard</h3>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Tries</th>
+                        </tr>
+                    </thead>
+                    <tbody id="global-leaderboard-body">
+                        <tr>
+                            <td colspan="3" style="color: var(--text-secondary);">Loading scores...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <h3 style="margin-top: 40px; color: var(--primary-color);">Daily Leaderboard</h3>
-        <table class="leaderboard-table">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Player</th>
-                    <th>Tries</th>
-                </tr>
-            </thead>
-            <tbody id="global-leaderboard-body">
-                <tr>
-                    <td colspan="3" style="color: var(--text-secondary);">Loading scores...</td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 
+    <!-- AUTH MODAL (POP-OVER) -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header">
+                <h2 id="auth-modal-title">Account Access</h2>
+                <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            </div>
+            <input type="text" id="auth-username" class="input-field" placeholder="Username">
+            <input type="password" id="auth-password" class="input-field" placeholder="Password">
+
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn secondary-btn" style="flex: 1;" onclick="loginUser()">Log In</button>
+                <button class="btn primary-btn" style="flex: 1;" onclick="registerUser()">Sign Up</button>
+            </div>
+
+            <p id="auth-message" style="color: var(--incorrect); font-weight: bold; margin-top: 15px;"></p>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
     <div id="toast" class="toast">Message</div>
 
     <script src="script.js"></script>

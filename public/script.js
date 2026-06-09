@@ -36,12 +36,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- DATE FORMATTER ---
+function getFormattedDateCST() {
+    const date = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const dayName = days[date.getDay()];
+    const monthName = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+
+    const suffix = (day % 10 === 1 && day !== 11) ? 'st' :
+        (day % 10 === 2 && day !== 12) ? 'nd' :
+            (day % 10 === 3 && day !== 13) ? 'rd' : 'th';
+
+    return `${dayName}, ${monthName} ${day}${suffix}, ${year}`;
+}
+
 // --- GLOBAL NAVBAR LOGIC ---
 function renderNavbar() {
     const authContainer = document.getElementById('nav-auth-container');
     if (!authContainer) return;
 
     authContainer.innerHTML = '';
+
+    // Arcade Link (Visible to everyone)
+    const vtLink = document.createElement('a');
+    vtLink.href = 'version-trainer.html';
+    vtLink.className = 'auth-link';
+    vtLink.style.marginRight = '20px';
+    vtLink.innerHTML = `Version Trainer <span class="badge-new">New</span>`;
+    authContainer.appendChild(vtLink);
 
     if (currentUser) {
         const avatarDiv = document.createElement('div');
@@ -57,9 +83,9 @@ function renderNavbar() {
 
         authContainer.appendChild(avatarDiv);
     } else {
-        authContainer.innerHTML = `
-            <button class="btn secondary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.location.href='index.html'">Log In</button>
-            <button class="btn primary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.location.href='index.html'">Sign Up</button>
+        // Combined Login/Register button
+        authContainer.innerHTML += `
+            <button class="btn primary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openAuthModal()">Login / Register</button>
         `;
     }
 }
@@ -83,6 +109,16 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// --- AUTH MODAL LOGIC ---
+function openAuthModal() {
+    document.getElementById('auth-modal').style.display = 'flex';
+    document.getElementById('auth-message').textContent = '';
+}
+
+function closeAuthModal() {
+    document.getElementById('auth-modal').style.display = 'none';
+}
+
 
 // --- HUB PAGE LOGIC (index.html) ---
 function setupHubPage() {
@@ -90,13 +126,8 @@ function setupHubPage() {
 
     document.getElementById('play-section').style.display = 'block';
 
-    if (currentUser) {
-        document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('welcome-message').textContent = `Welcome back, ${currentUser}!`;
-    } else {
-        document.getElementById('auth-section').style.display = 'block';
-        document.getElementById('welcome-message').textContent = `Ready to play?`;
-    }
+    // Inject Today's Date
+    document.getElementById('welcome-message').textContent = getFormattedDateCST();
 }
 
 async function loginUser() {
@@ -115,7 +146,7 @@ async function loginUser() {
         if (res.ok) {
             localStorage.setItem('loredle_username', usernameInput);
             localStorage.setItem('loredle_avatar', data.avatar || 'default');
-            window.location.href = 'index.html';
+            window.location.reload();
         } else {
             msg.textContent = data.error;
         }
@@ -140,7 +171,7 @@ async function registerUser() {
         if (res.ok) {
             localStorage.setItem('loredle_username', usernameInput);
             localStorage.setItem('loredle_avatar', data.avatar || 'default');
-            window.location.href = 'index.html';
+            window.location.reload();
         } else {
             msg.textContent = data.error;
         }
@@ -391,7 +422,6 @@ function guessCard(card) {
     row.appendChild(createTypeCell(card.type, targetCard.type));
     row.appendChild(createCell(card.rarity, targetCard.rarity));
 
-    // THE FIX: Appends the guess to the bottom of the list instead of prepending to the top!
     feedback.appendChild(row);
 
     if (card.name === targetCard.name) {
@@ -484,7 +514,6 @@ function endGame() {
     emojiFeedbackContainer.appendChild(title);
 
     const feedback = document.getElementById('game-board');
-    // THE FIX: Removed the .reverse() command, so the array is mapped in natural chronological order!
     const rowsArray = Array.from(feedback.childNodes);
 
     rowsArray.forEach((row, index) => {

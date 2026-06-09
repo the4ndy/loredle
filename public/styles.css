@@ -58,6 +58,32 @@ html {
     position: relative;
 }
 
+.auth-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+.auth-link:hover {
+    color: var(--primary-color);
+}
+
+.badge-new {
+    background-color: var(--incorrect);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 12px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 .avatar-circle {
     width: 40px;
     height: 40px;
@@ -122,7 +148,7 @@ html {
     background-color: #333;
 }
 
-/* --- HUB & SETTINGS CONTAINERS --- */
+/* --- CONTAINERS & MODALS --- */
 .menu-container {
     background-color: var(--bg-surface);
     padding: 40px;
@@ -160,6 +186,53 @@ h1 {
     color: var(--text-secondary);
     font-size: 0.95rem;
     line-height: 1.5;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--bg-surface);
+    width: 90%;
+    max-width: 450px;
+    max-height: 85vh;
+    border-radius: 12px;
+    padding: 24px;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.close-btn {
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: #fff;
 }
 
 /* --- SETTINGS SPECIFICS --- */
@@ -284,7 +357,8 @@ h1 {
 }
 
 /* Suggestions Box Overrides */
-#suggestions {
+#suggestions,
+.suggestions-list {
     position: absolute;
     top: 100%;
     left: 0;
@@ -300,7 +374,8 @@ h1 {
     z-index: 100;
 }
 
-#suggestions li {
+#suggestions li,
+.suggestions-list li {
     padding: 12px;
     border-bottom: 1px solid #333;
     cursor: pointer;
@@ -309,8 +384,8 @@ h1 {
     transition: background-color 0.1s;
 }
 
-/* RESTORED: Dropdown Hover Highlight */
-#suggestions li:hover {
+#suggestions li:hover,
+.suggestions-list li:hover {
     background-color: var(--primary-color) !important;
     color: #000 !important;
     font-weight: bold;
@@ -327,17 +402,22 @@ h1 {
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 10px;
+    outline: none;
+    transition: border-color 0.2s;
 }
 
 .input-field:focus {
-    outline: none;
     border-color: var(--primary-color);
 }
 
-.button-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.input-correct {
+    border-color: var(--correct) !important;
+    background-color: rgba(76, 175, 80, 0.1) !important;
+}
+
+.input-incorrect {
+    border-color: var(--incorrect) !important;
+    background-color: rgba(207, 102, 121, 0.1) !important;
 }
 
 .btn {
@@ -362,13 +442,12 @@ h1 {
 }
 
 .secondary-btn {
-    background-color: var(--bg-card);
-    color: var(--text-primary);
-    border: 1px solid #444;
+    background-color: var(--secondary-color);
+    color: #000;
 }
 
 .secondary-btn:hover {
-    background-color: #333;
+    background-color: #00b3a6;
 }
 
 .minimal-btn {
@@ -403,7 +482,6 @@ h1 {
     color: var(--primary-color);
 }
 
-/* Share Styling */
 .emoji-row {
     letter-spacing: 3px;
     font-size: 1.1rem;
@@ -431,7 +509,6 @@ h1 {
     opacity: 1;
 }
 
-/* Mobile Query */
 @media (max-width: 768px) {
     #game-board {
         align-items: center;

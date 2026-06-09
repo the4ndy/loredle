@@ -11,7 +11,7 @@ app.use(express.static('public'));
 
 // --- MONGODB CONNECTION ---
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to Loredle Database'))
+    .then(() => console.log('Connected to Database'))
     .catch(err => console.error('Database connection error:', err));
 
 // --- DATABASE SCHEMAS ---
@@ -29,9 +29,17 @@ const scoreSchema = new mongoose.Schema({
 });
 const Score = mongoose.model('Score', scoreSchema);
 
+// NEW: Arcade Score Schema (All-time high scores)
+const arcadeScoreSchema = new mongoose.Schema({
+    initials: { type: String, required: true, uppercase: true, maxlength: 3 },
+    score: { type: Number, required: true },
+    date: { type: Date, default: Date.now }
+});
+const ArcadeScore = mongoose.model('ArcadeScore', arcadeScoreSchema);
+
+
 // --- HELPER FUNCTION: GET CST DATE ---
 function getCSTDate() {
-    // Formats strictly as YYYY-MM-DD using US Central Time
     return new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Chicago',
         year: 'numeric',
@@ -75,11 +83,10 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Hub: Get Global Daily Leaderboard
+// Hub: Get Global Daily Loredle Leaderboard
 app.get('/api/leaderboard', async (req, res) => {
     try {
         const today = getCSTDate();
-
         const scores = await Score.find({ date: today }).sort({ tries: 1 }).limit(10).lean();
 
         for (let score of scores) {
@@ -136,7 +143,7 @@ app.get('/api/user/history/:username', async (req, res) => {
     }
 });
 
-// Gameplay: Submit Score & Webhook
+// Gameplay: Submit Loredle Score
 app.post('/api/submit-score', async (req, res) => {
     try {
         const { username, tries, shareText } = req.body;
@@ -171,6 +178,31 @@ app.post('/api/submit-score', async (req, res) => {
         res.status(201).json({ message: "Score processed successfully!" });
     } catch (err) {
         res.status(500).json({ error: "Failed to process score." });
+    }
+});
+
+// --- NEW ARCADE ROUTES ---
+
+// Submit Arcade Score
+app.post('/api/arcade-score', async (req, res) => {
+    try {
+        const { initials, score } = req.body;
+        const newScore = new ArcadeScore({ initials, score });
+        await newScore.save(); // Saves every single score permanently
+        res.status(201).json({ message: "Arcade score saved!" });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to save arcade score." });
+    }
+});
+
+// Get Top 25 Arcade Leaderboard
+app.get('/api/arcade-leaderboard', async (req, res) => {
+    try {
+        // Sorts by Highest Score first, then Oldest Date if there's a tie
+        const scores = await ArcadeScore.find().sort({ score: -1, date: 1 }).limit(25);
+        res.status(200).json(scores);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch arcade leaderboard." });
     }
 });
 
