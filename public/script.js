@@ -367,7 +367,8 @@ async function fetchCards() {
             set: card.set.name,
             cost: card.cost,
             inkable: card.inkwell,
-            color: card.ink || 'Colorless',
+            // Extract to an array for easier partial matching
+            colors: card.inks && card.inks.length > 0 ? card.inks : (card.ink ? [card.ink] : ['Colorless']),
             type: card.type ? card.type.join(' - ') : 'Unknown',
             rarity: card.rarity,
             image: card.image_uris?.digital?.normal || ''
@@ -441,7 +442,10 @@ function guessCard(card) {
     row.appendChild(createCell(card.set, targetCard.set));
     row.appendChild(createCell(card.cost, targetCard.cost));
     row.appendChild(createCell(String(card.inkable), String(targetCard.inkable)));
-    row.appendChild(createCell(card.color, targetCard.color));
+
+    // Using the new createColorCell function for Inks
+    row.appendChild(createColorCell(card.colors, targetCard.colors));
+
     row.appendChild(createTypeCell(card.type, targetCard.type));
     row.appendChild(createCell(card.rarity, targetCard.rarity));
 
@@ -461,6 +465,30 @@ function createCell(guessValue, targetValue) {
     } else {
         cell.classList.add('incorrect');
     }
+    return cell;
+}
+
+// New specialized cell renderer for matching Ink Arrays
+function createColorCell(guessColors, targetColors) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+
+    // Output standard string for UI e.g., "Ruby / Sapphire"
+    cell.textContent = guessColors.join(' / ');
+
+    // Calculate match properties
+    const matchingInks = guessColors.filter(ink => targetColors.includes(ink));
+    const isExactMatch = guessColors.length === targetColors.length && matchingInks.length === guessColors.length;
+
+    // Apply strict matching logic
+    if (isExactMatch) {
+        cell.classList.add('correct');
+    } else if (matchingInks.length > 0) {
+        cell.classList.add('close'); // Triggers Yellow
+    } else {
+        cell.classList.add('incorrect'); // Triggers Red
+    }
+
     return cell;
 }
 
