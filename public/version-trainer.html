@@ -119,7 +119,42 @@
         </div>
     </div>
 
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
+        <span class="footer-separator">|</span>
+        <a href="change-log.html">Change Log</a>
+        <span class="footer-separator">|</span>
+        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
+    </footer>
+
+    <!-- FOOTER MODALS -->
+    <div id="disclaimer-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <div class="modal-header">
+                <h2>Disclaimer</h2>
+                <span class="close-btn" onclick="closeModal('disclaimer-modal')">&times;</span>
+            </div>
+            <p style="text-align: left; color: var(--text-secondary); line-height: 1.5;">
+                Loredle uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under Ravensburger’s
+                Community Code Policy. We are expressly prohibited from
+                charging you to use or access this content. Loredle is not published, endorsed, or
+                specifically approved by Disney or Ravensburger. For more information about Disney Lorcana TCG, visit <a
+                    href="https://www.disneylorcana.com/en-US">https://www.disneylorcana.com/en-US</a>
+            </p>
+        </div>
+    </div>
+
     <script>
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'flex';
+        }
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'none';
+        }
+
         let uniqueBaseNames = [];
         let questionPool = [];
         let currentRound = 0;
