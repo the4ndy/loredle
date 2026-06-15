@@ -7,7 +7,6 @@
   * *Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger.*
 * **Attribution:** Added Attribution
   * *Added link to creators Twitter page.*
-* **added disclaimer, attribution, and change-log page.**
 
 ---
 
