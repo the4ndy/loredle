@@ -3,52 +3,30 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Loredle - Play</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loredle - Change Log</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body>
+    <!-- TOP NAVIGATION BAR -->
     <nav class="navbar">
         <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
         <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
+    <!-- AVATAR DROPDOWN -->
     <div id="nav-dropdown" class="nav-dropdown">
         <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
         <div class="dropdown-item" onclick="logOut()">Log Out</div>
     </div>
 
-    <div id="game-container"
-        style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; align-items: center;">
-        <div class="image-container" id="image-container" style="height: 350px; margin-bottom: 20px;">
-            <img id="hovered-image" src="" alt="Hovered Card" style="display: none; height: 100%; border-radius: 12px;">
-        </div>
-
-        <div style="width: 100%; max-width: 450px; margin: 0 auto; position: relative; margin-bottom: 20px;">
-            <input type="text" id="card-input" class="input-field" placeholder="Start typing a card name..."
-                style="margin: 0; text-align: center; width: 100%;">
-            <ul id="suggestions"></ul>
-        </div>
-
-        <div id="feedback">
-            <div class="header">
-                <div class="cell">Name</div>
-                <div class="cell">Number</div>
-                <div class="cell">Set</div>
-                <div class="cell">Cost</div>
-                <div class="cell">Inkable</div>
-                <div class="cell">Color</div>
-                <div class="cell">Type</div>
-                <div class="cell">Rarity</div>
-            </div>
-            <div id="game-board"></div>
-        </div>
-
-        <div id="emoji-feedback" style="display: none; text-align: center; margin-top: 20px;">
-            <div id="emoji-feedback-container"></div>
-            <button id="copy-emoji-button" class="btn primary-btn" style="margin-top: 10px;">Copy to Clipboard</button>
+    <!-- MAIN CONTAINER -->
+    <div class="menu-container" style="max-width: 800px; text-align: left; margin-bottom: 40px; margin-top: 20px;">
+        <h1 style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px;">Change Log</h1>
+        <div id="changelog-page-content" style="color: var(--text-secondary); line-height: 1.6;">
+            <p style="text-align: center;">Loading...</p>
         </div>
     </div>
 
@@ -58,8 +36,7 @@
         <span class="footer-separator">|</span>
         <a href="change-log.html">Change Log</a>
         <span class="footer-separator">|</span>
-        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV]
-                Andy</a></span>
+        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
     </footer>
 
     <!-- FOOTER MODALS -->
@@ -78,10 +55,6 @@
             </p>
         </div>
     </div>
-
-
-
-    <div id="toast" class="toast">Message</div>
 
     <script src="script.js"></script>
 </body>
