@@ -537,3 +537,44 @@ h1 {
         padding-bottom: 4px;
     }
 }
+
+/* --- FOOTER --- */
+.site-footer {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    z-index: 1000;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.site-footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.site-footer a:hover {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.footer-separator {
+    color: #444;
+}
+
+.site-footer .author-link {
+    color: #e0f7fa; /* mostly white with slight light blue hue */
+    text-decoration: none !important;
+}
+
+.site-footer .author-link:hover {
+    color: #e0f7fa;
+    text-decoration: none !important;
+}

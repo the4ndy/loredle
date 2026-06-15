@@ -117,6 +117,39 @@ function closeAuthModal() {
     document.getElementById('auth-modal').style.display = 'none';
 }
 
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'flex';
+        if (id === 'changelog-modal') {
+            fetchChangelog();
+        }
+    }
+}
+
+async function fetchChangelog() {
+    const contentDiv = document.getElementById('changelog-content');
+    if (!contentDiv) return;
+    
+    if (contentDiv.dataset.loaded) return;
+
+    try {
+        const response = await fetch('changelog.md');
+        if (!response.ok) throw new Error('Failed to load changelog');
+        const text = await response.text();
+        contentDiv.innerHTML = marked.parse(text);
+        contentDiv.dataset.loaded = 'true';
+    } catch (error) {
+        contentDiv.innerHTML = '<p>Could not load change log.</p>';
+        console.error(error);
+    }
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'none';
+}
+
 
 // --- HUB PAGE LOGIC (index.html) ---
 function setupHubPage() {

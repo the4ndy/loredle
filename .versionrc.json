@@ -1,0 +1,24 @@
+{
+    "types": [
+        {
+            "type": "feat",
+            "section": "### ✨ Gameplay & Features"
+        },
+        {
+            "type": "qol",
+            "section": "### 🛠️ Quality of Life"
+        },
+        {
+            "type": "fix",
+            "section": "### 🐛 Bug Fixes"
+        },
+        {
+            "type": "chore",
+            "hidden": true
+        },
+        {
+            "type": "test",
+            "hidden": true
+        }
+    ]
+}
