@@ -1,12 +1,12 @@
 {
   "name": "loredle",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "release": "standard-version"
+    "changelog": "node generate-changelog.js"
   },
   "repository": {
     "type": "git",
