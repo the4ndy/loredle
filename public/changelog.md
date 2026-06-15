@@ -1,3 +1,16 @@
+# v2.3.0 - June 15, 2026
+
+### ✨ Gameplay & Features
+* **Change Log page:** added change log page
+  * *View changes made to the app*
+* **Disclaimer:** added disclaimer to all pages
+  * *Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger.*
+* **Attribution:** Added Attribution
+  * *Added link to creators Twitter page.*
+* **added disclaimer, attribution, and change-log page.**
+
+---
+
 # v2.2.0 - June 14, 2026
 
 *This update addresses a critical issue with how the game board evaluates multi-color cards.*
