@@ -181,6 +181,49 @@ app.post('/api/submit-score', async (req, res) => {
     }
 });
 
+// Hub: Get Hall Of Fame
+app.get('/api/hall-of-fame', async (req, res) => {
+    try {
+        const dailyWinners = await Score.aggregate([
+            { $sort: { date: -1, tries: 1, _id: 1 } },
+            {
+                $group: {
+                    _id: "$date",
+                    username: { $first: "$username" },
+                    tries: { $first: "$tries" },
+                    date: { $first: "$date" }
+                }
+            },
+            { $sort: { date: -1 } }
+        ]);
+
+        for (let winner of dailyWinners) {
+            const user = await User.findOne({ username: winner.username }).lean();
+            winner.avatar = user ? user.avatar : 'default';
+        }
+
+        const winCounts = {};
+        for (let winner of dailyWinners) {
+            winCounts[winner.username] = (winCounts[winner.username] || 0) + 1;
+        }
+
+        const top5 = Object.entries(winCounts)
+            .map(([username, count]) => ({ username, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+
+        for (let t of top5) {
+            const user = await User.findOne({ username: t.username }).lean();
+            t.avatar = user ? user.avatar : 'default';
+        }
+
+        res.status(200).json({ top5, recentWinners: dailyWinners });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch hall of fame.' });
+    }
+});
+
 // --- ARCADE ROUTES ---
 
 // Submit Arcade Score

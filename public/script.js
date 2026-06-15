@@ -38,6 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('changelog-page-content')) {
         fetchChangelogPage();
     }
+
+    if (document.getElementById('hof-container')) {
+        fetchHallOfFame();
+    }
 });
 
 // --- DATE FORMATTER ---
@@ -64,6 +68,13 @@ function renderNavbar() {
     if (!authContainer) return;
 
     authContainer.innerHTML = '';
+
+    const hofLink = document.createElement('a');
+    hofLink.href = 'hall-of-fame.html';
+    hofLink.className = 'auth-link';
+    hofLink.style.marginRight = '20px';
+    hofLink.innerHTML = `Hall Of Fame`;
+    authContainer.appendChild(hofLink);
 
     const vtLink = document.createElement('a');
     vtLink.href = 'version-trainer.html';
@@ -265,6 +276,61 @@ async function fetchArcadeLeaderboard() {
         });
     } catch (err) {
         console.error("Failed to load arcade leaderboard.");
+    }
+}
+
+async function fetchHallOfFame() {
+    try {
+        const res = await fetch('/api/hall-of-fame');
+        const data = await res.json();
+        
+        const top5Body = document.getElementById('hof-top5-body');
+        top5Body.innerHTML = '';
+        if (data.top5 && data.top5.length > 0) {
+            data.top5.forEach((player, index) => {
+                const tr = document.createElement('tr');
+                let avatarHTML = player.avatar === 'default' || !player.avatar 
+                    ? `<div class="mini-avatar">${player.username.charAt(0).toUpperCase()}</div>`
+                    : `<div class="mini-avatar" style="background-image: url('${player.avatar}'); background-color: transparent;"></div>`;
+
+                tr.innerHTML = `
+                    <td>#${index + 1}</td>
+                    <td style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        ${avatarHTML} <span>${player.username}</span>
+                    </td>
+                    <td>${player.count}</td>
+                `;
+                top5Body.appendChild(tr);
+            });
+        } else {
+            top5Body.innerHTML = '<tr><td colspan="3" style="color: var(--text-secondary);">No data yet.</td></tr>';
+        }
+
+        const recentBody = document.getElementById('hof-recent-body');
+        recentBody.innerHTML = '';
+        if (data.recentWinners && data.recentWinners.length > 0) {
+            data.recentWinners.forEach((winner) => {
+                const tr = document.createElement('tr');
+                let avatarHTML = winner.avatar === 'default' || !winner.avatar 
+                    ? `<div class="mini-avatar">${winner.username.charAt(0).toUpperCase()}</div>`
+                    : `<div class="mini-avatar" style="background-image: url('${winner.avatar}'); background-color: transparent;"></div>`;
+
+                tr.innerHTML = `
+                    <td>${winner.date}</td>
+                    <td style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        ${avatarHTML} <span>${winner.username}</span>
+                    </td>
+                    <td>${winner.tries}</td>
+                `;
+                recentBody.appendChild(tr);
+            });
+        } else {
+            recentBody.innerHTML = '<tr><td colspan="3" style="color: var(--text-secondary);">No data yet.</td></tr>';
+        }
+    } catch (err) {
+        console.error("Failed to load hall of fame.", err);
+        document.getElementById('hof-top5-body').innerHTML = '<tr><td colspan="3" style="color: var(--incorrect);">Error loading data.</td></tr>';
+        document.getElementById('hof-recent-body').innerHTML = '<tr><td colspan="3" style="color: var(--incorrect);">Error loading data.</td></tr>';
     }
 }
 
