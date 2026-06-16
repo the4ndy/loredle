@@ -1,3 +1,13 @@
+# v2.5.1 - June 16, 2026
+
+### 🐛 Bug Fixes
+* **Changelog Scripts:** Fixed changelog Scripts
+  * *Fixed backend scripts for changelog management.*
+  * *Cleaned up duplicate change log entries*
+  * *updated change log*
+
+---
+
 # v2.5.0 - June 16, 2026
 
 ### ✨ Gameplay & Features
