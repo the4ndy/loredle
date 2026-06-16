@@ -12,6 +12,147 @@
     --close: #fbc02d;
 }
 
+/* --- THEMES --- */
+/* Light Theme */
+html.theme-light {
+    --bg-main: #f5f5f5;
+    --bg-surface: #ffffff;
+    --bg-card: #eeeeee;
+    --text-primary: #121212;
+    --text-secondary: #666666;
+    --primary-color: #6200ee;
+    --secondary-color: #018786;
+    --correct: #4caf50;
+    --incorrect: #b00020;
+    --close: #f57f17;
+}
+
+/* Dracula Theme */
+html.theme-dracula {
+    --bg-main: #282a36;
+    --bg-surface: #44475a;
+    --bg-card: #383a59;
+    --text-primary: #f8f8f2;
+    --text-secondary: #6272a4;
+    --primary-color: #bd93f9;
+    --secondary-color: #ff79c6;
+    --correct: #50fa7b;
+    --incorrect: #ff5555;
+    --close: #f1fa8c;
+}
+
+/* Solarized Dark */
+html.theme-solarized {
+    --bg-main: #002b36;
+    --bg-surface: #073642;
+    --bg-card: #002b36;
+    --text-primary: #839496;
+    --text-secondary: #586e75;
+    --primary-color: #268bd2;
+    --secondary-color: #2aa198;
+    --correct: #859900;
+    --incorrect: #dc322f;
+    --close: #b58900;
+}
+
+/* Tokyo Night */
+html.theme-tokyonight {
+    --bg-main: #1a1b26;
+    --bg-surface: #24283b;
+    --bg-card: #1f2335;
+    --text-primary: #a9b1d6;
+    --text-secondary: #787c99;
+    --primary-color: #7aa2f7;
+    --secondary-color: #bb9af7;
+    --correct: #9ece6a;
+    --incorrect: #f7768e;
+    --close: #e0af68;
+}
+
+/* Night Owl */
+html.theme-nightowl {
+    --bg-main: #011627;
+    --bg-surface: #0b2942;
+    --bg-card: #011627;
+    --text-primary: #d6deeb;
+    --text-secondary: #5f7e97;
+    --primary-color: #82aaff;
+    --secondary-color: #c792ea;
+    --correct: #addb67;
+    --incorrect: #ef5350;
+    --close: #ecc48d;
+}
+
+/* One Dark Pro */
+html.theme-onedark {
+    --bg-main: #282c34;
+    --bg-surface: #2c313c;
+    --bg-card: #21252b;
+    --text-primary: #abb2bf;
+    --text-secondary: #5c6370;
+    --primary-color: #61afef;
+    --secondary-color: #c678dd;
+    --correct: #98c379;
+    --incorrect: #e06c75;
+    --close: #e5c07b;
+}
+
+/* SynthWave 84 */
+html.theme-synthwave {
+    --bg-main: #262335;
+    --bg-surface: #2b213a;
+    --bg-card: #241b2f;
+    --text-primary: #ffffff;
+    --text-secondary: #8a889d;
+    --primary-color: #f92aad;
+    --secondary-color: #36f9f6;
+    --correct: #72f1b8;
+    --incorrect: #fe4450;
+    --close: #fede5d;
+}
+
+/* Gruvbox */
+html.theme-gruvbox {
+    --bg-main: #282828;
+    --bg-surface: #3c3836;
+    --bg-card: #32302f;
+    --text-primary: #ebdbb2;
+    --text-secondary: #a89984;
+    --primary-color: #d3869b;
+    --secondary-color: #fabd2f;
+    --correct: #b8bb26;
+    --incorrect: #fb4934;
+    --close: #fabd2f;
+}
+
+/* Catppuccin */
+html.theme-catppuccin {
+    --bg-main: #1e1e2e;
+    --bg-surface: #313244;
+    --bg-card: #181825;
+    --text-primary: #cdd6f4;
+    --text-secondary: #a6adc8;
+    --primary-color: #cba6f7;
+    --secondary-color: #f5c2e7;
+    --correct: #a6e3a1;
+    --incorrect: #f38ba8;
+    --close: #f9e2af;
+}
+
+/* Nord */
+html.theme-nord {
+    --bg-main: #2e3440;
+    --bg-surface: #3b4252;
+    --bg-card: #434c5e;
+    --text-primary: #eceff4;
+    --text-secondary: #d8dee9;
+    --primary-color: #88c0d0;
+    --secondary-color: #b48ead;
+    --correct: #a3be8c;
+    --incorrect: #bf616a;
+    --close: #ebcb8b;
+}
+
 body,
 html {
     margin: 0;
@@ -276,6 +417,51 @@ h1 {
 .avatar-option.selected {
     border-color: var(--secondary-color);
     box-shadow: 0 0 10px var(--secondary-color);
+}
+
+/* --- THEME GRID --- */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 12px;
+}
+
+.theme-option {
+    border-radius: 12px;
+    border: 2px solid #444;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.theme-option:hover {
+    transform: translateY(-2px);
+    border-color: #888;
+}
+
+.theme-option.selected {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 10px var(--secondary-color);
+}
+
+.theme-preview-color {
+    height: 20px;
+    display: flex;
+}
+
+.theme-preview-color > div {
+    flex: 1;
+}
+
+.theme-label {
+    padding: 6px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
 }
 
 /* --- GAME BOARD GRID --- */

@@ -18,7 +18,8 @@ mongoose.connect(process.env.MONGODB_URI)
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    avatar: { type: String, default: 'default' }
+    avatar: { type: String, default: 'default' },
+    theme: { type: String, default: 'default' }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -63,7 +64,7 @@ app.post('/api/register', async (req, res) => {
         const newUser = new User({ username, password: hashedPassword });
         await newUser.save();
 
-        res.status(201).json({ message: 'Registration successful!', avatar: newUser.avatar });
+        res.status(201).json({ message: 'Registration successful!', avatar: newUser.avatar, theme: newUser.theme });
     } catch (err) {
         res.status(500).json({ error: 'Server error during registration.' });
     }
@@ -79,7 +80,7 @@ app.post('/api/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ error: 'Invalid password.' });
 
-        res.status(200).json({ message: 'Login successful!', avatar: user.avatar });
+        res.status(200).json({ message: 'Login successful!', avatar: user.avatar, theme: user.theme });
     } catch (err) {
         res.status(500).json({ error: 'Server error during login.' });
     }
@@ -120,16 +121,17 @@ app.put('/api/user/change-password', async (req, res) => {
     }
 });
 
-// Settings: Update Avatar
-app.put('/api/user/avatar', async (req, res) => {
+// Settings: Update Preferences (Avatar & Theme)
+app.put('/api/user/preferences', async (req, res) => {
     try {
-        const { username, avatar } = req.body;
+        const { username, avatar, theme } = req.body;
         const user = await User.findOne({ username });
         if (!user) return res.status(404).json({ error: 'User not found.' });
 
-        user.avatar = avatar;
+        if (avatar) user.avatar = avatar;
+        if (theme) user.theme = theme;
         await user.save();
-        res.status(200).json({ message: 'Avatar updated!', avatar: user.avatar });
+        res.status(200).json({ message: 'Preferences updated!', avatar: user.avatar, theme: user.theme });
     } catch (err) {
         res.status(500).json({ error: 'Server error.' });
     }

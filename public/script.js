@@ -4,8 +4,15 @@ let targetCard = null;
 let guessedCards = new Set();
 let currentUser = localStorage.getItem('loredle_username');
 let currentAvatar = localStorage.getItem('loredle_avatar') || 'default';
+let currentTheme = localStorage.getItem('loredle_theme') || 'default';
+let pendingAvatar = currentAvatar;
 let userHistory = [];
 let historySortDesc = true;
+
+function applyTheme(themeName) {
+    document.documentElement.className = themeName === 'default' ? '' : themeName;
+}
+applyTheme(currentTheme);
 
 const availableAvatars = [
     'default',
@@ -32,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('settings-container')) {
         if (!currentUser) window.location.href = 'index.html';
         setupAvatarGrid();
+        setupThemeGrid();
     }
 
     if (document.getElementById('changelog-page-content')) {
@@ -187,6 +195,7 @@ async function loginUser() {
         if (res.ok) {
             localStorage.setItem('loredle_username', usernameInput);
             localStorage.setItem('loredle_avatar', data.avatar || 'default');
+            localStorage.setItem('loredle_theme', data.theme || 'default');
             window.location.reload();
         } else {
             msg.textContent = data.error;
@@ -212,6 +221,7 @@ async function registerUser() {
         if (res.ok) {
             localStorage.setItem('loredle_username', usernameInput);
             localStorage.setItem('loredle_avatar', data.avatar || 'default');
+            localStorage.setItem('loredle_theme', data.theme || 'default');
             window.location.reload();
         } else {
             msg.textContent = data.error;
@@ -287,13 +297,13 @@ async function fetchHallOfFame() {
     try {
         const res = await fetch('/api/hall-of-fame');
         const data = await res.json();
-        
+
         const top5Body = document.getElementById('hof-top5-body');
         top5Body.innerHTML = '';
         if (data.top5 && data.top5.length > 0) {
             data.top5.forEach((player, index) => {
                 const tr = document.createElement('tr');
-                let avatarHTML = player.avatar === 'default' || !player.avatar 
+                let avatarHTML = player.avatar === 'default' || !player.avatar
                     ? `<div class="mini-avatar">${player.username.charAt(0).toUpperCase()}</div>`
                     : `<div class="mini-avatar" style="background-image: url('${player.avatar}'); background-color: transparent;"></div>`;
 
@@ -315,7 +325,7 @@ async function fetchHallOfFame() {
         if (data.recentWinners && data.recentWinners.length > 0) {
             data.recentWinners.forEach((winner) => {
                 const tr = document.createElement('tr');
-                let avatarHTML = winner.avatar === 'default' || !winner.avatar 
+                let avatarHTML = winner.avatar === 'default' || !winner.avatar
                     ? `<div class="mini-avatar">${winner.username.charAt(0).toUpperCase()}</div>`
                     : `<div class="mini-avatar" style="background-image: url('${winner.avatar}'); background-color: transparent;"></div>`;
 
@@ -355,29 +365,90 @@ function setupAvatarGrid() {
             option.style.backgroundColor = 'transparent';
         }
 
-        if (url === currentAvatar) option.classList.add('selected');
-        option.onclick = () => saveAvatar(url);
+        if (url === pendingAvatar) option.classList.add('selected');
+        option.onclick = () => {
+            pendingAvatar = url;
+            setupAvatarGrid();
+        };
         grid.appendChild(option);
     });
 }
 
-async function saveAvatar(url) {
+const availableThemes = [
+    { id: 'default', name: 'Default Dark', bg: '#121212', primary: '#bb86fc', secondary: '#03dac6' },
+    { id: 'theme-light', name: 'Light Mode', bg: '#f5f5f5', primary: '#6200ee', secondary: '#018786' },
+    { id: 'theme-dracula', name: 'Dracula', bg: '#282a36', primary: '#bd93f9', secondary: '#ff79c6' },
+    { id: 'theme-solarized', name: 'Solarized Dark', bg: '#002b36', primary: '#268bd2', secondary: '#2aa198' },
+    { id: 'theme-tokyonight', name: 'Tokyo Night', bg: '#1a1b26', primary: '#7aa2f7', secondary: '#bb9af7' },
+    { id: 'theme-nightowl', name: 'Night Owl', bg: '#011627', primary: '#82aaff', secondary: '#c792ea' },
+    { id: 'theme-onedark', name: 'One Dark Pro', bg: '#282c34', primary: '#61afef', secondary: '#c678dd' },
+    { id: 'theme-synthwave', name: 'SynthWave 84', bg: '#262335', primary: '#f92aad', secondary: '#36f9f6' },
+    { id: 'theme-gruvbox', name: 'Gruvbox', bg: '#282828', primary: '#d3869b', secondary: '#fabd2f' },
+    { id: 'theme-catppuccin', name: 'Catppuccin', bg: '#1e1e2e', primary: '#cba6f7', secondary: '#f5c2e7' },
+    { id: 'theme-nord', name: 'Nord', bg: '#2e3440', primary: '#88c0d0', secondary: '#b48ead' }
+];
+
+let pendingTheme = currentTheme;
+
+function setupThemeGrid() {
+    const grid = document.getElementById('theme-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    availableThemes.forEach(theme => {
+        const option = document.createElement('div');
+        option.classList.add('theme-option');
+        if (theme.id === pendingTheme) option.classList.add('selected');
+
+        option.innerHTML = `
+            <div class="theme-preview-color">
+                <div style="background-color: ${theme.bg};"></div>
+                <div style="background-color: ${theme.primary};"></div>
+                <div style="background-color: ${theme.secondary};"></div>
+            </div>
+            <div class="theme-label">${theme.name}</div>
+        `;
+
+        option.onclick = () => {
+            pendingTheme = theme.id;
+            previewTheme(theme.id);
+            setupThemeGrid();
+        };
+
+        grid.appendChild(option);
+    });
+}
+
+function previewTheme(themeValue) {
+    applyTheme(themeValue);
+}
+
+async function savePreferences() {
     if (!currentUser) return;
+    const selectedTheme = pendingTheme;
+
     try {
-        const res = await fetch('/api/user/avatar', {
+        const res = await fetch('/api/user/preferences', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUser, avatar: url })
+            body: JSON.stringify({ username: currentUser, avatar: pendingAvatar, theme: selectedTheme })
         });
+        const data = await res.json();
+
         if (res.ok) {
-            currentAvatar = url;
-            localStorage.setItem('loredle_avatar', url);
+            currentAvatar = data.avatar;
+            currentTheme = data.theme;
+            localStorage.setItem('loredle_avatar', currentAvatar);
+            localStorage.setItem('loredle_theme', currentTheme);
             setupAvatarGrid();
+            setupThemeGrid();
             renderNavbar();
-            showToast('Avatar updated!');
+            showToast('Preferences updated!');
+        } else {
+            showToast(data.error || 'Failed to update preferences.');
         }
     } catch (err) {
-        showToast('Failed to update avatar.');
+        showToast('Failed to save preferences.');
     }
 }
 
@@ -468,7 +539,7 @@ function renderDetailedHistory(historyData) {
                 tableContainer.classList.add('game-board');
                 tableContainer.style.margin = '0';
                 tableContainer.style.width = '100%';
-                
+
                 const headerRow = document.createElement('div');
                 headerRow.classList.add('row');
                 headerRow.style.padding = '5px';
