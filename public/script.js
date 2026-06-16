@@ -636,9 +636,31 @@ function setupInputListener() {
                 card.name.toLowerCase().includes(value) && !guessedCards.has(card.name)
             );
 
+            const inkColors = {
+                'Amber': '#FFE082',    // Material Amber 200
+                'Amethyst': '#CE93D8', // Material Purple 200
+                'Emerald': '#A5D6A7',  // Material Green 200
+                'Ruby': '#EF9A9A',     // Material Red 200
+                'Sapphire': '#90CAF9', // Material Blue 200
+                'Steel': '#B0BEC5'     // Material Blue Grey 200
+            };
+
             filteredCards.forEach(card => {
                 const li = document.createElement('li');
                 li.textContent = card.name;
+
+                if (card.colors && card.colors.length > 0) {
+                    if (card.colors.length === 1) {
+                        li.style.backgroundColor = inkColors[card.colors[0]] || 'transparent';
+                    } else {
+                        const c1 = inkColors[card.colors[0]] || 'transparent';
+                        const c2 = inkColors[card.colors[1]] || 'transparent';
+                        li.style.background = `linear-gradient(90deg, ${c1} 0%, ${c2} 100%)`;
+                    }
+                    li.style.color = '#121212';
+                    li.style.fontWeight = '500';
+                }
+
                 li.onclick = () => {
                     cardInput.value = '';
                     suggestions.innerHTML = '';
