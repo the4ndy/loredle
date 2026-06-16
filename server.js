@@ -135,15 +135,6 @@ app.put('/api/user/avatar', async (req, res) => {
     }
 });
 
-// Settings: Get User History
-app.get('/api/user/history/:username', async (req, res) => {
-    try {
-        const scores = await Score.find({ username: req.params.username }).sort({ date: -1 });
-        res.status(200).json(scores);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch history.' });
-    }
-});
 
 // Settings: Get User Detailed History
 app.get('/api/user/detailed-history/:username', async (req, res) => {

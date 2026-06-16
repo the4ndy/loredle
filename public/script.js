@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('settings-container')) {
         if (!currentUser) window.location.href = 'index.html';
         setupAvatarGrid();
-        fetchUserHistory();
     }
 
     if (document.getElementById('changelog-page-content')) {
@@ -408,38 +407,6 @@ async function submitPasswordChange() {
     }
 }
 
-async function fetchUserHistory() {
-    try {
-        const res = await fetch(`/api/user/history/${currentUser}`);
-        userHistory = await res.json();
-        renderHistoryTable();
-    } catch (err) {
-        document.getElementById('history-table-body').innerHTML = '<tr><td colspan="2">Failed to load history.</td></tr>';
-    }
-}
-
-function toggleHistorySort() {
-    historySortDesc = !historySortDesc;
-    document.getElementById('sort-label').textContent = historySortDesc ? 'Newest' : 'Oldest';
-    userHistory.reverse();
-    renderHistoryTable();
-}
-
-function renderHistoryTable() {
-    const tbody = document.getElementById('history-table-body');
-    tbody.innerHTML = '';
-
-    if (userHistory.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2" style="color: var(--text-secondary);">No games played yet.</td></tr>';
-        return;
-    }
-
-    userHistory.forEach(score => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${score.date}</td><td>${score.tries}</td>`;
-        tbody.appendChild(tr);
-    });
-}
 
 // --- DETAILED HISTORY PAGE LOGIC (history.html) ---
 
