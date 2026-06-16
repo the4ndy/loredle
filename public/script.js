@@ -42,6 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('hof-container')) {
         fetchHallOfFame();
     }
+
+    if (document.getElementById('history-container')) {
+        if (!currentUser) window.location.href = 'index.html';
+        fetchDetailedHistory();
+    }
 });
 
 // --- DATE FORMATTER ---
@@ -436,6 +441,124 @@ function renderHistoryTable() {
     });
 }
 
+// --- DETAILED HISTORY PAGE LOGIC (history.html) ---
+
+async function fetchDetailedHistory() {
+    try {
+        if (cards.length === 0) {
+            await fetchCards();
+        }
+
+        const res = await fetch(`/api/user/detailed-history/${currentUser}`);
+        const historyData = await res.json();
+        renderDetailedHistory(historyData);
+    } catch (err) {
+        document.getElementById('detailed-history-content').innerHTML = '<p style="color: var(--incorrect); text-align: center;">Failed to load history.</p>';
+    }
+}
+
+function renderDetailedHistory(historyData) {
+    const container = document.getElementById('detailed-history-content');
+    container.innerHTML = '';
+
+    if (!historyData || historyData.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No history found.</p>';
+        return;
+    }
+
+    historyData.forEach(dayScore => {
+        const dayDiv = document.createElement('div');
+        dayDiv.style.background = 'rgba(0,0,0,0.2)';
+        dayDiv.style.borderRadius = '8px';
+        dayDiv.style.padding = '20px';
+        dayDiv.style.marginBottom = '20px';
+
+        const headerDiv = document.createElement('div');
+        headerDiv.style.display = 'flex';
+        headerDiv.style.justifyContent = 'space-between';
+        headerDiv.style.alignItems = 'center';
+        headerDiv.style.marginBottom = '15px';
+        headerDiv.style.borderBottom = '1px solid #444';
+        headerDiv.style.paddingBottom = '10px';
+
+        const dateEl = document.createElement('h3');
+        dateEl.textContent = dayScore.date;
+        dateEl.style.margin = '0';
+        dateEl.style.color = 'var(--primary-color)';
+
+        const statsEl = document.createElement('div');
+        statsEl.style.fontWeight = 'bold';
+        statsEl.innerHTML = `<span style="color: var(--text-secondary);">Guesses:</span> <span style="color: var(--correct);">${dayScore.tries}</span> &nbsp;&nbsp;|&nbsp;&nbsp; <span style="color: var(--text-secondary);">Rank:</span> <span style="color: var(--close);">#${dayScore.rank}</span>`;
+
+        headerDiv.appendChild(dateEl);
+        headerDiv.appendChild(statsEl);
+        dayDiv.appendChild(headerDiv);
+
+        if (dayScore.guesses && dayScore.guesses.length > 0 && dayScore.targetCard) {
+            const targetCardObj = cards.find(c => c.name === dayScore.targetCard);
+            if (targetCardObj) {
+                const tableContainer = document.createElement('div');
+                tableContainer.classList.add('game-board');
+                tableContainer.style.margin = '0';
+                tableContainer.style.width = '100%';
+                
+                const headerRow = document.createElement('div');
+                headerRow.classList.add('row');
+                headerRow.style.padding = '5px';
+                headerRow.style.fontSize = '0.8rem';
+                ['Card Name', 'Number', 'Set', 'Cost', 'Inkable', 'Ink', 'Type', 'Rarity'].forEach(text => {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.style.background = 'transparent';
+                    cell.style.color = 'var(--text-secondary)';
+                    cell.style.border = 'none';
+                    cell.style.fontWeight = 'bold';
+                    cell.textContent = text;
+                    headerRow.appendChild(cell);
+                });
+                tableContainer.appendChild(headerRow);
+
+                dayScore.guesses.forEach(guessName => {
+                    const guessCardObj = cards.find(c => c.name === guessName);
+                    if (guessCardObj) {
+                        const row = document.createElement('div');
+                        row.classList.add('row');
+                        row.style.padding = '3px';
+                        row.style.minHeight = '30px';
+
+                        row.appendChild(createCell(guessCardObj.name.replace(' - ', '\n'), targetCardObj.name.replace(' - ', '\n')));
+                        row.appendChild(createNumberCell(guessCardObj.number, targetCardObj.number));
+                        row.appendChild(createCell(guessCardObj.set, targetCardObj.set));
+                        row.appendChild(createCell(guessCardObj.cost, targetCardObj.cost));
+                        row.appendChild(createCell(String(guessCardObj.inkable), String(targetCardObj.inkable)));
+                        row.appendChild(createColorCell(guessCardObj.colors, targetCardObj.colors));
+                        row.appendChild(createTypeCell(guessCardObj.type, targetCardObj.type));
+                        row.appendChild(createCell(guessCardObj.rarity, targetCardObj.rarity));
+
+                        Array.from(row.childNodes).forEach(cell => {
+                            cell.style.height = 'auto';
+                            cell.style.padding = '5px';
+                            cell.style.fontSize = '0.85rem';
+                        });
+
+                        tableContainer.appendChild(row);
+                    }
+                });
+                dayDiv.appendChild(tableContainer);
+            }
+        } else {
+            const noDetails = document.createElement('p');
+            noDetails.textContent = "Detailed guess data is not available for this game.";
+            noDetails.style.color = 'var(--text-secondary)';
+            noDetails.style.fontStyle = 'italic';
+            noDetails.style.fontSize = '0.9rem';
+            dayDiv.appendChild(noDetails);
+        }
+
+        container.appendChild(dayDiv);
+    });
+}
+
 
 // --- GAME PAGE LOGIC (game.html) ---
 
@@ -705,7 +828,9 @@ function endGame() {
         body: JSON.stringify({
             username: currentUser || 'Anonymous User',
             tries: guessedCards.size,
-            shareText: emojiText
+            shareText: emojiText,
+            targetCard: targetCard.name,
+            guesses: Array.from(guessedCards)
         })
     }).catch(err => console.error('Error submitting score:', err));
 

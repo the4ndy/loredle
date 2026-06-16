@@ -25,7 +25,9 @@ const User = mongoose.model('User', userSchema);
 const scoreSchema = new mongoose.Schema({
     username: { type: String, required: true },
     date: { type: String, required: true },
-    tries: { type: Number, required: true }
+    tries: { type: Number, required: true },
+    targetCard: { type: String },
+    guesses: { type: [String] }
 });
 const Score = mongoose.model('Score', scoreSchema);
 
@@ -143,10 +145,26 @@ app.get('/api/user/history/:username', async (req, res) => {
     }
 });
 
+// Settings: Get User Detailed History
+app.get('/api/user/detailed-history/:username', async (req, res) => {
+    try {
+        const scores = await Score.find({ username: req.params.username }).sort({ date: -1 }).lean();
+        
+        for (let score of scores) {
+            const dailyScores = await Score.find({ date: score.date }).sort({ tries: 1, _id: 1 }).lean();
+            const rank = dailyScores.findIndex(s => s._id.toString() === score._id.toString()) + 1;
+            score.rank = rank;
+        }
+        res.status(200).json(scores);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch detailed history.' });
+    }
+});
+
 // Gameplay: Submit Loredle Score
 app.post('/api/submit-score', async (req, res) => {
     try {
-        const { username, tries, shareText } = req.body;
+        const { username, tries, shareText, targetCard, guesses } = req.body;
         const today = getCSTDate();
 
         const isAnonymous = !username || username === 'Anonymous User';
@@ -156,7 +174,7 @@ app.post('/api/submit-score', async (req, res) => {
             const existingScore = await Score.findOne({ username, date: today });
             if (existingScore) return res.status(400).json({ error: "You already submitted today's score!" });
 
-            const newScore = new Score({ username, date: today, tries });
+            const newScore = new Score({ username, date: today, tries, targetCard, guesses });
             await newScore.save();
         }
 
