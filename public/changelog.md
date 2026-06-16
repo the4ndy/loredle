@@ -1,3 +1,40 @@
+# v2.5.0 - June 16, 2026
+
+### ✨ Gameplay & Features
+* **History Card Preview:** added the ability to preview cards in history page.
+  * *Cards now show an image when you hover their name in the history page.*
+* **Gameplay History:** added History page to show previous day's guesses.
+  * *Game now records each guess and you can see your guesses from previous days*
+  * *update changelog*
+* **Hall of Fame:** Added Loredle hall of fame page.
+  * *Displays the top 5 users with the most 1st place daily finishes*
+  * *Displays every daily 1st place finisher every*
+* **Change Log page:** added change log page
+  * *View changes made to the app*
+* **Disclaimer:** added disclaimer to all pages
+  * *Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger.*
+* **Attribution:** Added Attribution
+  * *Added link to creators Twitter page.*
+* **added disclaimer, attribution, and change-log page.**
+
+### 🛠️ Quality of Life
+* **Colored Results:** Color coded the cards in the drop down while guessing.
+  * *The background of the card name now indicates the color of the card*
+  * *This should allow for easier/quicker/more efficient guessing*
+
+### 🐛 Bug Fixes
+* **Removed Duplicate History:** Removed the history section from the Settings page.
+  * *History is now its own page, removed the old history section from settings.*
+* **Hover color:** Adjusted styling on hovered guesses for better clarity.
+  * *Hovered guesses now show a darker shade of their ink color and are outlined*
+* **Coloring:** Adjusted coloring for better visibility
+* **version-trainer footer:** Added footer (with disclaimer) to Version Trainer page.
+* **Punctuation:** fixed some punctuation in various texts
+  * *update changelog.md*
+  * *changelog update v2.3.0*
+
+---
+
 # v2.4.0 - June 15, 2026
 
 ### ✨ Gameplay & Features
