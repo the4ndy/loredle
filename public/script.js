@@ -526,7 +526,29 @@ function renderDetailedHistory(historyData) {
                         row.style.padding = '3px';
                         row.style.minHeight = '30px';
 
-                        row.appendChild(createCell(guessCardObj.name.replace(' - ', '\n'), targetCardObj.name.replace(' - ', '\n')));
+                        const nameCell = createCell(guessCardObj.name.replace(' - ', '\n'), targetCardObj.name.replace(' - ', '\n'));
+                        nameCell.style.cursor = 'help';
+                        nameCell.addEventListener('mouseenter', () => {
+                            const tooltip = document.getElementById('history-tooltip');
+                            if (tooltip && guessCardObj.image) {
+                                tooltip.src = guessCardObj.image;
+                                tooltip.style.display = 'block';
+                            }
+                        });
+                        nameCell.addEventListener('mousemove', (e) => {
+                            const tooltip = document.getElementById('history-tooltip');
+                            if (tooltip) {
+                                // Keep it on screen near the cursor
+                                tooltip.style.left = (e.pageX + 15) + 'px';
+                                tooltip.style.top = (e.pageY + 15) + 'px';
+                            }
+                        });
+                        nameCell.addEventListener('mouseleave', () => {
+                            const tooltip = document.getElementById('history-tooltip');
+                            if (tooltip) tooltip.style.display = 'none';
+                        });
+
+                        row.appendChild(nameCell);
                         row.appendChild(createNumberCell(guessCardObj.number, targetCardObj.number));
                         row.appendChild(createCell(guessCardObj.set, targetCardObj.set));
                         row.appendChild(createCell(guessCardObj.cost, targetCardObj.cost));
