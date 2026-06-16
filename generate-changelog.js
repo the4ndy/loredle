@@ -9,36 +9,23 @@ if (!newVersion) {
 }
 
 const changelogPath = path.join(__dirname, 'public', 'CHANGELOG.md');
+const packagePath = path.join(__dirname, 'package.json');
 
-// Format the date for CST
 const options = { timeZone: 'America/Chicago', year: 'numeric', month: 'long', day: 'numeric' };
 const todayDate = new Intl.DateTimeFormat('en-US', options).format(new Date());
 
 try {
-    // Get the latest git tag
     const latestTag = execSync('git describe --tags --abbrev=0').toString().trim();
-
-    // Fetch all commit messages since that latest tag
     const commitHistory = execSync(`git log ${latestTag}..HEAD --format=%B`).toString();
-
-    // Split into lines and remove extra whitespace
     const lines = commitHistory.split('\n').map(line => line.trim());
 
-    const categories = {
-        features: [],
-        qol: [],
-        fixes: []
-    };
-
+    const categories = { features: [], qol: [], fixes: [] };
     let currentItem = null;
 
-    // Read through the commit message line-by-line
     lines.forEach(line => {
-        if (!line) return; // Skip empty blank lines
-
+        if (!line) return;
         const lowerLine = line.toLowerCase();
 
-        // Check if the line is a new category trigger
         if (lowerLine.startsWith('feat:')) {
             currentItem = { title: line.replace(/^feat:\s*/i, '').trim(), subItems: [] };
             categories.features.push(currentItem);
@@ -49,7 +36,6 @@ try {
             currentItem = { title: line.replace(/^fix:\s*/i, '').trim(), subItems: [] };
             categories.fixes.push(currentItem);
         } else if (currentItem) {
-            // If the line DOESN'T have a trigger, attach it as a sub-bullet to the active item!
             currentItem.subItems.push(line);
         }
     });
@@ -59,29 +45,21 @@ try {
         process.exit(0);
     }
 
-    // Build the Markdown String
     let markdownUpdate = `# v${newVersion} - ${todayDate}\n\n`;
 
     const formatItems = (items, sectionTitle) => {
         if (!items.length) return '';
         let sectionStr = `### ${sectionTitle}\n`;
-
         items.forEach(item => {
-            // Check for an inline colon to bold the title (e.g., "Feature Name: Description")
             const splitIndex = item.title.indexOf(':');
             if (splitIndex > 0 && splitIndex < 35) {
                 const name = item.title.substring(0, splitIndex).trim();
                 const desc = item.title.substring(splitIndex + 1).trim();
                 sectionStr += `* **${name}:** ${desc}\n`;
             } else {
-                // Otherwise, bold the whole title
                 sectionStr += `* **${item.title}**\n`;
             }
-
-            // Add all captured description lines as italicized sub-bullets
-            item.subItems.forEach(sub => {
-                sectionStr += `  * *${sub}*\n`;
-            });
+            item.subItems.forEach(sub => { sectionStr += `  * *${sub}*\n`; });
         });
         return sectionStr + `\n`;
     };
@@ -89,14 +67,24 @@ try {
     markdownUpdate += formatItems(categories.features, "✨ Gameplay & Features");
     markdownUpdate += formatItems(categories.qol, "🛠️ Quality of Life");
     markdownUpdate += formatItems(categories.fixes, "🐛 Bug Fixes");
-
     markdownUpdate += `---\n\n`;
 
-    // Prepend to the existing changelog
+    // Update Markdown
     const currentChangelog = fs.existsSync(changelogPath) ? fs.readFileSync(changelogPath, 'utf8') : '';
     fs.writeFileSync(changelogPath, markdownUpdate + currentChangelog);
 
-    console.log(`✅ Successfully generated and added v${newVersion} to public/CHANGELOG.md!`);
+    // Update package.json version
+    if (fs.existsSync(packagePath)) {
+        const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+        pkg.version = newVersion;
+        fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 2) + '\n');
+    }
+
+    console.log(`✅ Generated v${newVersion} in public/CHANGELOG.md`);
+    console.log(`✅ Bumped package.json to v${newVersion}\n`);
+    console.log(`NEXT STEPS:`);
+    console.log(`1. Open CHANGELOG.md and add your narrative summary sentence.`);
+    console.log(`2. Run: npm run release:finish`);
 
 } catch (error) {
     console.error("❌ An error occurred:", error.message);

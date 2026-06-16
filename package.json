@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "changelog": "node generate-changelog.js"
+    "changelog": "node generate-changelog.js",
+    "release:finish": "node finish-release.js"
   },
   "repository": {
     "type": "git",
