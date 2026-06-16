@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loredle - UI Sandbox</title>
+    <link rel="stylesheet" href="test.css">
+    <link id="font-stylesheet" rel="stylesheet" href="">
+</head>
+<body>
+
+    <!-- CONTROL PANEL -->
+    <div class="control-panel">
+        <h3>Sandbox Controls</h3>
+        <div class="control-group">
+            <label for="style-select">UI Style:</label>
+            <select id="style-select">
+                <option value="style-material-3">Material 3</option>
+                <option value="style-fluent">Fluent UI</option>
+                <option value="style-carbon">Carbon Design</option>
+                <option value="style-tailwind">Tailwind Default</option>
+                <option value="style-glassmorphism">Glassmorphism</option>
+                <option value="style-neumorphism">Neumorphism</option>
+                <option value="style-brutalism">Brutalism</option>
+                <option value="style-chakra">Chakra UI</option>
+                <option value="style-atlassian">Atlassian</option>
+                <option value="style-ant-design">Ant Design</option>
+                <option value="style-apple">Apple / iOS</option>
+                <option value="style-material-2">Material 2 (Classic)</option>
+                <option value="style-bootstrap">Bootstrap 4</option>
+                <option value="style-win95">Windows 95 Retro</option>
+                <option value="style-cyberpunk">Cyberpunk</option>
+                <option value="style-skeuomorphic">Skeuomorphic</option>
+                <option value="style-flat">Flat Design</option>
+                <option value="style-bauhaus">Bauhaus</option>
+                <option value="style-notion">Minimalist (Notion)</option>
+                <option value="style-wireframe">Wireframe</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="theme-select">Color Theme:</label>
+            <select id="theme-select">
+                <option value="theme-light">Light Mode</option>
+                <option value="theme-dark">Default Dark</option>
+                <option value="theme-dracula">Dracula</option>
+                <option value="theme-solarized">Solarized Dark</option>
+                <option value="theme-tokyonight">Tokyo Night</option>
+                <option value="theme-nightowl">Night Owl</option>
+                <option value="theme-onedark">One Dark Pro</option>
+                <option value="theme-synthwave">SynthWave 84</option>
+                <option value="theme-gruvbox">Gruvbox</option>
+                <option value="theme-catppuccin">Catppuccin</option>
+                <option value="theme-nord">Nord</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="font-select">Typography:</label>
+            <select id="font-select">
+                <!-- Populated by JS -->
+            </select>
+        </div>
+    </div>
+
+    <!-- NAVBAR SIMULATION -->
+    <nav class="navbar">
+        <div class="nav-brand">Loredle Sandbox</div>
+        <div class="nav-auth">
+            <a href="#" class="auth-link">Login</a>
+            <button class="btn primary-btn small-btn">Sign Up</button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="menu-container">
+        <h1>Typography & Headings</h1>
+        <p class="subtitle">This is a subtitle or secondary text that provides more context.</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula.</p>
+
+        <hr>
+
+        <h2>Forms & Inputs</h2>
+        <div class="form-group">
+            <input type="text" class="input-field" placeholder="Standard Text Input">
+            <input type="password" class="input-field" placeholder="Password Input" value="password123">
+            <select class="input-field">
+                <option>Dropdown Option 1</option>
+                <option>Dropdown Option 2</option>
+            </select>
+        </div>
+
+        <hr>
+
+        <h2>Buttons & Actions</h2>
+        <div class="button-group">
+            <button class="btn primary-btn">Primary Action</button>
+            <button class="btn secondary-btn">Secondary Action</button>
+            <button class="btn minimal-btn">Minimal Action</button>
+            <button class="btn primary-btn" disabled>Disabled</button>
+        </div>
+
+        <hr>
+
+        <h2>Cards & Grids</h2>
+        <div class="grid-container">
+            <div class="card">
+                <h3>Card Item 1</h3>
+                <p>Card description goes here.</p>
+            </div>
+            <div class="card selected">
+                <h3>Card Item 2</h3>
+                <p>This card is currently selected.</p>
+            </div>
+            <div class="card">
+                <h3>Card Item 3</h3>
+                <p>Card description goes here.</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <h2>Data Tables</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>User</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>#1</td>
+                    <td><div class="mini-avatar">A</div> Alice</td>
+                    <td>100</td>
+                    <td><span class="badge success">Active</span></td>
+                </tr>
+                <tr>
+                    <td>#2</td>
+                    <td><div class="mini-avatar">B</div> Bob</td>
+                    <td>85</td>
+                    <td><span class="badge warning">Away</span></td>
+                </tr>
+                <tr>
+                    <td>#3</td>
+                    <td><div class="mini-avatar">C</div> Charlie</td>
+                    <td>70</td>
+                    <td><span class="badge error">Offline</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- MODAL SIMULATION -->
+    <div class="modal-inline">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Modal Title</h2>
+                <span class="close-btn">&times;</span>
+            </div>
+            <p>This simulates what a popup modal looks like in the current theme. It usually sits on top of a dark overlay.</p>
+            <div class="modal-actions">
+                <button class="btn minimal-btn">Cancel</button>
+                <button class="btn primary-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="test.js"></script>
+</body>
+</html>

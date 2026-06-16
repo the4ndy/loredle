@@ -1,0 +1,649 @@
+/* BASE VARIABLES & DEFAULTS */
+:root {
+    --bg-main: #f5f5f5;
+    --bg-surface: #ffffff;
+    --bg-card: #ffffff;
+    --text-primary: #121212;
+    --text-secondary: #666666;
+    --primary-color: #6200ee;
+    --secondary-color: #03dac6;
+    --correct: #4caf50;
+    --incorrect: #f44336;
+    --close: #ffeb3b;
+    
+    --border-radius-btn: 4px;
+    --border-radius-card: 8px;
+    --border-radius-input: 4px;
+    
+    --shadow-card: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-btn: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-modal: 0 10px 30px rgba(0,0,0,0.2);
+    
+    --border-color: #e0e0e0;
+    --border-width: 1px;
+    --border-style: solid;
+    
+    --btn-primary-text: #ffffff;
+    --btn-secondary-bg: #e0e0e0;
+    --btn-secondary-text: #121212;
+    --table-header-bg: #f0f0f0;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    transition: all 0.3s ease;
+}
+
+/* --- COLOR THEMES (Palette Decoupled) --- */
+html.theme-light {
+    --bg-main: #f5f5f5; --bg-surface: #ffffff; --bg-card: #ffffff;
+    --text-primary: #121212; --text-secondary: #666666;
+    --primary-color: #6200ee; --secondary-color: #03dac6;
+    --correct: #4caf50; --incorrect: #f44336; --close: #ffeb3b;
+    --border-color: #e0e0e0; --btn-secondary-bg: #e0e0e0; --btn-secondary-text: #121212;
+    --table-header-bg: #f0f0f0;
+}
+
+html.theme-dark {
+    --bg-main: #121212; --bg-surface: #1e1e1e; --bg-card: #1e1e1e;
+    --text-primary: #e0e0e0; --text-secondary: #aaaaaa;
+    --primary-color: #bb86fc; --secondary-color: #03dac6;
+    --correct: #4caf50; --incorrect: #cf6679; --close: #ffeb3b;
+    --border-color: #333333; --btn-secondary-bg: #333333; --btn-secondary-text: #e0e0e0;
+    --table-header-bg: #2c2c2c;
+}
+
+html.theme-dracula {
+    --bg-main: #282a36; --bg-surface: #44475a; --bg-card: #282a36;
+    --text-primary: #f8f8f2; --text-secondary: #6272a4;
+    --primary-color: #bd93f9; --secondary-color: #ff79c6;
+    --correct: #50fa7b; --incorrect: #ff5555; --close: #f1fa8c;
+    --border-color: #6272a4; --btn-secondary-bg: #44475a; --btn-secondary-text: #f8f8f2;
+    --table-header-bg: #44475a;
+}
+
+html.theme-solarized {
+    --bg-main: #002b36; --bg-surface: #073642; --bg-card: #002b36;
+    --text-primary: #839496; --text-secondary: #586e75;
+    --primary-color: #268bd2; --secondary-color: #2aa198;
+    --correct: #859900; --incorrect: #dc322f; --close: #b58900;
+    --border-color: #586e75; --btn-secondary-bg: #073642; --btn-secondary-text: #839496;
+    --table-header-bg: #073642;
+}
+
+html.theme-tokyonight {
+    --bg-main: #1a1b26; --bg-surface: #24283b; --bg-card: #1f2335;
+    --text-primary: #a9b1d6; --text-secondary: #787c99;
+    --primary-color: #7aa2f7; --secondary-color: #bb9af7;
+    --correct: #9ece6a; --incorrect: #f7768e; --close: #e0af68;
+    --border-color: #414868; --btn-secondary-bg: #24283b; --btn-secondary-text: #a9b1d6;
+    --table-header-bg: #24283b;
+}
+
+html.theme-nightowl {
+    --bg-main: #011627; --bg-surface: #0b2942; --bg-card: #011627;
+    --text-primary: #d6deeb; --text-secondary: #5f7e97;
+    --primary-color: #82aaff; --secondary-color: #c792ea;
+    --correct: #addb67; --incorrect: #ef5350; --close: #ecc48d;
+    --border-color: #5f7e97; --btn-secondary-bg: #0b2942; --btn-secondary-text: #d6deeb;
+    --table-header-bg: #0b2942;
+}
+
+html.theme-onedark {
+    --bg-main: #282c34; --bg-surface: #2c313c; --bg-card: #21252b;
+    --text-primary: #abb2bf; --text-secondary: #5c6370;
+    --primary-color: #61afef; --secondary-color: #c678dd;
+    --correct: #98c379; --incorrect: #e06c75; --close: #e5c07b;
+    --border-color: #5c6370; --btn-secondary-bg: #2c313c; --btn-secondary-text: #abb2bf;
+    --table-header-bg: #2c313c;
+}
+
+html.theme-synthwave {
+    --bg-main: #262335; --bg-surface: #2b213a; --bg-card: #241b2f;
+    --text-primary: #ffffff; --text-secondary: #8a889d;
+    --primary-color: #f92aad; --secondary-color: #36f9f6;
+    --correct: #72f1b8; --incorrect: #fe4450; --close: #fede5d;
+    --border-color: #49465a; --btn-secondary-bg: #2b213a; --btn-secondary-text: #ffffff;
+    --table-header-bg: #2b213a;
+}
+
+html.theme-gruvbox {
+    --bg-main: #282828; --bg-surface: #3c3836; --bg-card: #32302f;
+    --text-primary: #ebdbb2; --text-secondary: #a89984;
+    --primary-color: #d3869b; --secondary-color: #fabd2f;
+    --correct: #b8bb26; --incorrect: #fb4934; --close: #fabd2f;
+    --border-color: #504945; --btn-secondary-bg: #3c3836; --btn-secondary-text: #ebdbb2;
+    --table-header-bg: #3c3836;
+}
+
+html.theme-catppuccin {
+    --bg-main: #1e1e2e; --bg-surface: #313244; --bg-card: #181825;
+    --text-primary: #cdd6f4; --text-secondary: #a6adc8;
+    --primary-color: #cba6f7; --secondary-color: #f5c2e7;
+    --correct: #a6e3a1; --incorrect: #f38ba8; --close: #f9e2af;
+    --border-color: #45475a; --btn-secondary-bg: #313244; --btn-secondary-text: #cdd6f4;
+    --table-header-bg: #313244;
+}
+
+html.theme-nord {
+    --bg-main: #2e3440; --bg-surface: #3b4252; --bg-card: #434c5e;
+    --text-primary: #eceff4; --text-secondary: #d8dee9;
+    --primary-color: #88c0d0; --secondary-color: #b48ead;
+    --correct: #a3be8c; --incorrect: #bf616a; --close: #ebcb8b;
+    --border-color: #4c566a; --btn-secondary-bg: #3b4252; --btn-secondary-text: #eceff4;
+    --table-header-bg: #3b4252;
+}
+
+
+/* --- UI STYLES (Structural Decoupled) --- */
+
+/* 1. MATERIAL 3 */
+html.style-material-3 {
+    --border-radius-btn: 20px;
+    --border-radius-card: 16px;
+    --border-radius-input: 12px;
+    --shadow-card: 0 1px 3px 1px rgba(0,0,0,0.15), 0 1px 2px 0 rgba(0,0,0,0.3);
+    --shadow-btn: 0 1px 3px 1px rgba(0,0,0,0.15), 0 1px 2px 0 rgba(0,0,0,0.3);
+    --border-width: 0px;
+}
+
+/* 2. FLUENT UI */
+html.style-fluent {
+    --border-radius-btn: 4px;
+    --border-radius-card: 4px;
+    --border-radius-input: 4px;
+    --shadow-card: 0 1.6px 3.6px 0 rgba(0,0,0,0.132), 0 0.3px 0.9px 0 rgba(0,0,0,0.108);
+    --shadow-btn: none;
+    --border-width: 1px;
+}
+
+/* 3. CARBON DESIGN */
+html.style-carbon {
+    --border-radius-btn: 0px;
+    --border-radius-card: 0px;
+    --border-radius-input: 0px;
+    --shadow-card: none;
+    --shadow-btn: none;
+    --border-width: 1px;
+}
+
+/* 4. TAILWIND DEFAULT */
+html.style-tailwind {
+    --border-radius-btn: 0.375rem;
+    --border-radius-card: 0.5rem;
+    --border-radius-input: 0.375rem;
+    --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-btn: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --border-width: 1px;
+}
+
+/* 5. GLASSMORPHISM */
+html.style-glassmorphism {
+    --border-radius-btn: 30px;
+    --border-radius-card: 20px;
+    --border-radius-input: 15px;
+    --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --shadow-btn: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --border-width: 1px;
+}
+html.style-glassmorphism .card, 
+html.style-glassmorphism .menu-container,
+html.style-glassmorphism .navbar,
+html.style-glassmorphism .modal-content {
+    background-color: transparent !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* 6. NEUMORPHISM */
+html.style-neumorphism {
+    --border-radius-btn: 50px;
+    --border-radius-card: 20px;
+    --border-radius-input: 50px;
+    --shadow-card: 9px 9px 16px rgba(0,0,0,0.3), -9px -9px 16px rgba(255,255,255, 0.1);
+    --shadow-btn: 9px 9px 16px rgba(0,0,0,0.3), -9px -9px 16px rgba(255,255,255, 0.1);
+    --border-width: 0px;
+}
+html.style-neumorphism .card, 
+html.style-neumorphism .menu-container,
+html.style-neumorphism .navbar,
+html.style-neumorphism .modal-content,
+html.style-neumorphism .btn {
+    background-color: var(--bg-main);
+}
+html.style-neumorphism .input-field {
+    box-shadow: inset 6px 6px 10px 0 rgba(0,0,0,0.3), inset -6px -6px 10px 0 rgba(255,255,255, 0.1);
+    background-color: var(--bg-main);
+}
+html.style-neumorphism .btn:active {
+    box-shadow: inset 6px 6px 10px 0 rgba(0,0,0,0.3), inset -6px -6px 10px 0 rgba(255,255,255, 0.1);
+}
+
+/* 7. BRUTALISM */
+html.style-brutalism {
+    --border-radius-btn: 0px;
+    --border-radius-card: 0px;
+    --border-radius-input: 0px;
+    --shadow-card: 8px 8px 0px 0px var(--text-primary);
+    --shadow-btn: 4px 4px 0px 0px var(--text-primary);
+    --border-width: 4px;
+}
+
+/* 8. CHAKRA UI */
+html.style-chakra {
+    --border-radius-btn: 0.375rem;
+    --border-radius-card: 0.5rem;
+    --border-radius-input: 0.375rem;
+    --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-btn: none;
+    --border-width: 1px;
+}
+
+/* 9. ATLASSIAN */
+html.style-atlassian {
+    --border-radius-btn: 3px;
+    --border-radius-card: 3px;
+    --border-radius-input: 3px;
+    --shadow-card: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+    --shadow-btn: none;
+    --border-width: 1px;
+}
+
+/* 10. ANT DESIGN */
+html.style-ant-design {
+    --border-radius-btn: 2px;
+    --border-radius-card: 2px;
+    --border-radius-input: 2px;
+    --shadow-card: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12), 0 5px 12px 4px rgba(0, 0, 0, 0.09);
+    --shadow-btn: 0 2px 0 rgba(0, 0, 0, 0.015);
+    --border-width: 1px;
+}
+
+/* 11. APPLE / IOS */
+html.style-apple {
+    --border-radius-btn: 12px;
+    --border-radius-card: 20px;
+    --border-radius-input: 10px;
+    --shadow-card: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-btn: none;
+    --border-width: 0px;
+}
+html.style-apple .navbar {
+    backdrop-filter: saturate(180%) blur(20px);
+    background-color: rgba(var(--bg-surface-rgb, 255,255,255), 0.7);
+}
+
+/* 12. MATERIAL 2 (Classic) */
+html.style-material-2 {
+    --border-radius-btn: 2px;
+    --border-radius-card: 4px;
+    --border-radius-input: 2px;
+    --shadow-card: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12);
+    --shadow-btn: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+    --border-width: 0px;
+}
+html.style-material-2 .btn { text-transform: uppercase; }
+
+/* 13. BOOTSTRAP 4 */
+html.style-bootstrap {
+    --border-radius-btn: 0.25rem;
+    --border-radius-card: 0.25rem;
+    --border-radius-input: 0.25rem;
+    --shadow-card: none;
+    --shadow-btn: none;
+    --border-width: 1px;
+}
+
+/* 14. WINDOWS 95 RETRO */
+html.style-win95 {
+    --border-radius-btn: 0px;
+    --border-radius-card: 0px;
+    --border-radius-input: 0px;
+    --shadow-card: none;
+    --shadow-btn: none;
+    --border-width: 2px;
+    --border-color: #dfdfdf;
+}
+html.style-win95 .card, html.style-win95 .menu-container, html.style-win95 .btn, html.style-win95 .navbar {
+    border-style: outset;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    background-color: #c0c0c0;
+    color: black;
+}
+html.style-win95 .input-field {
+    border-style: inset;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background-color: white;
+    color: black;
+}
+
+/* 15. CYBERPUNK */
+html.style-cyberpunk {
+    --border-radius-btn: 0px;
+    --border-radius-card: 0px;
+    --border-radius-input: 0px;
+    --shadow-card: 0 0 15px var(--primary-color);
+    --shadow-btn: 0 0 10px var(--secondary-color);
+    --border-width: 2px;
+    --border-color: var(--primary-color);
+}
+html.style-cyberpunk .btn {
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+html.style-cyberpunk .card {
+    clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+}
+
+/* 16. SKEUOMORPHIC */
+html.style-skeuomorphic {
+    --border-radius-btn: 8px;
+    --border-radius-card: 12px;
+    --border-radius-input: 6px;
+    --shadow-card: 0 4px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+    --shadow-btn: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+    --border-width: 1px;
+}
+html.style-skeuomorphic .btn, html.style-skeuomorphic .navbar {
+    background-image: linear-gradient(to bottom, rgba(255,255,255,0.2), rgba(0,0,0,0.2));
+}
+
+/* 17. FLAT DESIGN */
+html.style-flat {
+    --border-radius-btn: 0px;
+    --border-radius-card: 0px;
+    --border-radius-input: 0px;
+    --shadow-card: none;
+    --shadow-btn: none;
+    --border-width: 0px;
+}
+
+/* 18. BAUHAUS */
+html.style-bauhaus {
+    --border-radius-btn: 0px;
+    --border-radius-card: 0px;
+    --border-radius-input: 0px;
+    --shadow-card: none;
+    --shadow-btn: none;
+    --border-width: 8px;
+    --border-color: var(--text-primary);
+}
+
+/* 19. MINIMALIST (NOTION) */
+html.style-notion {
+    --border-radius-btn: 3px;
+    --border-radius-card: 3px;
+    --border-radius-input: 3px;
+    --shadow-card: none;
+    --shadow-btn: none;
+    --border-width: 1px;
+}
+html.style-notion .card:hover {
+    background-color: var(--table-header-bg);
+}
+
+/* 20. WIREFRAME */
+html.style-wireframe {
+    --border-radius-btn: 2px;
+    --border-radius-card: 2px;
+    --border-radius-input: 2px;
+    --shadow-card: none;
+    --shadow-btn: none;
+    --border-width: 2px;
+    --border-color: var(--text-primary);
+    --border-style: dashed;
+}
+html.style-wireframe .card, html.style-wireframe .btn, html.style-wireframe .menu-container {
+    background-color: transparent;
+}
+
+
+/* --- COMMON STYLES --- */
+.control-panel {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    padding: 20px;
+    border-bottom: var(--border-width) solid var(--border-color); /* solid for controls to avoid dashed mess */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-sizing: border-box;
+}
+
+.control-panel h3 { margin: 0; }
+.control-group { display: flex; align-items: center; gap: 10px; }
+
+.navbar {
+    margin-top: 80px; /* Offset for control panel */
+    padding: 15px 30px;
+    background-color: var(--bg-surface);
+    border-bottom: var(--border-width) var(--border-style) var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-card);
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.nav-auth {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.auth-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.menu-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 40px;
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius-card);
+    box-shadow: var(--shadow-card);
+    border: var(--border-width) var(--border-style) var(--border-color);
+}
+
+h1, h2, h3 {
+    color: var(--text-primary);
+    margin-top: 0;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+}
+
+hr {
+    border: 0;
+    border-top: var(--border-width) var(--border-style) var(--border-color);
+    margin: 40px 0;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+}
+
+.input-field {
+    padding: 12px;
+    border-radius: var(--border-radius-input);
+    border: var(--border-width) var(--border-style) var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+}
+
+.input-field:focus {
+    border-color: var(--primary-color);
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: var(--border-radius-btn);
+    border: var(--border-width) var(--border-style) var(--border-color);
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+    box-shadow: var(--shadow-btn);
+    transition: filter 0.2s, transform 0.2s;
+}
+
+.btn:hover:not([disabled]) {
+    filter: brightness(0.9);
+}
+
+.primary-btn {
+    background-color: var(--primary-color);
+    color: var(--btn-primary-text);
+    border-color: var(--primary-color);
+}
+
+.secondary-btn {
+    background-color: var(--btn-secondary-bg);
+    color: var(--btn-secondary-text);
+}
+
+.minimal-btn {
+    background-color: transparent;
+    color: var(--primary-color);
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.card {
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius-card);
+    padding: 20px;
+    border: var(--border-width) var(--border-style) var(--border-color);
+    box-shadow: var(--shadow-card);
+}
+
+.card.selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius-card);
+    overflow: hidden;
+    border: var(--border-width) var(--border-style) var(--border-color);
+    box-shadow: var(--shadow-card);
+}
+
+.data-table th, .data-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: var(--border-width) var(--border-style) var(--border-color);
+}
+
+.data-table th {
+    background-color: var(--table-header-bg);
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #fff;
+}
+.badge.success { background-color: var(--correct); }
+.badge.warning { background-color: var(--close); color: #000; }
+.badge.error { background-color: var(--incorrect); }
+
+.mini-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: var(--btn-primary-text);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.modal-inline {
+    margin: 40px auto;
+    max-width: 500px;
+    background-color: rgba(0,0,0,0.5); /* backdrop */
+    padding: 40px;
+    border-radius: 8px;
+}
+
+.modal-content {
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius-card);
+    padding: 30px;
+    border: var(--border-width) var(--border-style) var(--border-color);
+    box-shadow: var(--shadow-modal);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 30px;
+}
