@@ -1,3 +1,13 @@
+# v2.6.0 - June 16, 2026
+
+### ✨ Gameplay & Features
+* **Its All About Style:** updated style to conform to Material Design 3
+  * *Changed font to Oswald*
+* **Themes:** Added color themes for the website
+  * *Now you can choose your favorite theme on the settings page*
+
+---
+
 # v2.5.1 - June 16, 2026
 
 ### 🐛 Bug Fixes
@@ -38,7 +48,6 @@
 * **Hall of Fame:** Added Loredle hall of fame page.
   * *Displays the top 5 users with the most 1st place daily finishes*
   * *Displays every daily 1st place finisher every*
-* 
 
 ### 🐛 Bug Fixes
 * **version-trainer footer:** Added footer (with disclaimer) to Version Trainer page.
