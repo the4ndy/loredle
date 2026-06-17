@@ -61,26 +61,28 @@
     </div>
 
     <!-- AUTH MODAL (POP-OVER) -->
-    <div id="auth-modal" class="modal">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
+    <div class="modal" id="auth-modal">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2 id="auth-modal-title">Account Access</h2>
+                <h2 style="color: var(--primary-color);">Welcome to Loredle</h2>
                 <span class="close-btn" onclick="closeAuthModal()">&times;</span>
             </div>
-            <input type="text" id="auth-username" class="input-field" placeholder="Username">
-            <input type="password" id="auth-password" class="input-field" placeholder="Password">
-
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn secondary-btn" style="flex: 1;" onclick="loginUser()">Log In</button>
-                <button class="btn primary-btn" style="flex: 1;" onclick="registerUser()">Sign Up</button>
+            <div class="form-group" style="margin: 0 auto;">
+                <input type="text" id="auth-username" class="input-field" placeholder="Username">
+                <input type="password" id="auth-password" class="input-field" placeholder="Password">
+                <div class="button-group" style="justify-content: center;">
+                    <button class="btn primary-btn" onclick="loginUser()">Login</button>
+                    <button class="btn secondary-btn" onclick="registerUser()">Register</button>
+                </div>
+                <p id="auth-message" style="color: var(--incorrect); font-weight: bold; text-align: center; margin-top: 10px;"></p>
             </div>
-
-            <p id="auth-message" style="color: var(--incorrect); font-weight: bold; margin-top: 15px;"></p>
         </div>
     </div>
 
     <!-- FOOTER -->
     <footer class="site-footer">
+        <a href="feedback.html" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Give Feedback</a>
+        <span class="footer-separator">|</span>
         <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
         <span class="footer-separator">|</span>
         <a href="change-log.html">Change Log</a>

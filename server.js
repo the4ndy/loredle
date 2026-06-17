@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -9,9 +11,24 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// --- MONGODB CONNECTION ---
+// --- MONGODB CONNECTION & MIGRATION ---
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to Database'))
+    .then(async () => {
+        console.log('Connected to Database');
+        
+        // Admin Migration Check
+        const adminUser = await User.findOne({ username: 'rov_andy' });
+        if (adminUser && adminUser.role !== 'admin') {
+            adminUser.role = 'admin';
+            await adminUser.save();
+            console.log('Migrated rov_andy to admin role.');
+        } else if (!adminUser) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            const newAdmin = new User({ username: 'rov_andy', password: hashedPassword, role: 'admin' });
+            await newAdmin.save();
+            console.log('Created rov_andy admin account.');
+        }
+    })
     .catch(err => console.error('Database connection error:', err));
 
 // --- DATABASE SCHEMAS ---
@@ -19,18 +36,34 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     avatar: { type: String, default: 'default' },
-    theme: { type: String, default: 'default' }
+    theme: { type: String, default: 'default' },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' }
 });
 const User = mongoose.model('User', userSchema);
+
+const feedbackSchema = new mongoose.Schema({
+    name: { type: String, default: 'anonymous' },
+    type: { type: String, enum: ['Feature Request', 'Feedback', 'Bug Report'], required: true },
+    text: { type: String, maxlength: 1000, required: true },
+    status: { type: String, enum: ['Open', 'In Progress', 'Closed'], default: 'Open' },
+    date: { type: Date, default: Date.now },
+    notes: [{ author: String, text: String, date: { type: Date, default: Date.now } }]
+});
+const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 const scoreSchema = new mongoose.Schema({
     username: { type: String, required: true },
     date: { type: String, required: true },
     tries: { type: Number, required: true },
-    targetCard: { type: String },
     guesses: { type: [String] }
 });
 const Score = mongoose.model('Score', scoreSchema);
+
+const answerLogSchema = new mongoose.Schema({
+    date: { type: String, required: true, unique: true },
+    targetCard: { type: String, required: true }
+});
+const AnswerLog = mongoose.model('AnswerLog', answerLogSchema);
 
 // UPDATED: Arcade Score Schema (Uses emojis instead of initials)
 const arcadeScoreSchema = new mongoose.Schema({
@@ -64,7 +97,14 @@ app.post('/api/register', async (req, res) => {
         const newUser = new User({ username, password: hashedPassword });
         await newUser.save();
 
-        res.status(201).json({ message: 'Registration successful!', avatar: newUser.avatar, theme: newUser.theme });
+        const token = jwt.sign({ username: newUser.username, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+        res.status(201).json({ 
+            message: 'Registration successful!', 
+            avatar: newUser.avatar, 
+            theme: newUser.theme,
+            token: token
+        });
     } catch (err) {
         res.status(500).json({ error: 'Server error during registration.' });
     }
@@ -80,7 +120,15 @@ app.post('/api/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ error: 'Invalid password.' });
 
-        res.status(200).json({ message: 'Login successful!', avatar: user.avatar, theme: user.theme });
+        const token = jwt.sign({ username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+        res.status(200).json({ 
+            message: 'Login successful!', 
+            avatar: user.avatar, 
+            theme: user.theme,
+            role: user.role,
+            token: token
+        });
     } catch (err) {
         res.status(500).json({ error: 'Server error during login.' });
     }
@@ -167,8 +215,16 @@ app.post('/api/submit-score', async (req, res) => {
             const existingScore = await Score.findOne({ username, date: today });
             if (existingScore) return res.status(400).json({ error: "You already submitted today's score!" });
 
-            const newScore = new Score({ username, date: today, tries, targetCard, guesses });
+            const newScore = new Score({ username, date: today, tries, guesses });
             await newScore.save();
+        }
+
+        if (targetCard) {
+            const existingAnswer = await AnswerLog.findOne({ date: today });
+            if (!existingAnswer) {
+                const newAnswer = new AnswerLog({ date: today, targetCard });
+                await newAnswer.save();
+            }
         }
 
         if (process.env.DISCORD_WEBHOOK_URL && shareText) {
@@ -257,6 +313,246 @@ app.get('/api/arcade-leaderboard', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch arcade leaderboard." });
     }
+});
+
+// --- MIDDLEWARE: Admin Check ---
+async function isAdmin(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(403).json({ error: 'Access denied.' });
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err || decoded.role !== 'admin') return res.status(403).json({ error: 'Access denied.' });
+        req.adminUser = decoded;
+        next();
+    });
+}
+
+// --- FEEDBACK ROUTES ---
+app.post('/api/feedback', async (req, res) => {
+    try {
+        const { name, type, text, anonymous } = req.body;
+        const submitName = anonymous ? 'anonymous' : (name || 'anonymous');
+        const newFeedback = new Feedback({ name: submitName, type, text });
+        await newFeedback.save();
+        res.status(201).json({ message: "Feedback submitted successfully!" });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to submit feedback." });
+    }
+});
+
+// --- ADMIN API ROUTES ---
+app.get('/api/admin/users', isAdmin, async (req, res) => {
+    try {
+        const users = await User.find({}, '-password').lean();
+        res.status(200).json(users);
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+app.put('/api/admin/users/:id', isAdmin, async (req, res) => {
+    try {
+        const { username, role, theme, avatar, newPassword } = req.body;
+        const updateData = { username, role, theme, avatar };
+        if (newPassword) {
+            updateData.password = await bcrypt.hash(newPassword, 10);
+        }
+        await User.findByIdAndUpdate(req.params.id, updateData);
+        res.status(200).json({ message: "Updated" });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+app.delete('/api/admin/users/:id', isAdmin, async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Deleted" });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+
+app.get('/api/admin/scores', isAdmin, async (req, res) => {
+    try {
+        const scores = await Score.find().lean();
+        const answers = await AnswerLog.find().lean();
+        const answerMap = {};
+        answers.forEach(a => answerMap[a.date] = a.targetCard);
+        
+        scores.forEach(s => s.targetCard = answerMap[s.date] || 'Unknown');
+        res.status(200).json(scores);
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+app.put('/api/admin/scores/:id', isAdmin, async (req, res) => {
+    try {
+        const { username, date, tries, guesses } = req.body;
+        await Score.findByIdAndUpdate(req.params.id, { username, date, tries, guesses });
+        res.status(200).json({ message: "Updated" });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+app.delete('/api/admin/scores/:id', isAdmin, async (req, res) => {
+    try {
+        await Score.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Deleted" });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+
+app.get('/api/admin/feedbacks', isAdmin, async (req, res) => {
+    try {
+        const feedbacks = await Feedback.find().sort({ date: -1 }).lean();
+        res.status(200).json(feedbacks);
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+app.put('/api/admin/feedbacks/:id', isAdmin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        await Feedback.findByIdAndUpdate(req.params.id, { status });
+        res.status(200).json({ message: "Updated" });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+app.post('/api/admin/feedbacks/:id/notes', isAdmin, async (req, res) => {
+    try {
+        const { text } = req.body;
+        const feedback = await Feedback.findById(req.params.id);
+        if (!feedback) return res.status(404).json({ error: "Not found" });
+        
+        feedback.notes.push({ author: req.adminUser.username, text });
+        await feedback.save();
+        res.status(201).json({ message: "Note added", notes: feedback.notes });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+app.delete('/api/admin/feedbacks/:id', isAdmin, async (req, res) => {
+    try {
+        await Feedback.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Deleted" });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+
+app.get('/api/admin/analytics', isAdmin, async (req, res) => {
+    try {
+        const users = await User.find().lean();
+        const scores = await Score.find().lean();
+        const feedbacks = await Feedback.find().lean();
+        const answers = await AnswerLog.find().lean();
+
+        const answerMap = {};
+        answers.forEach(a => answerMap[a.date] = a.targetCard);
+
+        const totalRegisteredUsers = users.length;
+        const totalAdmins = users.filter(u => u.role === 'admin').length;
+        const totalGamesPlayed = scores.length;
+        const openFeedbacks = feedbacks.filter(f => f.status === 'Open').length;
+
+        const globalFirstGuesses = {};
+        const globalIncorrectGuesses = {};
+
+        const dailyData = {};
+
+        scores.forEach(s => {
+            const date = s.date;
+            if (!dailyData[date]) {
+                dailyData[date] = {
+                    date: date,
+                    targetCard: answerMap[date] || 'Unknown',
+                    gamesPlayed: 0,
+                    totalGuesses: 0,
+                    fewestGuesses: Infinity,
+                    mostGuesses: -Infinity,
+                    winnersFewest: [],
+                    incorrectGuesses: {},
+                    firstGuesses: {}
+                };
+            }
+
+            const dayObj = dailyData[date];
+            dayObj.gamesPlayed++;
+            dayObj.totalGuesses += s.tries;
+
+            if (s.tries < dayObj.fewestGuesses) {
+                dayObj.fewestGuesses = s.tries;
+                dayObj.winnersFewest = [s.username];
+            } else if (s.tries === dayObj.fewestGuesses) {
+                if (!dayObj.winnersFewest.includes(s.username)) {
+                    dayObj.winnersFewest.push(s.username);
+                }
+            }
+
+            if (s.tries > dayObj.mostGuesses) dayObj.mostGuesses = s.tries;
+
+            const guessesArr = s.guesses || [];
+            
+            if (guessesArr.length > 0) {
+                const first = guessesArr[0];
+                globalFirstGuesses[first] = (globalFirstGuesses[first] || 0) + 1;
+                dayObj.firstGuesses[first] = (dayObj.firstGuesses[first] || 0) + 1;
+            }
+
+            guessesArr.forEach(g => {
+                const ans = answerMap[date] || 'Unknown';
+                if (g !== ans) {
+                    globalIncorrectGuesses[g] = (globalIncorrectGuesses[g] || 0) + 1;
+                    dayObj.incorrectGuesses[g] = (dayObj.incorrectGuesses[g] || 0) + 1;
+                }
+            });
+        });
+
+        let mostCommonIncorrect = 'None';
+        let maxInc = 0;
+        for (const [card, count] of Object.entries(globalIncorrectGuesses)) {
+            if (count > maxInc) { maxInc = count; mostCommonIncorrect = card; }
+        }
+
+        let mostCommonFirst = 'None';
+        let maxFirst = 0;
+        for (const [card, count] of Object.entries(globalFirstGuesses)) {
+            if (count > maxFirst) { maxFirst = count; mostCommonFirst = card; }
+        }
+
+        const sortedDates = Object.keys(dailyData).sort();
+        const dailyCounts = [];
+        const dailyAvgGuesses = [];
+
+        const dailyStatsTable = sortedDates.map(date => {
+            const dayObj = dailyData[date];
+            dailyCounts.push(dayObj.gamesPlayed);
+            const avg = dayObj.gamesPlayed > 0 ? (dayObj.totalGuesses / dayObj.gamesPlayed).toFixed(2) : 0;
+            dailyAvgGuesses.push(avg);
+
+            let dayMostInc = 'None';
+            let dayMaxInc = 0;
+            for (const [c, count] of Object.entries(dayObj.incorrectGuesses)) {
+                if (count > dayMaxInc) { dayMaxInc = count; dayMostInc = c; }
+            }
+
+            let dayMostFirst = 'None';
+            let dayMaxFirst = 0;
+            for (const [c, count] of Object.entries(dayObj.firstGuesses)) {
+                if (count > dayMaxFirst) { dayMaxFirst = count; dayMostFirst = c; }
+            }
+
+            if (dayObj.fewestGuesses === Infinity) dayObj.fewestGuesses = 0;
+            if (dayObj.mostGuesses === -Infinity) dayObj.mostGuesses = 0;
+
+            return {
+                date: dayObj.date,
+                answerCard: dayObj.targetCard,
+                fewestGuesses: dayObj.fewestGuesses,
+                mostGuesses: dayObj.mostGuesses,
+                avgGuesses: avg,
+                gamesPlayed: dayObj.gamesPlayed,
+                winners: dayObj.winnersFewest.join(', '),
+                mostGuessedIncorrect: dayMaxInc > 0 ? `${dayMostInc} (${dayMaxInc})` : 'None',
+                mostCommonFirst: dayMaxFirst > 1 ? `${dayMostFirst} (${dayMaxFirst})` : 'None'
+            };
+        });
+        
+        res.status(200).json({
+            dates: sortedDates,
+            dailyCounts,
+            dailyAvgGuesses,
+            totalRegisteredUsers,
+            totalAdmins,
+            totalGamesPlayed,
+            openFeedbacks,
+            mostCommonIncorrect,
+            mostCommonFirst,
+            dailyStatsTable
+        });
+    } catch (err) { res.status(500).json({ error: "Failed" }); }
 });
 
 const PORT = process.env.PORT || 10000;

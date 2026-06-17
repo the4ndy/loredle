@@ -108,6 +108,19 @@ function renderNavbar() {
         }
 
         authContainer.appendChild(avatarDiv);
+
+        const dropdown = document.getElementById('nav-dropdown');
+        if (dropdown) {
+            let adminHtml = localStorage.getItem('loredle_role') === 'admin' ? 
+                `<div class="dropdown-item" onclick="window.location.href='/admin/index.html'">Admin Portal</div>` : '';
+            dropdown.innerHTML = `
+                ${adminHtml}
+                <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
+                <div class="dropdown-item" onclick="window.location.href='history.html'">History</div>
+                <div class="dropdown-item" onclick="window.location.href='feedback.html'">Feedback</div>
+                <div class="dropdown-item" onclick="logOut()">Log Out</div>
+            `;
+        }
     } else {
         authContainer.innerHTML += `
             <button class="btn primary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openAuthModal()">Login / Register</button>
@@ -123,6 +136,9 @@ function toggleDropdown() {
 function logOut() {
     localStorage.removeItem('loredle_username');
     localStorage.removeItem('loredle_avatar');
+    localStorage.removeItem('loredle_theme');
+    localStorage.removeItem('loredle_role');
+    localStorage.removeItem('loredle_token');
     window.location.href = 'index.html';
 }
 
@@ -196,6 +212,8 @@ async function loginUser() {
             localStorage.setItem('loredle_username', usernameInput);
             localStorage.setItem('loredle_avatar', data.avatar || 'default');
             localStorage.setItem('loredle_theme', data.theme || 'default');
+            if (data.role) localStorage.setItem('loredle_role', data.role);
+            if (data.token) localStorage.setItem('loredle_token', data.token);
             window.location.reload();
         } else {
             msg.textContent = data.error;
@@ -222,6 +240,8 @@ async function registerUser() {
             localStorage.setItem('loredle_username', usernameInput);
             localStorage.setItem('loredle_avatar', data.avatar || 'default');
             localStorage.setItem('loredle_theme', data.theme || 'default');
+            if (data.role) localStorage.setItem('loredle_role', data.role);
+            if (data.token) localStorage.setItem('loredle_token', data.token);
             window.location.reload();
         } else {
             msg.textContent = data.error;
@@ -626,11 +646,21 @@ function getDailyTargetCard() {
     const options = { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' };
     const todayCST = new Intl.DateTimeFormat('en-CA', options).format(new Date());
 
-    let hash = 0;
-    for (let i = 0; i < todayCST.length; i++) {
-        hash = todayCST.charCodeAt(i) + ((hash << 5) - hash);
+    // Generate a 32-bit seed from the date string
+    let h = 0xdeadbeef;
+    for(let i = 0; i < todayCST.length; i++) {
+        h = Math.imul(h ^ todayCST.charCodeAt(i), 2654435761);
     }
-    const index = Math.abs(hash) % cards.length;
+    h = (h ^ h >>> 16) >>> 0;
+    
+    // Mulberry32 PRNG for uniform distribution
+    let a = h;
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    const rand = ((t ^ t >>> 14) >>> 0) / 4294967296;
+
+    const index = Math.floor(rand * cards.length);
     return cards[index];
 }
 

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback - Loredle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand" style="text-decoration: none;">LOREDLE</a>
+        <div class="nav-auth" id="nav-auth-section">
+            <!-- Auth injected via JS -->
+        </div>
+    </nav>
+
+    <div class="menu-container">
+        <h1>Feedback</h1>
+        <p class="subtitle" style="text-align: center;">Help us improve Loredle!</p>
+        
+        <form id="feedback-form" class="form-group" style="margin: 0 auto;">
+            <div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+                <label for="fb-name"><strong>Name</strong></label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="fb-name" class="input-field" placeholder="Your Name" style="margin-bottom: 0; flex: 1;">
+                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="fb-anonymous"> Anonymous
+                    </label>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-top: 10px;">
+                <label><strong>Type</strong></label>
+                <div style="display: flex; gap: 15px; margin-top: 5px;">
+                    <label><input type="radio" name="fb-type" value="Feedback" checked> Feedback</label>
+                    <label><input type="radio" name="fb-type" value="Feature Request"> Feature</label>
+                    <label><input type="radio" name="fb-type" value="Bug Report"> Bug Report</label>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-top: 10px;">
+                <label for="fb-text"><strong>Details</strong> (max 1000 chars)</label>
+                <textarea id="fb-text" class="input-field" rows="6" maxlength="1000" placeholder="What's on your mind?" required></textarea>
+            </div>
+
+            <button type="submit" class="btn primary-btn" style="margin-top: 15px;">Submit</button>
+            <p id="fb-message" style="color: var(--correct); font-weight: bold; display: none; text-align: center; margin-top: 10px;"></p>
+        </form>
+    </div>
+
+    <!-- Login/Register Modals included by script.js -->
+    <script src="script.js"></script>
+    <script src="feedback.js"></script>
+</body>
+</html>

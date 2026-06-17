@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loredle | Admin Portal</title>
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Theme style AdminLTE -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+  <!-- Custom Admin CSS -->
+  <style>
+    .section-view { display: none; }
+    .section-view.active { display: block; }
+    .btn-action { margin-right: 5px; cursor: pointer; }
+  </style>
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="/" class="nav-link">Return to Loredle Hub</a>
+      </li>
+    </ul>
+
+    <!-- Right navbar links -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="#" id="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="#" class="brand-link">
+      <span class="brand-text font-weight-light">Loredle Admin</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Sidebar user panel -->
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="info">
+          <a href="#" class="d-block" id="admin-username-display">Administrator</a>
+        </div>
+      </div>
+
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          
+          <li class="nav-item">
+            <a href="#" class="nav-link active" data-target="dashboard">
+              <i class="nav-link-icon fas fa-tachometer-alt"></i>
+              <p>Dashboard</p>
+            </a>
+          </li>
+          
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="users">
+              <i class="nav-link-icon fas fa-users"></i>
+              <p>Users</p>
+            </a>
+          </li>
+          
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="scores">
+              <i class="nav-link-icon fas fa-trophy"></i>
+              <p>Scores / HoF</p>
+            </a>
+          </li>
+          
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="feedback">
+              <i class="nav-link-icon fas fa-comments"></i>
+              <p>Communications</p>
+            </a>
+          </li>
+
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 id="page-title">Dashboard</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard" class="section-view active">
+          <div class="row">
+            <div class="col-lg-3 col-6"><div class="small-box bg-info"><div class="inner"><h3 id="stat-users">0</h3><p>Registered Users</p></div><div class="icon"><i class="fas fa-users"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-primary"><div class="inner"><h3 id="stat-admins">0</h3><p>Total Admins</p></div><div class="icon"><i class="fas fa-user-shield"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-success"><div class="inner"><h3 id="stat-games">0</h3><p>Total Games Played</p></div><div class="icon"><i class="fas fa-gamepad"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-light"><div class="inner"><h3 id="stat-fb-open">0</h3><p>Open Feedbacks</p></div><div class="icon"><i class="fas fa-envelope-open"></i></div></div></div>
+
+            <div class="col-lg-6 col-12"><div class="info-box"><span class="info-box-icon bg-danger"><i class="fas fa-times-circle"></i></span><div class="info-box-content"><span class="info-box-text">Most Common Incorrect Guess</span><span class="info-box-number" id="stat-guess">None</span></div></div></div>
+            <div class="col-lg-6 col-12"><div class="info-box"><span class="info-box-icon bg-warning"><i class="fas fa-play"></i></span><div class="info-box-content"><span class="info-box-text">Most Common First Guess</span><span class="info-box-number" id="stat-first">None</span></div></div></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card card-primary">
+                <div class="card-header"><h3 class="card-title">Games Played Per Day</h3></div>
+                <div class="card-body"><div class="chart"><canvas id="gamesChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas></div></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card card-info">
+                <div class="card-header"><h3 class="card-title">Average Guesses Per Day</h3></div>
+                <div class="card-body"><div class="chart"><canvas id="avgGuessesChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas></div></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header border-0"><h3 class="card-title">Daily Statistics</h3></div>
+                <div class="card-body">
+                  <table id="table-daily-stats" class="table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Answer Card</th>
+                        <th>Games Played</th>
+                        <th>Fewest Guesses</th>
+                        <th>Most Guesses</th>
+                        <th>Avg Guesses</th>
+                        <th>Winners (Fewest)</th>
+                        <th>Top Incorrect Guess</th>
+                        <th>Top First Guess</th>
+                      </tr>
+                    </thead>
+                    <tbody id="daily-stats-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- USERS VIEW -->
+        <div id="view-users" class="section-view">
+          <div class="card">
+            <div class="card-header border-0">
+              <h3 class="card-title">User Management</h3>
+            </div>
+            <div class="card-body">
+              <table id="table-users" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Theme</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="users-table-body">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCORES VIEW -->
+        <div id="view-scores" class="section-view">
+          <div class="card">
+            <div class="card-header border-0">
+              <h3 class="card-title">Scores & Hall of Fame</h3>
+            </div>
+            <div class="card-body">
+              <table id="table-scores" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Username</th>
+                  <th>Tries</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="scores-table-body">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEEDBACK VIEW -->
+        <div id="view-feedback" class="section-view">
+          <div class="card">
+            <div class="card-header border-0 d-flex justify-content-between">
+              <h3 class="card-title">Feedback & Communications</h3>
+              <div class="card-tools">
+                <select id="feedback-filter" class="form-control form-control-sm">
+                  <option value="All">All Status</option>
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-body">
+              <table id="table-feedback" class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Text</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="feedback-table-body">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal fade" id="modal-user">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Edit User</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="edit-user-id">
+          <div class="form-group"><label>Username</label><input type="text" id="edit-user-username" class="form-control"></div>
+          <div class="form-group"><label>Role</label><select id="edit-user-role" class="form-control"><option value="user">User</option><option value="admin">Admin</option></select></div>
+          <div class="form-group"><label>Theme</label><select id="edit-user-theme" class="form-control"></select></div>
+          <div class="form-group"><label>Avatar</label><select id="edit-user-avatar" class="form-control"></select></div>
+          <div class="form-group"><label>Reset Password (leave blank to keep current)</label><input type="password" id="edit-user-password" class="form-control"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" onclick="saveUser()">Save</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modal-score">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Edit Score</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="edit-score-id">
+          <div class="form-group"><label>Username</label><input type="text" id="edit-score-username" class="form-control" readonly></div>
+          <div class="form-group"><label>Date</label><input type="text" id="edit-score-date" class="form-control" readonly></div>
+          <div class="form-group"><label>Tries</label><input type="number" id="edit-score-tries" class="form-control"></div>
+          <div class="form-group"><label>Target Card</label><input type="text" id="edit-score-target" class="form-control" readonly></div>
+          <div class="form-group"><label>Guesses (comma separated)</label><input type="text" id="edit-score-guesses" class="form-control"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" onclick="saveScore()">Save</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modal-feedback">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">View Feedback</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="edit-fb-id">
+          <div class="row">
+            <div class="col-md-6">
+               <p><strong>Name:</strong> <span id="view-fb-name"></span></p>
+               <p><strong>Type:</strong> <span id="view-fb-type"></span></p>
+               <p><strong>Date:</strong> <span id="view-fb-date"></span></p>
+               <div class="form-group"><label>Status</label><select id="edit-fb-status" class="form-control"><option>Open</option><option>In Progress</option><option>Closed</option></select></div>
+            </div>
+            <div class="col-md-6">
+               <label>Message:</label>
+               <div class="p-2 border bg-light" id="view-fb-text" style="min-height:100px;"></div>
+            </div>
+          </div>
+          <hr>
+          <h5>Notes</h5>
+          <div id="view-fb-notes" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;"></div>
+          <div class="form-group">
+            <label>Add a Note</label>
+            <textarea id="edit-fb-newnote" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="addFeedbackNote()">Add Note</button>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" onclick="saveFeedback()">Save Status</button></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="main-footer">
+    <strong>Loredle Admin Portal.</strong>
+  </footer>
+</div>
+
+<!-- REQUIRED SCRIPTS -->
+<!-- jQuery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+<!-- ChartJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+<!-- Custom Admin Logic -->
+<script src="admin.js"></script>
+</body>
+</html>
