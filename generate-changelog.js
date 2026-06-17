@@ -8,7 +8,7 @@ if (!newVersion) {
     process.exit(1);
 }
 
-const changelogPath = path.join(__dirname, 'public', 'CHANGELOG.md');
+const changelogPath = path.join(__dirname, 'public', 'changelog.md');
 const packagePath = path.join(__dirname, 'package.json');
 
 const options = { timeZone: 'America/Chicago', year: 'numeric', month: 'long', day: 'numeric' };
@@ -80,10 +80,10 @@ try {
         fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 2) + '\n');
     }
 
-    console.log(`✅ Generated v${newVersion} in public/CHANGELOG.md`);
+    console.log(`✅ Generated v${newVersion} in public/changelog.md`);
     console.log(`✅ Bumped package.json to v${newVersion}\n`);
     console.log(`NEXT STEPS:`);
-    console.log(`1. Open CHANGELOG.md and add your narrative summary sentence.`);
+    console.log(`1. Open changelog.md and add your narrative summary sentence.`);
     console.log(`2. Run: npm run release:finish`);
 
 } catch (error) {
