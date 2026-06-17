@@ -1,3 +1,17 @@
+# v2.8.0 - June 17, 2026
+
+### ✨ Gameplay & Features
+* **Feedback:** We want to hear from you for Feedback, Bug Fixes, and Feature Requests
+  * *Feedback can now be submitted with attribution or anonymously*
+  * *Feedback can be in the form of general feedback, bug report, or feature request*
+  * *Communication sent via feedback form only viewable by the game developers*
+
+### 🐛 Bug Fixes
+* **Release scripts:** Fixed bug in release script causing additional commits.
+  * *chore: commit changelog narrative*
+
+---
+
 # v2.7.0 - June 17, 2026
 
 ### ✨ Gameplay & Features
