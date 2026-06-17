@@ -1,3 +1,17 @@
+# v2.7.0 - June 17, 2026
+
+### ✨ Gameplay & Features
+* **Admin Portal:** Added admin portal to manage backend
+  * *Not accessible to users but useful for managing the app*
+
+### 🐛 Bug Fixes
+* **Answer Card Generation:** Fixed bug in random answer card Generation
+  * *Previous Daily Answer Card were generated in a predictable method. This has been resolved.*
+* **Backend Reorganization:** Reformatted database tables to allow for better analytics and features going forward
+  * *chore: changelog update*
+
+---
+
 # v2.6.0 - June 16, 2026
 
 ### ✨ Gameplay & Features
