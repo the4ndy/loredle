@@ -1,3 +1,13 @@
+# v2.9.0 - June 25, 2026
+
+### ✨ Gameplay & Features
+* **Updated Admin:** Added new metrics to admin portal
+  * *Now integrates with Google analytics*
+* **Google Analytics:** Now tracking site data with Google analytics
+  * *This will help ensure server resources are optimized for expected sessions*
+
+---
+
 # v2.8.0 - June 17, 2026
 
 ### ✨ Gameplay & Features
