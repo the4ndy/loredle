@@ -5,6 +5,9 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const { BetaAnalyticsDataClient } = require('@google-analytics/data');
+
+const analyticsDataClient = new BetaAnalyticsDataClient();
 
 const app = express();
 app.use(cors());
@@ -553,6 +556,184 @@ app.get('/api/admin/analytics', isAdmin, async (req, res) => {
             dailyStatsTable
         });
     } catch (err) { res.status(500).json({ error: "Failed" }); }
+});
+
+app.get('/api/admin/ga-data', isAdmin, async (req, res) => {
+    try {
+        const propertyId = process.env.GA4_PROPERTY_ID;
+        
+        // 1. Realtime Active Users
+        const [realtimeResponse] = await analyticsDataClient.runRealtimeReport({
+            property: `properties/${propertyId}`,
+            metrics: [{ name: 'activeUsers' }]
+        });
+        const activeUsers = realtimeResponse.rows && realtimeResponse.rows.length > 0 ? realtimeResponse.rows[0].metricValues[0].value : 0;
+
+        // 2. Daily Metrics (last 30 days)
+        const [dailyResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'date' }],
+            metrics: [{ name: 'sessions' }, { name: 'totalUsers' }, { name: 'screenPageViews' }],
+            orderBys: [{ dimension: { dimensionName: 'date' }, desc: false }]
+        });
+        const dailyData = (dailyResponse.rows || []).map(row => ({
+            date: row.dimensionValues[0].value,
+            sessions: parseInt(row.metricValues[0].value),
+            users: parseInt(row.metricValues[1].value),
+            pageviews: parseInt(row.metricValues[2].value)
+        }));
+
+        // 3. Top Pages
+        const [pagesResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'pagePath' }],
+            metrics: [{ name: 'screenPageViews' }],
+            orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
+            limit: 10
+        });
+        const topPages = (pagesResponse.rows || []).map(row => ({
+            path: row.dimensionValues[0].value,
+            views: parseInt(row.metricValues[0].value)
+        }));
+
+        // 4. Device Category
+        const [deviceResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'deviceCategory' }],
+            metrics: [{ name: 'sessions' }]
+        });
+        const devices = (deviceResponse.rows || []).map(row => ({
+            category: row.dimensionValues[0].value,
+            sessions: parseInt(row.metricValues[0].value)
+        }));
+
+        // 5. Traffic Sources
+        const [sourceResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'sessionSourceMedium' }],
+            metrics: [{ name: 'sessions' }],
+            orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+            limit: 10
+        });
+        const sources = (sourceResponse.rows || []).map(row => ({
+            source: row.dimensionValues[0].value,
+            sessions: parseInt(row.metricValues[0].value)
+        }));
+
+        // 6. Top Countries
+        const [countryResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'country' }],
+            metrics: [{ name: 'sessions' }],
+            orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+            limit: 10
+        });
+        const countries = (countryResponse.rows || []).map(row => ({
+            country: row.dimensionValues[0].value,
+            sessions: parseInt(row.metricValues[0].value)
+        }));
+
+        // 7. Overall Totals
+        const [totalsResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            metrics: [{ name: 'sessions' }, { name: 'totalUsers' }, { name: 'screenPageViews' }]
+        });
+        const totals = totalsResponse.rows && totalsResponse.rows.length > 0 ? {
+            sessions: totalsResponse.rows[0].metricValues[0].value,
+            users: totalsResponse.rows[0].metricValues[1].value,
+            pageviews: totalsResponse.rows[0].metricValues[2].value
+        } : { sessions: 0, users: 0, pageviews: 0 };
+
+        // 8. Engagement
+        const [engagementResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            metrics: [{ name: 'engagementRate' }, { name: 'bounceRate' }, { name: 'averageSessionDuration' }]
+        });
+        const engagement = engagementResponse.rows && engagementResponse.rows.length > 0 ? {
+            engagementRate: parseFloat(engagementResponse.rows[0].metricValues[0].value).toFixed(2),
+            bounceRate: parseFloat(engagementResponse.rows[0].metricValues[1].value).toFixed(2),
+            averageSessionDuration: parseFloat(engagementResponse.rows[0].metricValues[2].value).toFixed(2)
+        } : { engagementRate: 0, bounceRate: 0, averageSessionDuration: 0 };
+
+        // 9. Top Events
+        const [eventsResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'eventName' }],
+            metrics: [{ name: 'eventCount' }],
+            orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }],
+            limit: 10
+        });
+        const events = (eventsResponse.rows || []).map(row => ({
+            eventName: row.dimensionValues[0].value,
+            eventCount: parseInt(row.metricValues[0].value)
+        }));
+
+        // 10. OS Breakdown
+        const [osResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'operatingSystem' }],
+            metrics: [{ name: 'sessions' }],
+            orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+            limit: 10
+        });
+        const operatingSystems = (osResponse.rows || []).map(row => ({
+            os: row.dimensionValues[0].value,
+            sessions: parseInt(row.metricValues[0].value)
+        }));
+
+        // 11. Browser Breakdown
+        const [browserResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'browser' }],
+            metrics: [{ name: 'sessions' }],
+            orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+            limit: 10
+        });
+        const browsers = (browserResponse.rows || []).map(row => ({
+            browser: row.dimensionValues[0].value,
+            sessions: parseInt(row.metricValues[0].value)
+        }));
+
+        // 12. New vs Returning
+        const [newRetResponse] = await analyticsDataClient.runReport({
+            property: `properties/${propertyId}`,
+            dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'newVsReturning' }],
+            metrics: [{ name: 'sessions' }]
+        });
+        const newVsReturning = (newRetResponse.rows || []).map(row => ({
+            type: row.dimensionValues[0].value,
+            sessions: parseInt(row.metricValues[0].value)
+        }));
+
+        res.status(200).json({
+            activeUsers,
+            totals,
+            engagement,
+            dailyData,
+            topPages,
+            devices,
+            sources,
+            countries,
+            events,
+            operatingSystems,
+            browsers,
+            newVsReturning
+        });
+    } catch (err) {
+        console.error("GA Data Error:", err);
+        res.status(500).json({ error: "Failed to fetch GA data." });
+    }
 });
 
 const PORT = process.env.PORT || 10000;

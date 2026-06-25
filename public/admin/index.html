@@ -19,6 +19,15 @@
     .section-view.active { display: block; }
     .btn-action { margin-right: 5px; cursor: pointer; }
   </style>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8C76E2T1CC');
+  </script>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -90,6 +99,13 @@
             <a href="#" class="nav-link" data-target="feedback">
               <i class="nav-link-icon fas fa-comments"></i>
               <p>Communications</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-target="ga">
+              <i class="nav-link-icon fas fa-chart-line"></i>
+              <p>Google Analytics</p>
             </a>
           </li>
 
@@ -242,6 +258,103 @@
                 <tbody id="feedback-table-body">
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- GA VIEW -->
+        <div id="view-ga" class="section-view">
+          <div class="row mb-3">
+            <div class="col-12 text-right">
+              <button class="btn btn-primary" onclick="loadGA()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-3 col-6"><div class="small-box bg-info"><div class="inner"><h3 id="ga-stat-realtime">0</h3><p>Realtime Active Users</p></div><div class="icon"><i class="fas fa-satellite-dish"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-primary"><div class="inner"><h3 id="ga-stat-sessions">0</h3><p>Sessions (30 Days)</p></div><div class="icon"><i class="fas fa-users"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-success"><div class="inner"><h3 id="ga-stat-users">0</h3><p>Total Users (30 Days)</p></div><div class="icon"><i class="fas fa-user-check"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-warning"><div class="inner"><h3 id="ga-stat-pageviews">0</h3><p>Pageviews (30 Days)</p></div><div class="icon"><i class="fas fa-eye"></i></div></div></div>
+            
+            <div class="col-lg-3 col-6"><div class="small-box bg-secondary"><div class="inner"><h3 id="ga-stat-engagement">0%</h3><p>Engagement Rate (30 Days)</p></div><div class="icon"><i class="fas fa-heartbeat"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-danger"><div class="inner"><h3 id="ga-stat-bounce">0%</h3><p>Bounce Rate (30 Days)</p></div><div class="icon"><i class="fas fa-sign-out-alt"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-light"><div class="inner"><h3 id="ga-stat-duration">0s</h3><p>Avg Session Duration (30 Days)</p></div><div class="icon"><i class="fas fa-clock"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-dark"><div class="inner"><h3 id="ga-stat-new">0</h3><p>New Users (30 Days)</p></div><div class="icon"><i class="fas fa-user-plus"></i></div></div></div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card card-primary">
+                <div class="card-header"><h3 class="card-title">Daily Trends (Sessions, Users, Views)</h3></div>
+                <div class="card-body"><div class="chart"><canvas id="gaDailyChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card card-info">
+                <div class="card-header"><h3 class="card-title">Device Categories</h3></div>
+                <div class="card-body"><div class="chart"><canvas id="gaDeviceChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas></div></div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card card-success">
+                <div class="card-header"><h3 class="card-title">Top Traffic Sources</h3></div>
+                <div class="card-body"><div class="chart"><canvas id="gaSourceChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas></div></div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card card-secondary">
+                <div class="card-header"><h3 class="card-title">New vs Returning</h3></div>
+                <div class="card-body"><div class="chart"><canvas id="gaNewRetChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card card-primary">
+                <div class="card-header"><h3 class="card-title">Operating Systems</h3></div>
+                <div class="card-body"><div class="chart"><canvas id="gaOSChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas></div></div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card card-primary">
+                <div class="card-header"><h3 class="card-title">Browsers</h3></div>
+                <div class="card-body"><div class="chart"><canvas id="gaBrowserChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header"><h3 class="card-title">Top Pages (30 Days)</h3></div>
+                <div class="card-body table-responsive p-0">
+                  <table class="table table-hover text-nowrap">
+                    <thead><tr><th>Page Path</th><th>Views</th></tr></thead>
+                    <tbody id="ga-table-pages"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header"><h3 class="card-title">Top Events (30 Days)</h3></div>
+                <div class="card-body table-responsive p-0">
+                  <table class="table table-hover text-nowrap">
+                    <thead><tr><th>Event Name</th><th>Count</th></tr></thead>
+                    <tbody id="ga-table-events"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card">
+                <div class="card-header"><h3 class="card-title">Top Countries (30 Days)</h3></div>
+                <div class="card-body table-responsive p-0">
+                  <table class="table table-hover text-nowrap">
+                    <thead><tr><th>Country</th><th>Sessions</th></tr></thead>
+                    <tbody id="ga-table-countries"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>

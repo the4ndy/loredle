@@ -37,6 +37,7 @@ navLinks.forEach(link => {
         if (targetId === 'users') loadUsers();
         if (targetId === 'scores') loadScores();
         if (targetId === 'feedback') loadFeedback();
+        if (targetId === 'ga') loadGA();
     });
 });
 
@@ -415,3 +416,122 @@ window.deleteFeedback = async (id) => {
 
 // Init
 loadDashboard();
+
+// 5. Google Analytics
+let gaDailyChartObj, gaDeviceChartObj, gaSourceChartObj, gaNewRetChartObj, gaOSChartObj, gaBrowserChartObj;
+async function loadGA() {
+    try {
+        const data = await apiGet('/api/admin/ga-data');
+        
+        document.getElementById('ga-stat-realtime').textContent = data.activeUsers;
+        document.getElementById('ga-stat-sessions').textContent = data.totals.sessions;
+        document.getElementById('ga-stat-users').textContent = data.totals.users;
+        document.getElementById('ga-stat-pageviews').textContent = data.totals.pageviews;
+
+        document.getElementById('ga-stat-engagement').textContent = `${(data.engagement.engagementRate * 100).toFixed(1)}%`;
+        document.getElementById('ga-stat-bounce').textContent = `${(data.engagement.bounceRate * 100).toFixed(1)}%`;
+        document.getElementById('ga-stat-duration').textContent = `${data.engagement.averageSessionDuration}s`;
+        
+        const newUsersObj = data.newVsReturning.find(n => n.type === 'new');
+        document.getElementById('ga-stat-new').textContent = newUsersObj ? newUsersObj.sessions : 0;
+        
+        // Format dates (YYYYMMDD to YYYY-MM-DD)
+        const labels = data.dailyData.map(d => {
+            const str = d.date;
+            return `${str.substring(0,4)}-${str.substring(4,6)}-${str.substring(6,8)}`;
+        });
+        
+        // Daily Chart
+        if(gaDailyChartObj) gaDailyChartObj.destroy();
+        gaDailyChartObj = new Chart(document.getElementById('gaDailyChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Sessions', data: data.dailyData.map(d=>d.sessions), borderColor: '#3b8bba', backgroundColor: 'transparent' },
+                    { label: 'Users', data: data.dailyData.map(d=>d.users), borderColor: '#00a65a', backgroundColor: 'transparent' },
+                    { label: 'Pageviews', data: data.dailyData.map(d=>d.pageviews), borderColor: '#f39c12', backgroundColor: 'transparent' }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Device Chart
+        if(gaDeviceChartObj) gaDeviceChartObj.destroy();
+        gaDeviceChartObj = new Chart(document.getElementById('gaDeviceChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: data.devices.map(d=>d.category),
+                datasets: [{
+                    data: data.devices.map(d=>d.sessions),
+                    backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Source Chart
+        if(gaSourceChartObj) gaSourceChartObj.destroy();
+        gaSourceChartObj = new Chart(document.getElementById('gaSourceChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: data.sources.map(d=>d.source),
+                datasets: [{
+                    data: data.sources.map(d=>d.sessions),
+                    backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de', '#8e44ad', '#2c3e50', '#e74c3c', '#16a085']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, legend: { position: 'right' } }
+        });
+
+        // New vs Returning Chart
+        if(gaNewRetChartObj) gaNewRetChartObj.destroy();
+        gaNewRetChartObj = new Chart(document.getElementById('gaNewRetChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: data.newVsReturning.map(d=>d.type),
+                datasets: [{
+                    data: data.newVsReturning.map(d=>d.sessions),
+                    backgroundColor: ['#3c8dbc', '#00c0ef']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // OS Chart
+        if(gaOSChartObj) gaOSChartObj.destroy();
+        gaOSChartObj = new Chart(document.getElementById('gaOSChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: data.operatingSystems.map(d=>d.os),
+                datasets: [{
+                    data: data.operatingSystems.map(d=>d.sessions),
+                    backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de', '#8e44ad', '#2c3e50', '#e74c3c', '#16a085']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Browser Chart
+        if(gaBrowserChartObj) gaBrowserChartObj.destroy();
+        gaBrowserChartObj = new Chart(document.getElementById('gaBrowserChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: data.browsers.map(d=>d.browser),
+                datasets: [{
+                    data: data.browsers.map(d=>d.sessions),
+                    backgroundColor: ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de', '#8e44ad', '#2c3e50', '#e74c3c', '#16a085']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Tables
+        document.getElementById('ga-table-pages').innerHTML = data.topPages.map(p => `<tr><td>${p.path}</td><td>${p.views}</td></tr>`).join('');
+        document.getElementById('ga-table-events').innerHTML = data.events.map(e => `<tr><td>${e.eventName}</td><td>${e.eventCount}</td></tr>`).join('');
+        document.getElementById('ga-table-countries').innerHTML = data.countries.map(c => `<tr><td>${c.country}</td><td>${c.sessions}</td></tr>`).join('');
+        
+    } catch (e) {
+        console.error("Error loading GA", e);
+    }
+}
