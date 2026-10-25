@@ -4,70 +4,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loredle - Change Log</title>
+    <title>Loredle — Change Log</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-8C76E2T1CC');
-  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
 </head>
 
 <body>
-    <!-- TOP NAVIGATION BAR -->
     <nav class="navbar">
-        <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
         <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
-    <!-- AVATAR DROPDOWN -->
-    <div id="nav-dropdown" class="nav-dropdown">
-        <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
-        <div class="dropdown-item" onclick="window.location.href='history.html'">History</div>
-        <div class="dropdown-item" onclick="logOut()">Log Out</div>
-    </div>
+    <div id="nav-dropdown" class="nav-dropdown"></div>
 
-    <!-- MAIN CONTAINER -->
-    <div class="menu-container" style="max-width: 800px; text-align: left; margin-bottom: 40px; margin-top: 20px;">
-        <h1
-            style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--primary-color); padding-bottom: 15px;">
-            Change Log</h1>
-        <div id="changelog-page-content" style="color: var(--text-secondary); line-height: 1.6;">
+    <div class="menu-container" style="max-width: 820px; text-align: left; margin-bottom: 40px;">
+        <h1 style="text-align: center; margin-bottom: 28px; border-bottom: 3px solid #000; padding-bottom: 14px;">
+            📋 Change Log
+        </h1>
+        <div id="changelog-page-content" style="color: var(--text-secondary); line-height: 1.65;">
             <p style="text-align: center;">Loading...</p>
         </div>
     </div>
 
-    <!-- FOOTER -->
     <footer class="site-footer">
+        <a href="feedback.html" style="color: var(--secondary-color);">Give Feedback</a>
+        <span class="footer-separator">//</span>
         <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
-        <span class="footer-separator">|</span>
+        <span class="footer-separator">//</span>
         <a href="change-log.html">Change Log</a>
-        <span class="footer-separator">|</span>
-        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV]
-                Andy</a></span>
+        <span class="footer-separator">//</span>
+        <span>v3.0.0</span>
+        <span class="footer-separator">//</span>
+        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
     </footer>
 
-    <!-- FOOTER MODALS -->
     <div id="disclaimer-modal" class="modal">
         <div class="modal-content" style="max-width: 500px; text-align: center;">
             <div class="modal-header">
-                <h2>Disclaimer</h2>
+                <h2>Community Code Disclaimer</h2>
                 <span class="close-btn" onclick="closeModal('disclaimer-modal')">&times;</span>
             </div>
-            <p style="text-align: left; color: var(--text-secondary); line-height: 1.5;">
+            <p style="text-align: left; color: var(--text-secondary); line-height: 1.6;">
                 Loredle uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under Ravensburger’s
-                Community Code Policy We are expressly prohibited from
-                charging you to use or access this content. Loredle is not published, endorsed, or
-                specifically approved by Disney or Ravensburger. For more information about Disney Lorcana TCG, visit <a
-                    href src="https://www.disneylorcana.com/en-US">https://www.disneylorcana.com/en-US</a>
+                Community Code Policy. We are expressly prohibited from charging you to use or access this content.
+                Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger. For more
+                information about Disney Lorcana TCG, visit
+                <a href="https://www.disneylorcana.com/en-US" target="_blank" style="color: var(--secondary-color);">disneylorcana.com</a>.
             </p>
         </div>
     </div>
+
+    <div id="toast" class="toast">Message</div>
 
     <script src="script.js"></script>
 </body>

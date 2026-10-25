@@ -4,91 +4,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loredle - Settings</title>
+    <title>Loredle — User Settings</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-8C76E2T1CC');
-  </script>
+    <style>
+        emoji-picker#settings-emoji-picker {
+            --background: var(--bg-main);
+            --border-color: #000;
+            --button-hover-background: var(--primary-color);
+            --button-active-background: var(--accent-color);
+            --indicator-color: var(--secondary-color);
+            --input-border-color: #000;
+            --input-border-radius: 8px;
+            --input-font-color: var(--text-primary);
+            --category-font-color: var(--secondary-color);
+            width: 100%;
+            max-width: 440px;
+            height: 320px;
+            margin: 14px auto 0 auto;
+            border: 3px solid #000;
+            border-radius: 10px;
+            box-shadow: 5px 5px 0px #000;
+        }
+    </style>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
 </head>
 
 <body>
     <nav class="navbar">
-        <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
         <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
-    <div id="nav-dropdown" class="nav-dropdown">
-        <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
-        <div class="dropdown-item" onclick="window.location.href='history.html'">History</div>
-        <div class="dropdown-item" onclick="logOut()">Log Out</div>
-    </div>
+    <div id="nav-dropdown" class="nav-dropdown"></div>
 
-    <div class="menu-container" id="settings-container" style="max-width: 600px; width: 95%;">
-        <h1
-            style="font-size: 2rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-bottom: 30px;">
-            User Settings</h1>
+    <div class="menu-container" id="settings-container" style="max-width: 640px; width: 95%;">
+        <h1 style="font-size: 2.3rem; border-bottom: 3px solid #000; padding-bottom: 12px; margin-bottom: 28px;">
+            ⚙️ User Settings
+        </h1>
 
         <div class="settings-section">
-            <h3>Choose Avatar</h3>
-            <div class="avatar-grid" id="avatar-grid">
+            <h3>1. Choose Avatar Emoji</h3>
+            <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: -4px; margin-bottom: 14px;">
+                Search any emoji below (e.g. "apple", "dragon", "crown") to set your profile avatar.
+            </p>
+            <div class="avatar-picker-preview-bar" id="avatar-grid"></div>
+            <div style="display: flex; justify-content: center; width: 100%;">
+                <emoji-picker id="settings-emoji-picker" class="dark"></emoji-picker>
             </div>
         </div>
 
-        <div class="settings-section" style="margin-top: 40px;">
-            <h3>Choose Theme</h3>
+        <div class="settings-section" style="margin-top: 34px;">
+            <h3>2. Choose Theme</h3>
             <div id="theme-grid" class="theme-grid"></div>
         </div>
 
-        <div style="margin-top: 40px; margin-bottom: 40px;">
-            <button onclick="savePreferences()" class="btn primary-btn" style="width: 100%; font-size: 1.1rem; padding: 15px;">Save Preferences</button>
+        <div style="margin-top: 32px; margin-bottom: 36px;">
+            <button onclick="savePreferences()" class="btn secondary-btn" style="width: 100%; font-size: 1.15rem; padding: 15px;">
+                💾 Save Avatar & Theme
+            </button>
         </div>
 
-        <div class="settings-section" style="margin-top: 40px;">
-            <h3>Change Password</h3>
+        <div class="settings-section" style="margin-top: 36px; border-top: 3px solid #000; padding-top: 24px;">
+            <h3>3. Change Password</h3>
             <input type="password" id="current-password" class="input-field" placeholder="Current Password">
             <input type="password" id="new-password" class="input-field" placeholder="New Password">
-            <button onclick="submitPasswordChange()" class="btn primary-btn" style="width: 100%;">Update
-                Password</button>
+            <button onclick="submitPasswordChange()" class="btn primary-btn" style="width: 100%;">
+                🔒 Update Password
+            </button>
         </div>
-
-
     </div>
 
     <!-- FOOTER -->
     <footer class="site-footer">
+        <a href="feedback.html" style="color: var(--secondary-color);">Give Feedback</a>
+        <span class="footer-separator">//</span>
         <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
-        <span class="footer-separator">|</span>
+        <span class="footer-separator">//</span>
         <a href="change-log.html">Change Log</a>
-        <span class="footer-separator">|</span>
-        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV]
-                Andy</a></span>
+        <span class="footer-separator">//</span>
+        <span>v3.0.0</span>
+        <span class="footer-separator">//</span>
+        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
     </footer>
 
-    <!-- FOOTER MODALS -->
+    <!-- DISCLAIMER MODAL -->
     <div id="disclaimer-modal" class="modal">
         <div class="modal-content" style="max-width: 500px; text-align: center;">
             <div class="modal-header">
-                <h2>Disclaimer</h2>
+                <h2>Community Code Disclaimer</h2>
                 <span class="close-btn" onclick="closeModal('disclaimer-modal')">&times;</span>
             </div>
-            <p style="text-align: left; color: var(--text-secondary); line-height: 1.5;">
+            <p style="text-align: left; color: var(--text-secondary); line-height: 1.6;">
                 Loredle uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under Ravensburger’s
-                Community Code Policy. We are expressly prohibited from
-                charging you to use or access this content. Loredle is not published, endorsed, or
-                specifically approved by Disney or Ravensburger. For more information about Disney Lorcana TCG, visit <a
-                    href="https://www.disneylorcana.com/en-US">https://www.disneylorcana.com/en-US</a>
+                Community Code Policy. We are expressly prohibited from charging you to use or access this content.
+                Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger. For more
+                information about Disney Lorcana TCG, visit
+                <a href="https://www.disneylorcana.com/en-US" target="_blank" style="color: var(--secondary-color);">disneylorcana.com</a>.
             </p>
         </div>
     </div>
-
-
 
     <div id="toast" class="toast">Message</div>
 

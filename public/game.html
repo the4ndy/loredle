@@ -3,93 +3,120 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Loredle - Play</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loredle — Play Daily</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-8C76E2T1CC');
-  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
 </head>
 
 <body>
     <nav class="navbar">
-        <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
         <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
-    <div id="nav-dropdown" class="nav-dropdown">
-        <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
-        <div class="dropdown-item" onclick="window.location.href='history.html'">History</div>
-        <div class="dropdown-item" onclick="logOut()">Log Out</div>
-    </div>
+    <div id="nav-dropdown" class="nav-dropdown"></div>
 
-    <div id="game-container"
-        style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; align-items: center;">
-        <div class="image-container" id="image-container" style="height: 350px; margin-bottom: 20px;">
-            <img id="hovered-image" src="" alt="Hovered Card" style="display: none; height: 100%; border-radius: 12px;">
+    <div id="game-container">
+        <!-- 3D HOLO-FOIL CARD PREVIEW STAGE -->
+        <div class="image-stage" id="image-container">
+            <div class="card-preview-frame" id="card-preview-frame">
+                <div class="card-preview-placeholder" id="card-preview-placeholder">
+                    <div style="font-size: 2.4rem; line-height: 1;">🃏</div>
+                    <span>Hover or select a card to preview</span>
+                </div>
+                <img id="hovered-image" src="" alt="Card Preview">
+                <div class="foil-overlay" id="foil-overlay"></div>
+            </div>
         </div>
 
-        <div style="width: 100%; max-width: 450px; margin: 0 auto; position: relative; margin-bottom: 20px;">
-            <input type="text" id="card-input" class="input-field" placeholder="Start typing a card name..."
-                style="margin: 0; text-align: center; width: 100%;">
+        <!-- SEARCH & AUTOCOMPLETE -->
+        <div class="search-box-wrapper">
+            <input type="text" id="card-input" class="input-field"
+                placeholder="Start typing a card name..."
+                autocomplete="off"
+                style="margin: 0; text-align: center; width: 100%; font-size: 1.05rem;">
+            <div id="mobile-guess-bar" class="mobile-guess-bar" style="display: none;">
+                <button type="button" id="mobile-guess-btn" class="btn secondary-btn" style="flex: 1; font-size: 1rem; padding: 12px 14px;">
+                    🎯 GUESS CARD
+                </button>
+                <button type="button" id="mobile-clear-btn" class="btn minimal-btn" style="padding: 12px 14px; font-size: 0.85rem;">
+                    ✕ Change
+                </button>
+            </div>
             <ul id="suggestions"></ul>
         </div>
 
+        <!-- 8-COLUMN GAME BOARD -->
         <div id="feedback">
-            <div class="header">
-                <div class="cell">Name</div>
-                <div class="cell">Number</div>
-                <div class="cell">Set</div>
-                <div class="cell">Cost</div>
-                <div class="cell">Inkable</div>
-                <div class="cell">Color</div>
-                <div class="cell">Type</div>
-                <div class="cell">Rarity</div>
+            <div id="game-board-wrapper" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                <div class="header">
+                    <div class="cell">Card Name</div>
+                    <div class="cell">Number</div>
+                    <div class="cell">Set</div>
+                    <div class="cell">Cost</div>
+                    <div class="cell">Inkable</div>
+                    <div class="cell">Color</div>
+                    <div class="cell">Type</div>
+                    <div class="cell">Rarity</div>
+                </div>
+                <div id="game-board"></div>
             </div>
-            <div id="game-board"></div>
         </div>
 
-        <div id="emoji-feedback" style="display: none; text-align: center; margin-top: 20px;">
+        <!-- VICTORY & SHARE PANEL -->
+        <div id="emoji-feedback" style="display: none; text-align: center;">
+            <h2 style="color: var(--correct); margin-top: 0; text-shadow: 2px 2px 0px #000;">🎉 VICTORY!</h2>
             <div id="emoji-feedback-container"></div>
-            <button id="copy-emoji-button" class="btn primary-btn" style="margin-top: 10px;">Copy to Clipboard</button>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap;">
+                <button id="copy-emoji-button" class="btn secondary-btn">📋 Copy Share Grid</button>
+                <button onclick="window.location.href='index.html'" class="btn primary-btn">🏆 View Leaderboard</button>
+            </div>
+            <div class="countdown-box">
+                NEXT LOREDLE IN
+                <span id="next-card-countdown" class="countdown-timer">--:--:--</span>
+            </div>
         </div>
     </div>
 
     <!-- FOOTER -->
     <footer class="site-footer">
+        <a href="feedback.html" style="color: var(--secondary-color);">Give Feedback</a>
+        <span class="footer-separator">//</span>
         <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
-        <span class="footer-separator">|</span>
+        <span class="footer-separator">//</span>
         <a href="change-log.html">Change Log</a>
-        <span class="footer-separator">|</span>
-        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV]
-                Andy</a></span>
+        <span class="footer-separator">//</span>
+        <span>v3.0.0</span>
+        <span class="footer-separator">//</span>
+        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
     </footer>
 
-    <!-- FOOTER MODALS -->
+    <!-- DISCLAIMER MODAL -->
     <div id="disclaimer-modal" class="modal">
         <div class="modal-content" style="max-width: 500px; text-align: center;">
             <div class="modal-header">
-                <h2>Disclaimer</h2>
+                <h2>Community Code Disclaimer</h2>
                 <span class="close-btn" onclick="closeModal('disclaimer-modal')">&times;</span>
             </div>
-            <p style="text-align: left; color: var(--text-secondary); line-height: 1.5;">
+            <p style="text-align: left; color: var(--text-secondary); line-height: 1.6;">
                 Loredle uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under Ravensburger’s
-                Community Code Policy We are expressly prohibited from
-                charging you to use or access this content. Loredle is not published, endorsed, or
-                specifically approved by Disney or Ravensburger. For more information about Disney Lorcana TCG, visit <a
-                    href src="https://www.disneylorcana.com/en-US">https://www.disneylorcana.com/en-US</a>
+                Community Code Policy. We are expressly prohibited from charging you to use or access this content.
+                Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger. For more
+                information about Disney Lorcana TCG, visit
+                <a href="https://www.disneylorcana.com/en-US" target="_blank" style="color: var(--secondary-color);">disneylorcana.com</a>.
             </p>
         </div>
     </div>
-
-
 
     <div id="toast" class="toast">Message</div>
 

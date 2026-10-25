@@ -1,64 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback - Loredle</title>
+    <title>Loredle — Feedback</title>
     <link rel="stylesheet" href="styles.css">
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-8C76E2T1CC');
-  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
 </head>
+
 <body>
     <nav class="navbar">
-        <a href="index.html" class="nav-brand" style="text-decoration: none;">LOREDLE</a>
-        <div class="nav-auth" id="nav-auth-section">
-            <!-- Auth injected via JS -->
-        </div>
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
+        <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
-    <div class="menu-container">
+    <div id="nav-dropdown" class="nav-dropdown"></div>
+
+    <div class="menu-container" style="max-width: 560px;">
+        <span class="brutal-badge" style="margin-bottom: 8px;">💬 DIRECT LINE</span>
         <h1>Feedback</h1>
-        <p class="subtitle" style="text-align: center;">Help us improve Loredle!</p>
-        
-        <form id="feedback-form" class="form-group" style="margin: 0 auto;">
-            <div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
-                <label for="fb-name"><strong>Name</strong></label>
-                <div style="display: flex; gap: 10px; align-items: center;">
+        <p style="text-align: center; color: var(--text-secondary); margin-bottom: 24px;">
+            Spot a bug or have a feature idea? Send a transmission straight to the dev team!
+        </p>
+
+        <form id="feedback-form" style="margin: 0 auto; display: flex; flex-direction: column; gap: 14px;">
+            <div style="text-align: left;">
+                <label for="fb-name" style="font-family: var(--font-display); text-transform: uppercase; letter-spacing: 1px;">Your Name</label>
+                <div style="display: flex; gap: 12px; align-items: center; margin-top: 6px;">
                     <input type="text" id="fb-name" class="input-field" placeholder="Your Name" style="margin-bottom: 0; flex: 1;">
-                    <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                    <label class="brutal-badge" style="cursor: pointer; padding: 12px; user-select: none;">
                         <input type="checkbox" id="fb-anonymous"> Anonymous
                     </label>
                 </div>
             </div>
 
-            <div style="text-align: left; margin-top: 10px;">
-                <label><strong>Type</strong></label>
-                <div style="display: flex; gap: 15px; margin-top: 5px;">
-                    <label><input type="radio" name="fb-type" value="Feedback" checked> Feedback</label>
-                    <label><input type="radio" name="fb-type" value="Feature Request"> Feature</label>
-                    <label><input type="radio" name="fb-type" value="Bug Report"> Bug Report</label>
+            <div style="text-align: left;">
+                <label style="font-family: var(--font-display); text-transform: uppercase; letter-spacing: 1px;">Category</label>
+                <div style="display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap;">
+                    <label class="brutal-badge" style="cursor: pointer; color: var(--text-primary);"><input type="radio" name="fb-type" value="Feedback" checked> Feedback</label>
+                    <label class="brutal-badge" style="cursor: pointer; color: var(--secondary-color);"><input type="radio" name="fb-type" value="Feature Request"> Feature Request</label>
+                    <label class="brutal-badge" style="cursor: pointer; color: var(--accent-color);"><input type="radio" name="fb-type" value="Bug Report"> Bug Report</label>
                 </div>
             </div>
 
-            <div style="text-align: left; margin-top: 10px;">
-                <label for="fb-text"><strong>Details</strong> (max 1000 chars)</label>
-                <textarea id="fb-text" class="input-field" rows="6" maxlength="1000" placeholder="What's on your mind?" required></textarea>
+            <div style="text-align: left;">
+                <label for="fb-text" style="font-family: var(--font-display); text-transform: uppercase; letter-spacing: 1px;">Details <span style="font-size: 0.78rem; color: var(--text-secondary);">(max 1000 chars)</span></label>
+                <textarea id="fb-text" class="input-field" rows="5" maxlength="1000" placeholder="What's on your mind?" required style="margin-top: 6px; resize: vertical;"></textarea>
             </div>
 
-            <button type="submit" class="btn primary-btn" style="margin-top: 15px;">Submit</button>
-            <p id="fb-message" style="color: var(--correct); font-weight: bold; display: none; text-align: center; margin-top: 10px;"></p>
+            <button type="submit" class="btn secondary-btn" style="width: 100%; font-size: 1.1rem;">🚀 Submit Transmission</button>
+            <p id="fb-message" style="color: var(--correct); font-weight: 700; display: none; text-align: center; margin-top: 8px;"></p>
         </form>
     </div>
 
-    <!-- Login/Register Modals included by script.js -->
+    <footer class="site-footer">
+        <a href="feedback.html" style="color: var(--secondary-color);">Give Feedback</a>
+        <span class="footer-separator">//</span>
+        <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
+        <span class="footer-separator">//</span>
+        <a href="change-log.html">Change Log</a>
+        <span class="footer-separator">//</span>
+        <span>v3.0.0</span>
+        <span class="footer-separator">//</span>
+        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
+    </footer>
+
+    <div id="disclaimer-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <div class="modal-header">
+                <h2>Community Code Disclaimer</h2>
+                <span class="close-btn" onclick="closeModal('disclaimer-modal')">&times;</span>
+            </div>
+            <p style="text-align: left; color: var(--text-secondary); line-height: 1.6;">
+                Loredle uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under Ravensburger’s
+                Community Code Policy. We are expressly prohibited from charging you to use or access this content.
+                Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger. For more
+                information about Disney Lorcana TCG, visit
+                <a href="https://www.disneylorcana.com/en-US" target="_blank" style="color: var(--secondary-color);">disneylorcana.com</a>.
+            </p>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Message</div>
+
     <script src="script.js"></script>
     <script src="feedback.js"></script>
 </body>
+
 </html>

@@ -4,39 +4,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loredle - Hall Of Fame</title>
+    <title>Loredle — Hall Of Fame</title>
     <link rel="stylesheet" href="styles.css">
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-8C76E2T1CC');
-  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
 </head>
 
 <body>
     <nav class="navbar">
-        <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
         <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
-    <div id="nav-dropdown" class="nav-dropdown">
-        <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
-        <div class="dropdown-item" onclick="window.location.href='history.html'">History</div>
-        <div class="dropdown-item" onclick="logOut()">Log Out</div>
-    </div>
+    <div id="nav-dropdown" class="nav-dropdown"></div>
 
     <!-- MAIN HOF CONTAINER -->
-    <div class="menu-container" id="hof-container" style="max-width: 600px; padding: 30px;">
-        <h1 style="color: var(--close); margin-bottom: 30px;">Hall Of Fame</h1>
+    <div class="menu-container" id="hof-container" style="max-width: 660px; padding: 32px;">
+        <span class="brutal-badge" style="margin-bottom: 8px;">👑 HALL OF FAME</span>
+        <h1 style="color: var(--close); margin-bottom: 28px;">Hall Of Fame</h1>
 
         <!-- TOP 5 LEADERBOARD -->
         <div>
-            <h3 style="color: var(--primary-color); margin-bottom: 10px;">All-Time First Place Wins</h3>
-            <table class="leaderboard-table" style="margin-bottom: 40px;">
+            <h3 style="color: var(--secondary-color); margin-bottom: 12px; text-shadow: 2px 2px 0px #000;">🏆 All-Time First Place Wins</h3>
+            <table class="leaderboard-table" style="margin-bottom: 36px;">
                 <thead>
                     <tr>
                         <th>Rank</th>
@@ -54,7 +51,7 @@
 
         <!-- RECENT DAILY WINNERS -->
         <div>
-            <h3 style="color: var(--primary-color); margin-bottom: 10px;">Daily First Place History</h3>
+            <h3 style="color: var(--accent-color); margin-bottom: 12px; text-shadow: 2px 2px 0px #000;">📅 Daily First Place History</h3>
             <table class="leaderboard-table">
                 <thead>
                     <tr>
@@ -69,55 +66,40 @@
                     </tr>
                 </tbody>
             </table>
+            <div id="hof-pagination" class="pagination-controls"></div>
         </div>
     </div>
 
     <!-- FOOTER -->
     <footer class="site-footer">
+        <a href="feedback.html" style="color: var(--secondary-color);">Give Feedback</a>
+        <span class="footer-separator">//</span>
         <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
-        <span class="footer-separator">|</span>
+        <span class="footer-separator">//</span>
         <a href="change-log.html">Change Log</a>
-        <span class="footer-separator">|</span>
+        <span class="footer-separator">//</span>
+        <span>v3.0.0</span>
+        <span class="footer-separator">//</span>
         <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
     </footer>
 
-    <!-- FOOTER MODALS -->
+    <!-- DISCLAIMER MODAL -->
     <div id="disclaimer-modal" class="modal">
         <div class="modal-content" style="max-width: 500px; text-align: center;">
             <div class="modal-header">
-                <h2>Disclaimer</h2>
+                <h2>Community Code Disclaimer</h2>
                 <span class="close-btn" onclick="closeModal('disclaimer-modal')">&times;</span>
             </div>
-            <p style="text-align: left; color: var(--text-secondary); line-height: 1.5;">
+            <p style="text-align: left; color: var(--text-secondary); line-height: 1.6;">
                 Loredle uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under Ravensburger’s
-                Community Code Policy. We are expressly prohibited from
-                charging you to use or access this content. Loredle is not published, endorsed, or
-                specifically approved by Disney or Ravensburger. For more information about Disney Lorcana TCG, visit <a
-                    href="https://www.disneylorcana.com/en-US">https://www.disneylorcana.com/en-US</a>
+                Community Code Policy. We are expressly prohibited from charging you to use or access this content.
+                Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger. For more
+                information about Disney Lorcana TCG, visit
+                <a href="https://www.disneylorcana.com/en-US" target="_blank" style="color: var(--secondary-color);">disneylorcana.com</a>.
             </p>
         </div>
     </div>
 
-    <!-- AUTH MODAL (POP-OVER) -->
-    <div id="auth-modal" class="modal">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <div class="modal-header">
-                <h2 id="auth-modal-title">Account Access</h2>
-                <span class="close-btn" onclick="closeAuthModal()">&times;</span>
-            </div>
-            <input type="text" id="auth-username" class="input-field" placeholder="Username">
-            <input type="password" id="auth-password" class="input-field" placeholder="Password">
-
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn secondary-btn" style="flex: 1;" onclick="loginUser()">Log In</button>
-                <button class="btn primary-btn" style="flex: 1;" onclick="registerUser()">Sign Up</button>
-            </div>
-
-            <p id="auth-message" style="color: var(--incorrect); font-weight: bold; margin-top: 15px;"></p>
-        </div>
-    </div>
-
-    <!-- TOAST NOTIFICATION -->
     <div id="toast" class="toast">Message</div>
 
     <script src="script.js"></script>

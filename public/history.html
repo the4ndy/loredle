@@ -4,69 +4,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loredle - History</title>
+    <title>Loredle — Detailed History</title>
     <link rel="stylesheet" href="styles.css">
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-8C76E2T1CC');
-  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
 </head>
 
 <body>
-    <!-- TOP NAVIGATION BAR -->
     <nav class="navbar">
-        <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
         <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
-    <!-- AVATAR DROPDOWN -->
-    <div id="nav-dropdown" class="nav-dropdown">
-        <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
-        <div class="dropdown-item" onclick="window.location.href='history.html'">History</div>
-        <div class="dropdown-item" onclick="logOut()">Log Out</div>
-    </div>
+    <div id="nav-dropdown" class="nav-dropdown"></div>
 
     <!-- MAIN CONTAINER -->
-    <div class="menu-container" id="history-container" style="max-width: 900px; padding: 30px; margin-bottom: 40px;">
-        <h1 style="color: var(--close); margin-bottom: 30px;">Detailed History</h1>
-        
+    <div class="menu-container" id="history-container" style="max-width: 1020px; padding: 30px; margin-bottom: 40px;">
+        <span class="brutal-badge" style="margin-bottom: 8px;">📜 ARCHIVE LOG</span>
+        <h1 style="color: var(--secondary-color); margin-bottom: 28px;">Detailed History</h1>
+
         <div id="detailed-history-content">
-            <p style="text-align: center; color: var(--text-secondary);">Loading your history...</p>
+            <p style="text-align: center; color: var(--text-secondary);">Loading your guess history...</p>
         </div>
     </div>
 
     <!-- FOOTER -->
     <footer class="site-footer">
+        <a href="feedback.html" style="color: var(--secondary-color);">Give Feedback</a>
+        <span class="footer-separator">//</span>
         <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
-        <span class="footer-separator">|</span>
+        <span class="footer-separator">//</span>
         <a href="change-log.html">Change Log</a>
-        <span class="footer-separator">|</span>
+        <span class="footer-separator">//</span>
+        <span>v3.0.0</span>
+        <span class="footer-separator">//</span>
         <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
     </footer>
 
-    <!-- FOOTER MODALS -->
+    <!-- DISCLAIMER MODAL -->
     <div id="disclaimer-modal" class="modal">
         <div class="modal-content" style="max-width: 500px; text-align: center;">
             <div class="modal-header">
-                <h2>Disclaimer</h2>
+                <h2>Community Code Disclaimer</h2>
                 <span class="close-btn" onclick="closeModal('disclaimer-modal')">&times;</span>
             </div>
-            <p style="text-align: left; color: var(--text-secondary); line-height: 1.5;">
+            <p style="text-align: left; color: var(--text-secondary); line-height: 1.6;">
                 Loredle uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under Ravensburger’s
-                Community Code Policy. We are expressly prohibited from
-                charging you to use or access this content. Loredle is not published, endorsed, or
-                specifically approved by Disney or Ravensburger. For more information about Disney Lorcana TCG, visit <a
-                    href="https://www.disneylorcana.com/en-US">https://www.disneylorcana.com/en-US</a>
+                Community Code Policy. We are expressly prohibited from charging you to use or access this content.
+                Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger. For more
+                information about Disney Lorcana TCG, visit
+                <a href="https://www.disneylorcana.com/en-US" target="_blank" style="color: var(--secondary-color);">disneylorcana.com</a>.
             </p>
         </div>
     </div>
 
-    <img id="history-tooltip" style="display: none; position: absolute; z-index: 1000; width: 220px; border-radius: 10px; pointer-events: none; box-shadow: 0 0 15px rgba(0,0,0,0.5);" />
+    <img id="history-tooltip" alt="Card Preview"
+        style="display: none; position: absolute; z-index: 1500; width: 220px; border: 3px solid #000; border-radius: 10px; pointer-events: none; box-shadow: 6px 6px 0px #000;" />
+
+    <div id="toast" class="toast">Message</div>
 
     <script src="script.js"></script>
 </body>

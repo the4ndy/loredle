@@ -4,37 +4,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loredle - Authentication</title>
+    <title>Loredle — Authentication</title>
     <link rel="stylesheet" href="styles.css">
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-8C76E2T1CC');
-  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
 </head>
 
 <body>
-    <div class="menu-container">
-        <h2 id="auth-title" style="color: var(--primary-color); margin-top: 0;">Login</h2>
+    <nav class="navbar">
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
+        <div id="nav-auth-container" class="nav-auth"></div>
+    </nav>
 
-        <form id="auth-form" class="button-group">
+    <div id="nav-dropdown" class="nav-dropdown"></div>
+
+    <div class="menu-container" style="max-width: 440px;">
+        <h2 id="auth-title" style="color: var(--secondary-color); margin-top: 0; font-size: 2rem; text-shadow: 2px 2px 0px #000;">Login</h2>
+
+        <form id="auth-form" style="display: flex; flex-direction: column; gap: 6px;">
             <input type="text" id="username" placeholder="Username" required class="input-field">
             <input type="password" id="password" placeholder="Password" required class="input-field">
-            <button type="submit" class="btn primary-btn" id="submit-btn">Login</button>
+            <button type="submit" class="btn secondary-btn" id="submit-btn" style="width: 100%;">Login</button>
         </form>
 
-        <p id="error-msg" style="color: var(--incorrect); font-size: 0.9rem; min-height: 20px;"></p>
+        <p id="error-msg" style="color: var(--incorrect); font-weight: 700; font-size: 0.9rem; min-height: 20px;"></p>
 
-        <div class="button-group" style="margin-top: 15px;">
-            <button id="toggle-auth" class="btn minimal-btn">Need an account? Register here.</button>
-            <button onclick="location.href='/index.html'" class="btn secondary-btn">Back to Home</button>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+            <button id="toggle-auth" class="btn minimal-btn" style="width: 100%;">Need an account? Register here.</button>
+            <button onclick="location.href='/index.html'" class="btn primary-btn" style="width: 100%;">Back to Hub</button>
         </div>
     </div>
 
+    <script src="script.js"></script>
     <script>
         let isLogin = true;
         const title = document.getElementById('auth-title');
@@ -43,7 +51,6 @@
         const errorMsg = document.getElementById('error-msg');
         const form = document.getElementById('auth-form');
 
-        // Toggle between Login and Register UI
         toggleBtn.addEventListener('click', () => {
             isLogin = !isLogin;
             title.textContent = isLogin ? 'Login' : 'Create Account';
@@ -52,7 +59,6 @@
             errorMsg.textContent = '';
         });
 
-        // Handle form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
@@ -69,15 +75,17 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Save credentials locally and go to home screen
                     localStorage.setItem('loredle_token', data.token);
-                    localStorage.setItem('loredle_username', data.username);
+                    localStorage.setItem('loredle_username', data.username || username);
+                    localStorage.setItem('loredle_avatar', data.avatar || 'default');
+                    localStorage.setItem('loredle_theme', data.theme || 'default');
+                    if (data.role) localStorage.setItem('loredle_role', data.role);
                     window.location.href = '/index.html';
                 } else {
                     errorMsg.textContent = data.error;
                 }
             } catch (err) {
-                errorMsg.textContent = "Server error. Please try again later.";
+                errorMsg.textContent = 'Server error. Please try again later.';
             }
         });
     </script>

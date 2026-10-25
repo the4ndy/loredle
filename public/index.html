@@ -4,53 +4,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loredle - Hub</title>
+    <title>Loredle</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-8C76E2T1CC');
-  </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
 </head>
 
 <body>
     <!-- TOP NAVIGATION BAR -->
     <nav class="navbar">
-        <div class="nav-brand" style="cursor:pointer;" onclick="window.location.href='index.html'">Loredle</div>
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
         <div id="nav-auth-container" class="nav-auth"></div>
     </nav>
 
     <!-- AVATAR DROPDOWN -->
-    <div id="nav-dropdown" class="nav-dropdown">
-        <div class="dropdown-item" onclick="window.location.href='settings.html'">Settings</div>
-        <div class="dropdown-item" onclick="window.location.href='history.html'">History</div>
-        <div class="dropdown-item" onclick="logOut()">Log Out</div>
-    </div>
+    <div id="nav-dropdown" class="nav-dropdown"></div>
 
     <!-- MAIN HUB CONTAINER -->
-    <div class="menu-container" id="hub-container" style="max-width: 600px;">
-        <h1>Loredle</h1>
+    <div class="menu-container" id="hub-container" style="max-width: 640px;">
+        <div class="rov-hero-banner">
+            <h1>LOREDLE</h1>
+            <div id="welcome-message" class="brutal-badge"></div>
+        </div>
 
-        <div id="play-section" style="margin-top: 20px;">
-            <h3 id="welcome-message" style="color: var(--secondary-color); font-size: 1.3rem;"></h3>
-
+        <div id="play-section" style="margin-top: 16px;">
             <!-- LOREDLE GAME CARD -->
             <div class="rules-card">
-                <p>Guess the daily Disney Lorcana card! Wordle but for Disney Lorcana.</p>
-                <button onclick="window.location.href='game.html'" class="btn primary-btn"
-                    style="width: 100%; font-size: 1.2rem; padding: 15px; margin-top: 10px;">PLAY LOREDLE</button>
+                <p style="margin-bottom: 16px;">Guess the daily <strong>Disney Lorcana</strong> card! Match Set, Cost, Ink, Type, Collector Number, and Rarity in as few tries as possible.</p>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button onclick="window.location.href='game.html'" class="btn secondary-btn"
+                        style="flex: 2; font-size: 1.25rem; padding: 15px;">▶ PLAY DAILY LOREDLE</button>
+                    <button onclick="window.location.href='version-trainer.html'" class="btn pink-btn"
+                        style="flex: 1; font-size: 1.05rem; padding: 15px;">⚡ VERSION TRAINER</button>
+                </div>
             </div>
         </div>
 
         <!-- LEADERBOARDS -->
-        <div style="display: flex; flex-direction: column; gap: 40px; margin-top: 40px;">
+        <div style="display: flex; flex-direction: column; gap: 32px; margin-top: 32px;">
             <div>
-                <h3 style="color: var(--primary-color); margin-bottom: 10px;">Loredle Daily Leaderboard</h3>
+                <h3 style="color: var(--secondary-color); margin-bottom: 12px; text-shadow: 2px 2px 0px #000;">🏆 Today's Daily Leaderboard</h3>
                 <table class="leaderboard-table">
                     <thead>
                         <tr>
@@ -69,55 +70,36 @@
         </div>
     </div>
 
-    <!-- AUTH MODAL (POP-OVER) -->
-    <div class="modal" id="auth-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 style="color: var(--primary-color);">Welcome to Loredle</h2>
-                <span class="close-btn" onclick="closeAuthModal()">&times;</span>
-            </div>
-            <div class="form-group" style="margin: 0 auto;">
-                <input type="text" id="auth-username" class="input-field" placeholder="Username">
-                <input type="password" id="auth-password" class="input-field" placeholder="Password">
-                <div class="button-group" style="justify-content: center;">
-                    <button class="btn primary-btn" onclick="loginUser()">Login</button>
-                    <button class="btn secondary-btn" onclick="registerUser()">Register</button>
-                </div>
-                <p id="auth-message" style="color: var(--incorrect); font-weight: bold; text-align: center; margin-top: 10px;"></p>
-            </div>
-        </div>
-    </div>
-
     <!-- FOOTER -->
     <footer class="site-footer">
-        <a href="feedback.html" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Give Feedback</a>
-        <span class="footer-separator">|</span>
+        <a href="feedback.html" style="color: var(--secondary-color);">Give Feedback</a>
+        <span class="footer-separator">//</span>
         <a href="#" onclick="openModal('disclaimer-modal'); return false;">Disclaimer</a>
-        <span class="footer-separator">|</span>
+        <span class="footer-separator">//</span>
         <a href="change-log.html">Change Log</a>
-        <span class="footer-separator">|</span>
-        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV]
-                Andy</a></span>
+        <span class="footer-separator">//</span>
+        <span>v3.0.0</span>
+        <span class="footer-separator">//</span>
+        <span>Made with 💜 by <a href="https://twitter.com/Villain_Andy" target="_blank" class="author-link">[ROV] Andy</a></span>
     </footer>
 
-    <!-- FOOTER MODALS -->
+    <!-- DISCLAIMER MODAL -->
     <div id="disclaimer-modal" class="modal">
         <div class="modal-content" style="max-width: 500px; text-align: center;">
             <div class="modal-header">
-                <h2>Disclaimer</h2>
+                <h2>Community Code Disclaimer</h2>
                 <span class="close-btn" onclick="closeModal('disclaimer-modal')">&times;</span>
             </div>
-            <p style="text-align: left; color: var(--text-secondary); line-height: 1.5;">
+            <p style="text-align: left; color: var(--text-secondary); line-height: 1.6;">
                 Loredle uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under Ravensburger’s
-                Community Code Policy We are expressly prohibited from
-                charging you to use or access this content. Loredle is not published, endorsed, or
-                specifically approved by Disney or Ravensburger. For more information about Disney Lorcana TCG, visit <a
-                    href="https://www.disneylorcana.com/en-US">https://www.disneylorcana.com/en-US</a>
+                Community Code Policy. We are expressly prohibited from charging you to use or access this content.
+                Loredle is not published, endorsed, or specifically approved by Disney or Ravensburger. For more
+                information about Disney Lorcana TCG, visit
+                <a href="https://www.disneylorcana.com/en-US" target="_blank" style="color: var(--secondary-color);">disneylorcana.com</a>.
             </p>
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
     <div id="toast" class="toast">Message</div>
 
     <script src="script.js"></script>
