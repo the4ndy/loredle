@@ -1,19 +1,13 @@
 # v3.0.0 - October 24, 2026
 
 ### ✨ Gameplay & Features
-* **Rules of Villainy Neo-Brutalist Redesign:** Complete visual overhaul with high-contrast Neo-Brutalist styling, hard ink shadows, tactile button physics, and the Rules of Villainy palette (Villain Purple, Maleficent Pink, Hades Teal, and Lore Gold)
-  * *All 11 customizable themes updated for Neo-Brutalism*
-* **Official Ravensburger Card Engine:** Migrated card catalog to the official Disney Lorcana API (`cards.disneylorcana.com`) with server-side caching and instant client-side loading
-  * *Includes AVIF high-resolution card art and official foil mask shaders*
-* **Interactive 3D Holo-Foil Victory Reveal & Staggered Tile Flips:**
-  * *Guessed attributes now flip in a staggered 3D sequence*
-  * *Victory modal features an interactive 3D tilt card with official Lorcana foil mask reflections and a live countdown to midnight CST*
+* **New Design:**
+  * *Complete design overhaul.*
 * **Smart Search & Keyboard Navigation:**
   * *Upgraded autocomplete with card thumbnails, Ink color & Cost badges, tokenized multi-word matching, and full keyboard arrow/enter navigation*
 * **Persistent Daily Progress:**
   * *In-progress daily guesses now save automatically across page refreshes and devices*
-* **Admin Command Center 3.0:**
-  * *Added 21-Day Daily Card Scheduler & Override Manager, One-Click Card Catalog Sync, Arcade Leaderboard Moderation, and Discord Webhook Tester*
+
 
 ### 🐛 Bug Fixes
 * **My History Guess Breakdown:** Fixed bug where past games in My History did not display the target card or detailed attribute breakdown
