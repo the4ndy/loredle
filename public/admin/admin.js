@@ -64,6 +64,8 @@ navButtons.forEach(btn => {
         if (targetId === 'scores') loadScoresAndArcade();
         if (targetId === 'feedback') loadFeedback();
         if (targetId === 'ga') loadGA();
+        if (targetId === 'discord') loadDiscordWebhooks();
+        if (targetId === 'announcements') loadSystemAnnouncement();
     });
 });
 
@@ -777,3 +779,282 @@ async function loadGA() {
         console.error('Error loading GA:', e);
     }
 }
+
+// ==========================================================================
+// 8. DISCORD MULTI-SERVER WEBHOOK MANAGER
+// ==========================================================================
+let cachedDiscordWebhooks = [];
+
+async function loadDiscordWebhooks() {
+    try {
+        const res = await apiGet('/api/admin/discord-webhooks');
+        cachedDiscordWebhooks = Array.isArray(res) ? res : (res.webhooks || []);
+        const select = document.getElementById('discord-server-select');
+        const form = document.getElementById('discord-config-form');
+        const empty = document.getElementById('discord-config-empty');
+
+        if (!select) return;
+
+        if (cachedDiscordWebhooks.length === 0) {
+            select.innerHTML = '<option value="">(No webhooks configured)</option>';
+            if (form) form.style.display = 'none';
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+
+        const prevVal = select.value;
+        select.innerHTML = cachedDiscordWebhooks.map(w => `
+            <option value="${w._id}">${escapeHtml(w.name)} ${w.enabled ? '🟢' : '⚪'}</option>
+        `).join('');
+
+        if (prevVal && cachedDiscordWebhooks.some(w => w._id === prevVal)) {
+            select.value = prevVal;
+        } else {
+            select.value = cachedDiscordWebhooks[0]._id;
+        }
+
+        onDiscordServerSelectChange();
+    } catch (e) {
+        console.error('Error loading Discord webhooks:', e);
+        showAdminToast('❌ Failed to load Discord webhooks');
+    }
+}
+
+window.onDiscordServerSelectChange = function() {
+    const select = document.getElementById('discord-server-select');
+    const form = document.getElementById('discord-config-form');
+    const empty = document.getElementById('discord-config-empty');
+    if (!select || !form) return;
+
+    const selectedId = select.value;
+    const webhook = cachedDiscordWebhooks.find(w => w._id === selectedId);
+
+    if (!webhook) {
+        form.style.display = 'none';
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+
+    form.style.display = 'block';
+    if (empty) empty.style.display = 'none';
+
+    document.getElementById('discord-config-id').value = webhook._id;
+    document.getElementById('discord-server-name').value = webhook.name || '';
+    document.getElementById('discord-webhook-url').value = webhook.webhookUrl || '';
+    document.getElementById('discord-role-ping').value = webhook.rolePing || '';
+    document.getElementById('discord-master-enabled').checked = webhook.enabled !== false;
+
+    document.getElementById('discord-opt-completions').checked = !!webhook.sendScoreCompletions;
+    document.getElementById('discord-opt-daily-drop').checked = !!webhook.sendDailyDrop;
+    document.getElementById('discord-opt-yesterday-recap').checked = !!webhook.sendYesterdayRecap;
+    document.getElementById('discord-opt-winner-shoutout').checked = !!webhook.sendWinnerShoutout;
+    document.getElementById('discord-opt-spoilers').checked = !!webhook.sendSpoilerProtection;
+
+    document.getElementById('discord-template-completions').value = webhook.templateCompletion || '';
+    document.getElementById('discord-template-daily-drop').value = webhook.templateDailyDrop || '';
+    document.getElementById('discord-template-yesterday-recap').value = webhook.templateYesterdayRecap || '';
+    document.getElementById('discord-template-winner-shoutout').value = webhook.templateWinnerShoutout || '';
+};
+
+window.openAddWebhookModal = function() {
+    document.getElementById('add-webhook-name').value = '';
+    document.getElementById('add-webhook-url').value = '';
+    document.getElementById('add-webhook-role').value = '';
+    const modal = document.getElementById('modal-add-webhook');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.submitAddDiscordWebhook = async function() {
+    const name = document.getElementById('add-webhook-name').value.trim();
+    const webhookUrl = document.getElementById('add-webhook-url').value.trim();
+    const rolePing = document.getElementById('add-webhook-role').value.trim();
+
+    if (!name || !webhookUrl) {
+        showAdminToast('⚠️ Please provide both a server name and a webhook URL');
+        return;
+    }
+
+    try {
+        const res = await apiPost('/api/admin/discord-webhooks', { name, webhookUrl, rolePing });
+        if (res.ok) {
+            showAdminToast('✅ Webhook created successfully!');
+            closeAdminModal('modal-add-webhook');
+            await loadDiscordWebhooks();
+            if (res.data && res.data.webhook) {
+                document.getElementById('discord-server-select').value = res.data.webhook._id;
+                onDiscordServerSelectChange();
+            }
+        } else {
+            showAdminToast(`❌ Error: ${res.data?.error || 'Failed to create webhook'}`);
+        }
+    } catch (e) {
+        console.error('Error adding webhook:', e);
+        showAdminToast('❌ Failed to add Discord webhook');
+    }
+};
+
+window.saveSelectedDiscordWebhook = async function() {
+    const id = document.getElementById('discord-config-id').value;
+    if (!id) return;
+
+    const name = document.getElementById('discord-server-name').value.trim();
+    const webhookUrl = document.getElementById('discord-webhook-url').value.trim();
+    const rolePing = document.getElementById('discord-role-ping').value.trim();
+    const enabled = document.getElementById('discord-master-enabled').checked;
+
+    const sendScoreCompletions = document.getElementById('discord-opt-completions').checked;
+    const sendDailyDrop = document.getElementById('discord-opt-daily-drop').checked;
+    const sendYesterdayRecap = document.getElementById('discord-opt-yesterday-recap').checked;
+    const sendWinnerShoutout = document.getElementById('discord-opt-winner-shoutout').checked;
+    const sendSpoilerProtection = document.getElementById('discord-opt-spoilers').checked;
+
+    const templateCompletion = document.getElementById('discord-template-completions').value.trim();
+    const templateDailyDrop = document.getElementById('discord-template-daily-drop').value.trim();
+    const templateYesterdayRecap = document.getElementById('discord-template-yesterday-recap').value.trim();
+    const templateWinnerShoutout = document.getElementById('discord-template-winner-shoutout').value.trim();
+
+    if (!name || !webhookUrl) {
+        showAdminToast('⚠️ Server name and Webhook URL cannot be empty');
+        return;
+    }
+
+    try {
+        const res = await apiPut(`/api/admin/discord-webhooks/${id}`, {
+            name,
+            webhookUrl,
+            rolePing,
+            enabled,
+            sendScoreCompletions,
+            sendDailyDrop,
+            sendYesterdayRecap,
+            sendWinnerShoutout,
+            sendSpoilerProtection,
+            templateCompletion,
+            templateDailyDrop,
+            templateYesterdayRecap,
+            templateWinnerShoutout
+        });
+
+        if (res.ok) {
+            showAdminToast('💾 Discord Webhook settings saved!');
+            await loadDiscordWebhooks();
+        } else {
+            showAdminToast(`❌ Error: ${res.data?.error || 'Save failed'}`);
+        }
+    } catch (e) {
+        console.error('Error saving webhook:', e);
+        showAdminToast('❌ Failed to save webhook settings');
+    }
+};
+
+window.testSelectedDiscordWebhook = async function() {
+    const id = document.getElementById('discord-config-id').value;
+    if (!id) return;
+
+    showAdminToast('📡 Dispatching general test ping to Discord...');
+    try {
+        const res = await apiPost(`/api/admin/discord-webhooks/${id}/test`, {});
+        if (res.ok) {
+            showAdminToast('✅ General test ping sent successfully to Discord!');
+        } else {
+            showAdminToast(`❌ Ping failed: ${res.data?.error || 'HTTP Error'}`);
+        }
+    } catch (e) {
+        console.error('Error testing webhook:', e);
+        showAdminToast('❌ Failed to dispatch test ping');
+    }
+};
+
+window.testDiscordComponentMessage = async function(messageType) {
+    const id = document.getElementById('discord-config-id').value;
+    if (!id) return;
+
+    const labels = {
+        completion: 'Solve Alert',
+        dailyDrop: 'Daily Drop',
+        yesterdayRecap: 'Yesterday Recap',
+        winnerShoutout: 'Winner Shoutout'
+    };
+
+    showAdminToast(`📡 Sending test ${labels[messageType] || messageType} to Discord...`);
+    try {
+        const res = await apiPost(`/api/admin/discord-webhooks/${id}/test-message`, { messageType });
+        if (res.ok) {
+            showAdminToast(`✅ Test ${labels[messageType] || messageType} delivered to Discord!`);
+        } else {
+            showAdminToast(`❌ Test failed: ${res.data?.error || 'HTTP Error'}`);
+        }
+    } catch (e) {
+        console.error('Error testing component message:', e);
+        showAdminToast('❌ Failed to send test message');
+    }
+};
+
+window.deleteSelectedDiscordWebhook = async function() {
+    const id = document.getElementById('discord-config-id').value;
+    const name = document.getElementById('discord-server-name').value;
+    if (!id) return;
+
+    if (!confirm(`Are you sure you want to delete the webhook "${name}"?`)) return;
+
+    try {
+        const res = await apiDelete(`/api/admin/discord-webhooks/${id}`);
+        if (res.ok) {
+            showAdminToast('🗑️ Webhook deleted');
+            await loadDiscordWebhooks();
+        } else {
+            showAdminToast(`❌ Error deleting webhook: ${res.data?.error || 'Failed'}`);
+        }
+    } catch (e) {
+        console.error('Error deleting webhook:', e);
+        showAdminToast('❌ Failed to delete webhook');
+    }
+};
+
+// ==========================================================================
+// 9. GLOBAL ANNOUNCEMENTS & OPS MANAGER
+// ==========================================================================
+async function loadSystemAnnouncement() {
+    try {
+        const res = await apiGet('/api/system/announcement');
+        const ann = res.announcement || {};
+        const maint = res.maintenance || {};
+
+        document.getElementById('announcement-active').checked = !!ann.active;
+        document.getElementById('announcement-type').value = ann.type || 'teal';
+        document.getElementById('announcement-id').value = ann.id || 'banner-1';
+        document.getElementById('announcement-message').value = ann.message || '';
+
+        document.getElementById('maintenance-active').checked = !!maint.active;
+        document.getElementById('maintenance-message').value = maint.message || 'Loredle is temporarily under maintenance. Back shortly!';
+    } catch (e) {
+        console.error('Error loading announcement config:', e);
+        showAdminToast('❌ Failed to load system announcements');
+    }
+}
+
+window.saveSystemAnnouncement = async function() {
+    const announcement = {
+        active: document.getElementById('announcement-active').checked,
+        type: document.getElementById('announcement-type').value,
+        id: document.getElementById('announcement-id').value.trim() || 'banner-' + Date.now(),
+        message: document.getElementById('announcement-message').value.trim()
+    };
+
+    const maintenance = {
+        active: document.getElementById('maintenance-active').checked,
+        message: document.getElementById('maintenance-message').value.trim() || 'Loredle is temporarily under maintenance. Back shortly!'
+    };
+
+    try {
+        const res = await apiPut('/api/admin/system/announcement', { announcement, maintenance });
+        if (res.ok) {
+            showAdminToast('💾 Global announcement & maintenance settings saved!');
+        } else {
+            showAdminToast(`❌ Error saving ops settings: ${res.data?.error || 'Failed'}`);
+        }
+    } catch (e) {
+        console.error('Error saving system announcements:', e);
+        showAdminToast('❌ Failed to save announcement settings');
+    }
+};

@@ -334,6 +334,8 @@
                 <button class="admin-nav-btn" data-target="users">👥 Users</button>
                 <button class="admin-nav-btn" data-target="scores">🏆 Scores & Arcade</button>
                 <button class="admin-nav-btn" data-target="feedback">💬 Feedback</button>
+                <button class="admin-nav-btn" data-target="discord">🤖 Discord Webhooks</button>
+                <button class="admin-nav-btn" data-target="announcements">📢 Announcements & Ops</button>
                 <button class="admin-nav-btn" data-target="ga">📈 Google Analytics</button>
             </nav>
 
@@ -662,7 +664,191 @@
                         </div>
                     </div>
                 </div>
-            </main>
+
+                <!-- 8. DISCORD WEBHOOKS VIEW -->
+                <div id="view-discord" class="section-view">
+                    <div class="brutal-panel">
+                        <div class="brutal-panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <h3 class="brutal-panel-title">🤖 Discord Multi-Server Webhook Manager</h3>
+                            <button class="btn secondary-btn" onclick="openAddWebhookModal()">➕ Add New Discord Server</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: 700; text-transform: uppercase; font-size: 0.85rem; display: block; margin-bottom: 6px;">Select Discord Server / Channel Webhook</label>
+                            <select id="discord-server-select" class="input-field" onchange="onDiscordServerSelectChange()" style="font-weight: 700;">
+                                <option value="">Loading servers...</option>
+                            </select>
+                        </div>
+
+                        <div id="discord-config-form" style="display: none;">
+                            <input type="hidden" id="discord-config-id">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label style="font-weight: 700; text-transform: uppercase; font-size: 0.85rem; display: block; margin-bottom: 6px;">Server / Channel Friendly Name</label>
+                                    <input type="text" id="discord-server-name" class="input-field" placeholder="e.g. Official Community, Guild A, Tournament Server">
+                                </div>
+                                <div>
+                                    <label style="font-weight: 700; text-transform: uppercase; font-size: 0.85rem; display: block; margin-bottom: 6px;">Webhook URL</label>
+                                    <input type="text" id="discord-webhook-url" class="input-field" placeholder="https://discord.com/api/webhooks/...">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                                <div>
+                                    <label style="font-weight: 700; text-transform: uppercase; font-size: 0.85rem; display: block; margin-bottom: 6px;">Role ID to Ping (Optional)</label>
+                                    <input type="text" id="discord-role-ping" class="input-field" placeholder="e.g. 123456789012345678 (leave blank for none)">
+                                </div>
+                                <div style="display: flex; flex-direction: column; justify-content: flex-end;">
+                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700;">
+                                        <input type="checkbox" id="discord-master-enabled" style="width: 20px; height: 20px; accent-color: var(--secondary-color);">
+                                        Master Webhook Active
+                                    </label>
+                                    <div style="font-size: 0.78rem; color: #555; margin-top: 3px;">
+                                        (Master gatekeeper: Must be ON for this server to receive any messages. Only checked options below will be sent.)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4 style="font-family: var(--font-display); text-transform: uppercase; font-size: 1.1rem; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 6px;">Broadcast Component Toggles & Custom Templates</h4>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+                                <!-- COMPONENT 1: COMPLETION ALERTS -->
+                                <div style="background: var(--bg-main); border: 2px solid #000; border-radius: 6px; padding: 14px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; margin: 0;">
+                                            <input type="checkbox" id="discord-opt-completions" style="width: 20px; height: 20px; accent-color: var(--secondary-color);">
+                                            Player Solve Completion Alerts
+                                        </label>
+                                        <button type="button" class="btn minimal-btn" style="padding: 5px 12px; font-size: 0.8rem;" onclick="testDiscordComponentMessage('completion')">🧪 Test Solve Alert</button>
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: #555; margin-bottom: 8px;">Dispatches an instant message when any player finishes today's daily puzzle.</div>
+                                    <label style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px;">Custom Completion Template (leave blank for default):</label>
+                                    <textarea id="discord-template-completions" class="input-field" rows="2" style="margin-bottom: 4px; font-family: var(--font-mono); font-size: 0.82rem;" placeholder="🚨 **{username}**{tracker} completed today's Loredle in **{tries}** {triesText}!&#10;{grid}"></textarea>
+                                    <div style="font-size: 0.74rem; color: #666;">Tags: <code>{username}</code>, <code>{tries}</code>, <code>{triesText}</code>, <code>{tracker}</code>, <code>{grid}</code>, <code>{date}</code></div>
+                                </div>
+
+                                <!-- COMPONENT 2: DAILY PUZZLE DROP -->
+                                <div style="background: var(--bg-main); border: 2px solid #000; border-radius: 6px; padding: 14px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; margin: 0;">
+                                            <input type="checkbox" id="discord-opt-daily-drop" style="width: 20px; height: 20px; accent-color: var(--secondary-color);">
+                                            New Daily Puzzle Announcement (Midnight CST)
+                                        </label>
+                                        <button type="button" class="btn minimal-btn" style="padding: 5px 12px; font-size: 0.8rem;" onclick="testDiscordComponentMessage('dailyDrop')">🧪 Test Daily Drop</button>
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: #555; margin-bottom: 8px;">Broadcasts a card drop notification at 00:00 CST with direct link.</div>
+                                    <label style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px;">Custom Daily Drop Template (leave blank for default):</label>
+                                    <textarea id="discord-template-daily-drop" class="input-field" rows="2" style="margin-bottom: 4px; font-family: var(--font-mono); font-size: 0.82rem;" placeholder="✨ **A new Loredle daily puzzle is LIVE for {date}!**&#10;Test your Lorcana knowledge at <https://loredle.com>"></textarea>
+                                    <div style="font-size: 0.74rem; color: #666;">Tags: <code>{date}</code>, <code>{url}</code></div>
+                                </div>
+
+                                <!-- COMPONENT 3: YESTERDAY'S RECAP -->
+                                <div style="background: var(--bg-main); border: 2px solid #000; border-radius: 6px; padding: 14px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; margin: 0;">
+                                            <input type="checkbox" id="discord-opt-yesterday-recap" style="width: 20px; height: 20px; accent-color: var(--secondary-color);">
+                                            Yesterday's Recap (Midnight CST)
+                                        </label>
+                                        <button type="button" class="btn minimal-btn" style="padding: 5px 12px; font-size: 0.8rem;" onclick="testDiscordComponentMessage('yesterdayRecap')">🧪 Test Recap</button>
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: #555; margin-bottom: 8px;">Reveals yesterday's card answer at midnight.</div>
+                                    <label style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px;">Custom Yesterday's Recap Template (leave blank for default):</label>
+                                    <textarea id="discord-template-yesterday-recap" class="input-field" rows="2" style="margin-bottom: 4px; font-family: var(--font-mono); font-size: 0.82rem;" placeholder="📜 **Yesterday's Card ({yesterdayDate}):** {yesterdayCard}"></textarea>
+                                    <div style="font-size: 0.74rem; color: #666;">Tags: <code>{yesterdayDate}</code>, <code>{yesterdayCard}</code></div>
+                                </div>
+
+                                <!-- COMPONENT 4: WINNER SHOUTOUT -->
+                                <div style="background: var(--bg-main); border: 2px solid #000; border-radius: 6px; padding: 14px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; margin: 0;">
+                                            <input type="checkbox" id="discord-opt-winner-shoutout" style="width: 20px; height: 20px; accent-color: var(--secondary-color);">
+                                            Daily Winner Shoutout (Midnight CST)
+                                        </label>
+                                        <button type="button" class="btn minimal-btn" style="padding: 5px 12px; font-size: 0.8rem;" onclick="testDiscordComponentMessage('winnerShoutout')">🧪 Test Winner Shoutout</button>
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: #555; margin-bottom: 8px;">Highlights the fastest #1 player of yesterday's puzzle.</div>
+                                    <label style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px;">Custom Winner Shoutout Template (leave blank for default):</label>
+                                    <textarea id="discord-template-winner-shoutout" class="input-field" rows="2" style="margin-bottom: 4px; font-family: var(--font-mono); font-size: 0.82rem;" placeholder="🏆 **Yesterday's #1 Winner:** **{winner}** (solved in {winnerTries} {winnerTriesText})!"></textarea>
+                                    <div style="font-size: 0.74rem; color: #666;">Tags: <code>{winner}</code>, <code>{winnerTries}</code>, <code>{winnerTriesText}</code>, <code>{yesterdayDate}</code></div>
+                                </div>
+
+                                <!-- COMPONENT 5: SPOILER PROTECTION -->
+                                <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-main); border: 2px solid #000; border-radius: 6px; cursor: pointer;">
+                                    <div>
+                                        <div style="font-weight: 700;">Spoiler Protection Mode</div>
+                                        <div style="font-size: 0.82rem; color: #555;">Wraps yesterday's solution card name in Discord spoiler tags (||Card Name||).</div>
+                                    </div>
+                                    <input type="checkbox" id="discord-opt-spoilers" style="width: 20px; height: 20px; accent-color: var(--secondary-color);">
+                                </label>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <button class="btn secondary-btn" style="flex: 2; min-width: 200px;" onclick="saveSelectedDiscordWebhook()">💾 Save Webhook Settings</button>
+                                <button class="btn primary-btn" style="flex: 1; min-width: 160px;" onclick="testSelectedDiscordWebhook()">🧪 Send Test Ping</button>
+                                <button class="btn delete-btn" style="flex: 1; min-width: 160px;" onclick="deleteSelectedDiscordWebhook()">🗑️ Delete Server</button>
+                            </div>
+                        </div>
+
+                        <div id="discord-config-empty" style="padding: 30px; text-align: center; color: #666; font-weight: 700;">
+                            No Discord webhook selected. Choose one from the dropdown or click "Add New Discord Server".
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 9. ANNOUNCEMENTS & OPS VIEW -->
+                <div id="view-announcements" class="section-view">
+                    <div class="brutal-panel">
+                        <div class="brutal-panel-header">
+                            <h3 class="brutal-panel-title">📢 Global Announcement Banner</h3>
+                        </div>
+                        <p style="margin-top: 0; color: #555; font-size: 0.9rem;">
+                            Renders a prominent sticky banner across all player pages (Game, Leaderboard, History, etc.). Users can click ✕ to dismiss it until a new banner ID is published.
+                        </p>
+
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; margin-bottom: 12px;">
+                                <input type="checkbox" id="announcement-active" style="width: 20px; height: 20px; accent-color: var(--secondary-color);">
+                                Display Banner Globally to Players
+                            </label>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label style="font-weight: 700; text-transform: uppercase; font-size: 0.85rem; display: block; margin-bottom: 6px;">Banner Theme / Style</label>
+                                <select id="announcement-type" class="input-field" style="font-weight: 700;">
+                                    <option value="teal">Teal (General Info / Update)</option>
+                                    <option value="gold">Gold (Special Event / Tournament)</option>
+                                    <option value="pink">Pink (Urgent Alert / Maintenance Notice)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-weight: 700; text-transform: uppercase; font-size: 0.85rem; display: block; margin-bottom: 6px;">Banner ID / Version Tag</label>
+                                <input type="text" id="announcement-id" class="input-field" placeholder="e.g. v3-launch-alert (change to re-show for all users)">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="font-weight: 700; text-transform: uppercase; font-size: 0.85rem; display: block; margin-bottom: 6px;">Banner Text Message</label>
+                            <textarea id="announcement-message" class="input-field" rows="3" placeholder="Enter message text... (e.g. Welcome to Loredle v3.0! Check out Friend Groups on the Leaderboard.)"></textarea>
+                        </div>
+
+                        <h4 style="font-family: var(--font-display); text-transform: uppercase; font-size: 1.1rem; margin-top: 30px; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 6px;">🔒 Emergency Maintenance Switch</h4>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; margin-bottom: 12px; color: #c00;">
+                                <input type="checkbox" id="maintenance-active" style="width: 20px; height: 20px; accent-color: #c00;">
+                                Enable Maintenance Mode (Locks daily gameplay for non-admins)
+                            </label>
+                        </div>
+
+                        <div style="margin-bottom: 24px;">
+                            <label style="font-weight: 700; text-transform: uppercase; font-size: 0.85rem; display: block; margin-bottom: 6px;">Maintenance Message</label>
+                            <input type="text" id="maintenance-message" class="input-field" placeholder="Loredle is temporarily under maintenance for database optimization. Back shortly!">
+                        </div>
+
+                        <button class="btn secondary-btn" style="width: 100%; font-size: 1.05rem;" onclick="saveSystemAnnouncement()">💾 Save Announcements & Ops Configuration</button>
+                    </div>
+                </div>
         </div>
     </div>
 
@@ -743,6 +929,26 @@
                 <button class="btn primary-btn" style="flex: 1;" onclick="addFeedbackNote()">➕ Add Note</button>
                 <button class="btn secondary-btn" style="flex: 1;" onclick="saveFeedback()">💾 Save Status</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD DISCORD WEBHOOK -->
+    <div class="modal" id="modal-add-webhook">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Discord Webhook</h2>
+                <span class="close-btn" onclick="closeAdminModal('modal-add-webhook')">&times;</span>
+            </div>
+            <label>Server / Channel Name</label>
+            <input type="text" id="add-webhook-name" class="input-field" placeholder="e.g. Official Community, Guild A">
+            <label>Discord Webhook URL</label>
+            <input type="text" id="add-webhook-url" class="input-field" placeholder="https://discord.com/api/webhooks/...">
+            <label>Optional Role ID to Ping</label>
+            <input type="text" id="add-webhook-role" class="input-field" placeholder="e.g. 123456789012345678 (blank for none)">
+            <p style="font-size: 0.82rem; color: #555; margin-top: 8px;">
+                Note: All broadcast components will default to OFF, except solve alerts if desired. You can configure individual component toggles after creating.
+            </p>
+            <button class="btn secondary-btn" style="width: 100%; margin-top: 10px;" onclick="submitAddDiscordWebhook()">➕ Create Webhook</button>
         </div>
     </div>
 

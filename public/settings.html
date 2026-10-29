@@ -76,7 +76,25 @@
         </div>
 
         <div class="settings-section" style="margin-top: 36px; border-top: 3px solid #000; padding-top: 24px;">
-            <h3>3. Change Password</h3>
+            <h3>3. Gameplay Helpers</h3>
+            <div style="background: var(--bg-card); border: 2.5px solid #000; border-radius: 8px; box-shadow: 3px 3px 0px #000; padding: 14px 16px; margin-top: 10px;">
+                <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; gap: 14px;">
+                    <div>
+                        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase;">
+                            🔎 Enable Card Tracker (Scratchpad)
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.45;">
+                            Provides an in-game scratchpad showing remaining possible cards filtered by your revealed clues.
+                            <br><strong style="color: var(--close);">Note:</strong> Solves completed using the Card Tracker will be marked with a <span style="font-size: 1.15em;">🔎</span> badge on the leaderboards and history to indicate assistance.
+                        </div>
+                    </div>
+                    <input type="checkbox" id="card-tracker-toggle" style="width: 26px; height: 26px; cursor: pointer; accent-color: var(--secondary-color); flex-shrink: 0;" onchange="toggleCardTrackerSetting(this.checked)">
+                </label>
+            </div>
+        </div>
+
+        <div class="settings-section" style="margin-top: 36px; border-top: 3px solid #000; padding-top: 24px;">
+            <h3>4. Change Password</h3>
             <input type="password" id="current-password" class="input-field" placeholder="Current Password">
             <input type="password" id="new-password" class="input-field" placeholder="New Password">
             <button onclick="submitPasswordChange()" class="btn primary-btn" style="width: 100%;">

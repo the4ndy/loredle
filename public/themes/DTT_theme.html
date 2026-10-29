@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<!--
+  Social Stream Ninja (SSN) - Neo-Brutalist Chat Overlay: "DTT Theme"
+  Restyled to match user specification with offset squircle avatars,
+  top-left overhang name chips, is-donation yellow cards,
+  neoPopIn spring entrance, neoPopOut slide-and-collapse exit,
+  and smooth progressive feathering + proximity fade at the top limits of the screen.
+
+  COMPATIBILITY:
+  - OBS Studio Browser Source: http://your-domain/themes/DTT_theme.html?session=YOUR_SESSION
+  - Social Stream Ninja &theme= / &css= parameter support
+  - Standalone Demo Mode: Open in any browser to test and preview!
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Neo-Brutalism Chat Overlay for Social Stream Ninja (DTT Theme)" />
+  <meta name="robots" content="noindex" />
+  <title>Neo-Brutalism Chat Overlay | DTT Theme</title>
+
+  <!-- Google Fonts for Neo-Brutalist Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- Social Stream Ninja Helper Scripts with Graceful Fallbacks -->
+  <script src="https://socialstream.ninja/libs/objects.js" onerror="console.warn('SSN objects.js fallback active')"></script>
+  <script src="https://socialstream.ninja/shared/utils/chatHtml.js" onerror="console.warn('SSN chatHtml.js fallback active')"></script>
+  <script src="https://socialstream.ninja/shared/utils/chatBadges.js" onerror="console.warn('SSN chatBadges.js fallback active')"></script>
+  <link rel="stylesheet" href="https://socialstream.ninja/shared/utils/chatBadges.css" onerror="console.warn('SSN chatBadges.css fallback active')">
+  <script src="https://socialstream.ninja/libs/colours.js" onerror="console.warn('SSN colours.js fallback active')"></script>
+  <script src="https://socialstream.ninja/js/transport-dedupe.js" onerror="console.warn('SSN transport-dedupe.js fallback active')"></script>
+
+  <style>
+    :root {
+      --border-color: #000000;
+      --card-bg: #ffffff;
+      --card-text: #111111;
+      --shadow-color: #000000;
+      --border-width: 3px;
+      --shadow-offset: 4px;
+      --font-stack: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'Space Mono', monospace;
+    }
+
+    body.dark {
+      --card-bg: #1e1638;
+      --card-text: #fdfbff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: transparent; /* Pure transparent for OBS Studio Browser Source */
+      font-family: var(--font-stack);
+      min-height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Neo-Brutalism Controls Toolbar (Visible in demo / test mode) */
+    .controls-panel {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 10000;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      border: var(--border-width) solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: 5px 5px 0px var(--shadow-color);
+      padding: 12px 16px;
+      max-width: 580px;
+      pointer-events: auto;
+    }
+
+    .controls-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .neo-btn {
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 14px;
+      border: 2.5px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      box-shadow: 3px 3px 0px var(--shadow-color);
+      transition: transform 0.06s ease, box-shadow 0.06s ease, background-color 0.15s ease;
+      background: #ffffff;
+      color: #000000;
+    }
+
+    .neo-btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .neo-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px var(--shadow-color);
+    }
+
+    .btn-create {
+      background-color: #00f0ff;
+      color: #000000;
+    }
+    .btn-create:hover { background-color: #55f7ff; }
+
+    .btn-dismiss {
+      background-color: #ff2a85;
+      color: #ffffff;
+    }
+    .btn-dismiss:hover { background-color: #ff5c9f; }
+
+    .btn-toggle {
+      background-color: #ffe600;
+      color: #000000;
+    }
+
+    .btn-donation {
+      background-color: #ffe600;
+      color: #000000;
+    }
+
+    .btn-member {
+      background-color: #00e5a3;
+      color: #000000;
+    }
+
+    .btn-close {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      font-size: 1.2rem;
+      padding: 0 4px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .obs-tip {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      background: #f4f4f5;
+      color: #222;
+      border: 1px solid #000;
+      border-radius: 4px;
+      padding: 6px 8px;
+      width: 100%;
+      word-break: break-all;
+    }
+
+    /* Chat Container */
+    #chat-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 16px;
+      max-width: 560px;
+      width: 100%;
+      height: 100vh;
+      padding: 24px;
+      box-sizing: border-box;
+      pointer-events: none;
+
+      /* Top Limits Feathering Gradient Mask */
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 0, 0, 0.05) 30px,
+        rgba(0, 0, 0, 0.6) 80px,
+        black 140px,
+        black 100%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0, 0, 0, 0.05) 30px,
+        rgba(0, 0, 0, 0.6) 80px,
+        black 140px,
+        black 100%
+      );
+    }
+
+    #chat-container.align-right {
+      left: auto;
+      right: 0;
+    }
+
+    #chat-container.align-center {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* Reverse mode: newest at top, scrolling down */
+    #chat-container.reverse-mode {
+      bottom: auto;
+      top: 0;
+      justify-content: flex-start;
+      -webkit-mask-image: linear-gradient(
+        to top,
+        transparent 0%,
+        rgba(0, 0, 0, 0.05) 30px,
+        rgba(0, 0, 0, 0.6) 80px,
+        black 140px,
+        black 100%
+      );
+      mask-image: linear-gradient(
+        to top,
+        transparent 0%,
+        rgba(0, 0, 0, 0.05) 30px,
+        rgba(0, 0, 0, 0.6) 80px,
+        black 140px,
+        black 100%
+      );
+    }
+
+    /* Message Item Wrapper */
+    .chat-message {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-top: 14px;
+      transform-origin: left bottom;
+      transition: max-height 0.35s ease, margin 0.35s ease, opacity 0.3s ease;
+      will-change: transform, opacity;
+      --scroll-opacity: 1;
+      filter: opacity(var(--scroll-opacity));
+    }
+
+    /* Animate In: Pop & Snap with Hard Shadow Depth */
+    .chat-message.anim-in {
+      animation: neoPopIn 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes neoPopIn {
+      0% {
+        opacity: 0;
+        transform: translateY(24px) scale(0.92);
+      }
+      70% {
+        transform: translateY(-3px) scale(1.02);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Animate Out: Slide Right, Depress Shadow & Collapse */
+    .chat-message.anim-out {
+      animation: neoPopOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      pointer-events: none;
+    }
+
+    @keyframes neoPopOut {
+      0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        max-height: 240px;
+      }
+      40% {
+        opacity: 0.8;
+        transform: translateX(-10px) scale(0.98);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(45px) scale(0.9);
+        max-height: 0px;
+        margin-top: 0px;
+        margin-bottom: -16px; /* Offsets container gap */
+      }
+    }
+
+    /* Reverse mode animation variants */
+    .reverse-mode .chat-message {
+      transform-origin: left top;
+    }
+    .reverse-mode .chat-message.anim-in {
+      animation: neoPopInReverse 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes neoPopInReverse {
+      0% {
+        opacity: 0;
+        transform: translateY(-24px) scale(0.92);
+      }
+      70% {
+        transform: translateY(3px) scale(1.02);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Squircle Avatar (Left) */
+    .avatar-wrapper {
+      position: relative;
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      background: #ffffff;
+      border: var(--border-width) solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: 3px 3px 0px var(--shadow-color);
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .avatar-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Card Message Body */
+    .message-card {
+      position: relative;
+      flex: 1;
+      background: var(--card-bg);
+      border: var(--border-width) solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--shadow-color);
+      padding: 18px 14px 12px 14px;
+    }
+
+    /* Top-Left Offset Name Chip */
+    .name-chip {
+      position: absolute;
+      top: -14px;
+      left: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--chip-bg, #00f0ff);
+      color: #000000;
+      border: 2.5px solid var(--border-color);
+      border-radius: 4px;
+      box-shadow: 2px 2px 0px var(--shadow-color);
+      padding: 2px 10px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      z-index: 2;
+      max-width: 85%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge-icon {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: #000000;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .source-icon {
+      width: 13px;
+      height: 13px;
+      object-fit: contain;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .chip-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chip-badges {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .chip-badges .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 14px;
+      width: auto;
+      max-height: 14px;
+      vertical-align: middle;
+    }
+    .chip-badges .badge img,
+    .chip-badges .badge svg {
+      height: 14px !important;
+      width: auto !important;
+      display: block;
+    }
+
+    .timestamp {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      opacity: 0.7;
+      margin-left: 4px;
+    }
+
+    /* Message Body Text */
+    .message-content {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      font-weight: 600;
+      color: var(--card-text);
+      word-break: break-word;
+    }
+
+    .message-content.event-content {
+      font-style: italic;
+      color: #00a896;
+    }
+
+    .message-content img,
+    .message-content svg {
+      max-width: 3.2em;
+      max-height: 1.3em;
+      vertical-align: -0.22em;
+      margin: 0 1px;
+    }
+
+    /* Superchat Highlight Variant */
+    .chat-message.is-donation .message-card {
+      background-color: #ffe600;
+    }
+
+    .chat-message.is-donation .name-chip {
+      background-color: #ff007f !important;
+      color: #ffffff;
+    }
+
+    .donation-banner {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #000000;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Membership Pill Variant */
+    .membership-banner {
+      display: inline-block;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #000000;
+      background: #00e5a3;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      box-shadow: 2px 2px 0px var(--shadow-color);
+      padding: 2px 8px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Attached Media */
+    .content-img-wrapper {
+      margin-top: 8px;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      box-shadow: 2px 2px 0px var(--shadow-color);
+      overflow: hidden;
+      display: inline-block;
+      max-width: 100%;
+    }
+    .content-img-wrapper img {
+      display: block;
+      max-width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Neo-Brutalism Controls Toolbar (Demo / Testing Mode) -->
+  <div class="controls-panel" id="controls-panel" style="display: none;">
+    <div class="controls-title">
+      <span>DTT Neo-Brutalism Overlay</span>
+      <button class="btn-close" id="btn-close-panel" title="Hide Toolbar (Press 'H' to show again)">&times;</button>
+    </div>
+    <button class="neo-btn btn-create" id="btn-add">+ New Chat</button>
+    <button class="neo-btn btn-donation" id="btn-donation">+ Superchat</button>
+    <button class="neo-btn btn-member" id="btn-member">+ Member</button>
+    <button class="neo-btn btn-dismiss" id="btn-remove">- Animate Out</button>
+    <button class="neo-btn btn-toggle" id="btn-timer">Auto-Dismiss: ON (8s)</button>
+    <button class="neo-btn" id="btn-clear">Clear All</button>
+    <div class="obs-tip">
+      <strong>OBS URL:</strong> <span id="obs-url-text"></span>
+    </div>
+  </div>
+
+  <!-- Chat Box Container -->
+  <div id="chat-container"></div>
+
+  <!-- Core Script: Animations, Protocols & Neo-Brutalist Layout -->
+  <script>
+    (function () {
+      "use strict";
+
+      var urlParams = new URLSearchParams(window.location.search);
+
+      // --- URL CONFIGURATION ---
+      var roomID = urlParams.get("session") || urlParams.get("s") || "";
+      var password = urlParams.get("password") || urlParams.get("pass") || urlParams.get("pw") || "false";
+      var MAX_MESSAGES = urlParams.has("limit") ? Math.max(1, parseInt(urlParams.get("limit"), 10)) : 6;
+      var reversed = urlParams.has("reverse");
+      var hideBots = urlParams.has("hidebots");
+      var hideAvatar = urlParams.has("noavatar");
+      var hideBadges = urlParams.has("nobadges");
+      var hideIcon = urlParams.has("noicon");
+      var showClock = urlParams.has("time");
+      var stripMemberships = urlParams.has("stripmemberships");
+      var isDark = urlParams.has("dark");
+      var isDemo = !roomID || urlParams.has("demo");
+
+      // Auto-dismiss timeout (0 = never auto dismiss, default 8000ms in demo mode)
+      var autoDismissMs = urlParams.has("showtime")
+        ? parseInt(urlParams.get("showtime"), 10)
+        : (isDemo ? 8000 : 0);
+      var autoDismissEnabled = autoDismissMs > 0;
+
+      if (isDark) {
+        document.body.classList.add("dark");
+      }
+
+      if (urlParams.has("chroma")) {
+        var c = urlParams.get("chroma") || "";
+        document.body.style.backgroundColor = c.charAt(0) === "#" ? c : "#" + c;
+      }
+
+      if (urlParams.has("font")) {
+        var fs = parseInt(urlParams.get("font"), 10);
+        if (!isNaN(fs) && fs > 0) {
+          document.documentElement.style.fontSize = fs + "px";
+        }
+      }
+
+      var chatContainer = document.getElementById("chat-container");
+
+      if (urlParams.has("width")) {
+        var w = parseInt(urlParams.get("width"), 10);
+        if (!isNaN(w) && w > 0) {
+          chatContainer.style.maxWidth = w + "px";
+        }
+      }
+
+      var align = (urlParams.get("align") || "").toLowerCase();
+      if (align === "right") {
+        chatContainer.classList.add("align-right");
+      } else if (align === "center") {
+        chatContainer.classList.add("align-center");
+      }
+
+      if (reversed) {
+        chatContainer.classList.add("reverse-mode");
+      }
+
+      var PROXIMITY_FADE_DISTANCE = (function () {
+        if (urlParams.has("fadezone")) {
+          var parsed = parseInt(urlParams.get("fadezone"), 10);
+          if (!Number.isNaN(parsed) && parsed >= 0) return parsed;
+        }
+        return 140; // 140px proximity fade zone at top edge
+      })();
+
+      // Vibrant Neo-Brutalist Chip Colors
+      var CHIP_PALETTE = [
+        "#00f0ff", // Electric Cyan
+        "#ff2a85", // Hot Pink
+        "#00e5a3", // Bright Teal
+        "#a855f7", // Vivid Purple
+        "#ffe600", // Lemon Yellow
+        "#ff6b35"  // Punch Orange
+      ];
+
+      function getChipColor(name, customColor) {
+        if (customColor && sanitizeRelayCssColor(customColor)) {
+          return sanitizeRelayCssColor(customColor);
+        }
+        var hash = 0;
+        for (var i = 0; i < (name || "").length; i++) {
+          hash = (hash * 31 + name.charCodeAt(i)) % CHIP_PALETTE.length;
+        }
+        return CHIP_PALETTE[Math.abs(hash) % CHIP_PALETTE.length];
+      }
+
+      // --- SECURITY & SANITIZATION HELPERS ---
+      function sanitize(str) {
+        if (str == null) return "";
+        var div = document.createElement("div");
+        div.textContent = String(str);
+        return div.innerHTML;
+      }
+
+      function sanitizeRelayUrl(url) {
+        if (!url || typeof url !== "string") return "";
+        var trimmed = url.trim();
+        if (/^(?:https?:|data:image\/(?:png|jpe?g|gif|webp|svg\+xml);base64,)/i.test(trimmed)) {
+          return trimmed;
+        }
+        return "";
+      }
+
+      function sanitizeRelayCssColor(color) {
+        if (!color || typeof color !== "string") return "";
+        var trimmed = color.trim();
+        if (/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(trimmed) ||
+            /^(?:rgb|hsl)a?\([0-9\s.,%/-]+\)$/i.test(trimmed)) {
+          return trimmed;
+        }
+        return "";
+      }
+
+      function sanitizeChatMessage(msg, isTextOnly) {
+        if (!msg) return "";
+        if (isTextOnly) return sanitize(msg);
+        if (window.SocialStreamChatHTML && typeof window.SocialStreamChatHTML.sanitize === "function") {
+          return window.SocialStreamChatHTML.sanitize(msg);
+        }
+        return sanitize(msg);
+      }
+
+      function nowClock() {
+        var d = new Date();
+        var h = d.getHours();
+        var m = d.getMinutes();
+        return (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m);
+      }
+
+      // --- REMOVE WITH ANIMATION (neoPopOut) ---
+      function removeMessageWithAnimation(element) {
+        if (!element || element.classList.contains("anim-out")) return;
+        element.classList.remove("anim-in");
+        element.classList.add("anim-out");
+
+        element.addEventListener("animationend", function () {
+          if (element.parentNode) {
+            element.parentNode.removeChild(element);
+          }
+        }, { once: true });
+      }
+
+      // --- DYNAMIC PROXIMITY FADE AT TOP BOUNDARY ---
+      function updateProximityFade() {
+        var containerRect = chatContainer.getBoundingClientRect();
+        var messages = chatContainer.querySelectorAll(".chat-message:not(.anim-out)");
+        var fadeZone = PROXIMITY_FADE_DISTANCE;
+
+        messages.forEach(function (msg) {
+          var rect = msg.getBoundingClientRect();
+          var distanceFromEdge = reversed
+            ? (containerRect.bottom - rect.bottom)
+            : (rect.top - containerRect.top);
+
+          if (distanceFromEdge <= 0) {
+            // Reached top limit: smoothly animate out!
+            removeMessageWithAnimation(msg);
+          } else if (distanceFromEdge < fadeZone) {
+            var op = Math.max(0, distanceFromEdge / fadeZone);
+            msg.style.setProperty("--scroll-opacity", op.toFixed(3));
+          } else {
+            msg.style.removeProperty("--scroll-opacity");
+          }
+        });
+
+        requestAnimationFrame(updateProximityFade);
+      }
+      requestAnimationFrame(updateProximityFade);
+
+      // --- CREATE & RENDER CHAT MESSAGE ---
+      function createChatMessage(data) {
+        if (!data || typeof data !== "object") return;
+        if (hideBots && data.bot) return;
+        if (!data.chatname && !data.chatmessage && !data.hasDonation && !data.donation && !data.membership && !data.contentimg) return;
+
+        var msgWrapper = document.createElement("div");
+        var donation = data.hasDonation || data.donation || null;
+        var isDonation = !!donation;
+        var authorName = data.chatname || "Guest";
+        var chipColor = getChipColor(authorName, data.nameColor);
+
+        msgWrapper.className = "chat-message anim-in" + (isDonation ? " is-donation" : "");
+        if (data.mid || data.id) {
+          msgWrapper.dataset.mid = String(data.mid || data.id);
+        }
+
+        // Avatar
+        var avatarUrl = "";
+        if (!hideAvatar) {
+          if (data.chatimg) {
+            avatarUrl = sanitizeRelayUrl(data.chatimg);
+          }
+          if (!avatarUrl) {
+            avatarUrl = "https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(authorName);
+          }
+        }
+        var avatarHtml = !hideAvatar
+          ? "<div class=\"avatar-wrapper\"><img src=\"" + sanitize(avatarUrl) + "\" alt=\"" + sanitize(authorName) + "\" onerror=\"this.parentNode.style.display='none'\" /></div>"
+          : "";
+
+        // Source Platform Icon
+        var sourceType = String(data.type || "").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+        var sourceIconHtml = (!hideIcon && sourceType)
+          ? "<img class=\"source-icon\" src=\"https://socialstream.ninja/sources/images/" + sanitize(sourceType) + ".png\" alt=\"\" onerror=\"this.style.display='none'\">"
+          : (!data.chatbadges ? "<span class=\"badge-icon\"></span>" : "");
+
+        // Chat Badges
+        var badgesHtml = "";
+        if (!hideBadges && data.chatbadges) {
+          if (window.SocialStreamBadges && typeof window.SocialStreamBadges.render === "function") {
+            badgesHtml = "<span class=\"chip-badges\">" + window.SocialStreamBadges.render(data.chatbadges) + "</span>";
+          }
+        }
+
+        // Timestamp
+        var clockHtml = showClock ? "<span class=\"timestamp\">" + nowClock() + "</span>" : "";
+
+        // Membership Banner
+        var membershipHtml = (!stripMemberships && data.membership)
+          ? "<div class=\"membership-banner\">★ " + sanitize(data.membership) + "</div>"
+          : "";
+
+        // Donation Banner
+        var donationHtml = isDonation
+          ? "<div class=\"donation-banner\">⚡ " + sanitize(donation) + "</div>"
+          : "";
+
+        // Message Content Body
+        var bodyHtml = sanitizeChatMessage(data.chatmessage, data.textonly);
+        var contentTextHtml = bodyHtml
+          ? "<div class=\"message-content" + (data.event ? " event-content" : "") + "\">" + bodyHtml + "</div>"
+          : "";
+
+        // Content Image Attachment
+        var contentImgSrc = data.contentimg ? sanitizeRelayUrl(data.contentimg) : "";
+        var contentImgHtml = contentImgSrc
+          ? "<div class=\"content-img-wrapper\"><img src=\"" + sanitize(contentImgSrc) + "\" alt=\"\" onerror=\"this.parentNode.style.display='none'\" /></div>"
+          : "";
+
+        // Inner Card Assembly
+        msgWrapper.innerHTML =
+          avatarHtml +
+          "<div class=\"message-card\">" +
+            "<div class=\"name-chip\" style=\"--chip-bg: " + chipColor + ";\">" +
+              sourceIconHtml +
+              badgesHtml +
+              "<span class=\"chip-name\">" + sanitize(authorName) + "</span>" +
+              clockHtml +
+            "</div>" +
+            donationHtml +
+            membershipHtml +
+            contentTextHtml +
+            contentImgHtml +
+          "</div>";
+
+        // Insert into container
+        if (reversed) {
+          var firstMsg = chatContainer.querySelector(".chat-message");
+          if (firstMsg) chatContainer.insertBefore(msgWrapper, firstMsg);
+          else chatContainer.appendChild(msgWrapper);
+        } else {
+          chatContainer.appendChild(msgWrapper);
+        }
+
+        // Auto Dismiss
+        if (autoDismissEnabled && autoDismissMs > 0) {
+          setTimeout(function () {
+            removeMessageWithAnimation(msgWrapper);
+          }, autoDismissMs);
+        }
+
+        // Max Queue Control: Animate out oldest if messages exceed limit
+        var activeMessages = chatContainer.querySelectorAll(".chat-message:not(.anim-out)");
+        if (activeMessages.length > MAX_MESSAGES) {
+          var oldest = reversed ? activeMessages[activeMessages.length - 1] : activeMessages[0];
+          if (oldest) removeMessageWithAnimation(oldest);
+        }
+      }
+      window.createChatMessage = createChatMessage;
+
+      // --- TRANSPORT & SSN LISTENERS ---
+      // WebRTC hidden iframe
+      var iframe = null;
+      if (roomID) {
+        iframe = document.createElement("iframe");
+        iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password=" + encodeURIComponent(password) + "&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room=" + encodeURIComponent(roomID);
+        iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px; opacity: 0; pointer-events: none;";
+        document.body.appendChild(iframe);
+      }
+
+      // Cross-transport dedupe
+      var CROSS_TRANSPORT_DEDUPE_TTL_MS = 12000;
+      var recentDeliveries = new Map();
+      function isDuplicate(data) {
+        if (!data || typeof data !== "object" || data.id === undefined || data.id === null) return false;
+        var key = String(data.id) + "|" + (data.type || "") + "|" + (data.chatname || "");
+        var now = Date.now();
+        recentDeliveries.forEach(function (seenAt, seenKey) {
+          if (now - seenAt > CROSS_TRANSPORT_DEDUPE_TTL_MS) recentDeliveries.delete(seenKey);
+        });
+        if (recentDeliveries.has(key)) return true;
+        recentDeliveries.set(key, now);
+        return false;
+      }
+
+      // Message Event Receiver (WebRTC + postMessage)
+      window.addEventListener("message", function (event) {
+        var data = event.data;
+        if (!data) return;
+
+        // WebRTC bridge payload
+        if (iframe && event.source === iframe.contentWindow) {
+          if (data.dataReceived && data.dataReceived.overlayNinja) {
+            data = data.dataReceived.overlayNinja;
+          } else {
+            return;
+          }
+        } else if (data.dataReceived && data.dataReceived.overlayNinja) {
+          data = data.dataReceived.overlayNinja;
+        } else if (data.overlayNinja) {
+          data = data.overlayNinja;
+        }
+
+        if (typeof data === "string") {
+          try { data = JSON.parse(data); } catch(_) { return; }
+        }
+
+        if (isDuplicate(data)) return;
+
+        // Control signals
+        if (data.action === "clear" || data.action === "clearAll" || "clearAll" in data) {
+          chatContainer.querySelectorAll(".chat-message").forEach(removeMessageWithAnimation);
+          return;
+        }
+        if (data.action === "delete" || "deleteMessage" in data) {
+          var targetId = String(data.mid || data.id || data.deleteMessage || (data.delete && data.delete.id));
+          if (targetId) {
+            var targetEl = chatContainer.querySelector("[data-mid=\"" + targetId + "\"]");
+            if (targetEl) removeMessageWithAnimation(targetEl);
+          }
+          return;
+        }
+
+        if (data.chatmessage || data.chatname || data.hasDonation || data.donation || data.membership || data.contentimg) {
+          createChatMessage(data);
+        }
+      });
+
+      // WebSocket Server mode (&server / &server2 / &localserver)
+      if (urlParams.has("server") || urlParams.has("server2") || urlParams.has("localserver")) {
+        var serverURL = urlParams.has("localserver") ? "ws://127.0.0.1:3000" : "wss://io.socialstream.ninja";
+        serverURL = urlParams.get("server") || urlParams.get("server2") || serverURL;
+        var socket = null;
+        var reconnectAttempts = 1;
+
+        function connectSocket() {
+          socket = new WebSocket(serverURL);
+          socket.onopen = function () {
+            reconnectAttempts = 1;
+            socket.send(JSON.stringify({ "join": roomID, "out": 3, "in": 4 }));
+          };
+          socket.onclose = function () {
+            setTimeout(function () {
+              reconnectAttempts++;
+              connectSocket();
+            }, Math.min(10000, 100 * reconnectAttempts));
+          };
+          socket.onmessage = function (ev) {
+            if (ev.data) {
+              try {
+                var parsed = JSON.parse(ev.data);
+                if (parsed) createChatMessage(parsed);
+              } catch (_) {}
+            }
+          };
+        }
+        connectSocket();
+      }
+
+      // --- DEMO / PREVIEW CONTROLS ---
+      var controlsPanel = document.getElementById("controls-panel");
+      var btnAdd = document.getElementById("btn-add");
+      var btnDonation = document.getElementById("btn-donation");
+      var btnMember = document.getElementById("btn-member");
+      var btnRemove = document.getElementById("btn-remove");
+      var btnTimer = document.getElementById("btn-timer");
+      var btnClear = document.getElementById("btn-clear");
+      var btnClosePanel = document.getElementById("btn-close-panel");
+      var obsUrlText = document.getElementById("obs-url-text");
+
+      var SAMPLE_POOL = [
+        { name: "GooglyGlimmers", msg: "Testing turn 2 shift with Madam Mim. Tempo holds up surprisingly well.", type: "twitch", badge: true },
+        { name: "VinceCasts", msg: "The board state is completely locked down. Incredible topdeck.", type: "youtube", badge: true },
+        { name: "InkRunner99", msg: "Are we running 3 or 4 copies of Ursula Deceiver of All?", type: "kick", badge: false },
+        { name: "ShieldTutor", msg: "Steel Amethyst looking lethal this round!", type: "youtube", badge: false, donation: "$10.00 SUPERCHAT" },
+        { name: "BuckyEnjoyer", msg: "That discard sequence just destroyed their curve.", type: "discord", badge: false },
+        { name: "PixelWizard", msg: "The brutalist layout looks crazy clean on dark mode overlays.", type: "twitch", badge: false }
+      ];
+      var sampleIndex = 0;
+
+      if (isDemo && controlsPanel) {
+        controlsPanel.style.display = "flex";
+        var obsUrl = window.location.origin + window.location.pathname + "?session=YOUR_SESSION_ID";
+        obsUrlText.textContent = obsUrl;
+
+        btnAdd.addEventListener("click", function () {
+          var sample = SAMPLE_POOL[sampleIndex % SAMPLE_POOL.length];
+          sampleIndex++;
+          createChatMessage({
+            chatname: sample.name,
+            chatmessage: sample.msg,
+            type: sample.type,
+            chatbadges: sample.badge ? ["moderator"] : null
+          });
+        });
+
+        btnDonation.addEventListener("click", function () {
+          var amounts = ["$5.00 SUPERCHAT", "$10.00 SUPERCHAT", "$25.00 SUPERCHAT", "$50.00 SUPERCHAT"];
+          var amt = amounts[Math.floor(Math.random() * amounts.length)];
+          createChatMessage({
+            chatname: "ShieldTutor",
+            chatmessage: "Massive support for the tournament stream! Keep crushing it! 🔥",
+            type: "youtube",
+            hasDonation: amt
+          });
+        });
+
+        btnMember.addEventListener("click", function () {
+          createChatMessage({
+            chatname: "UrsulaFanatic",
+            chatmessage: "Hyped to join the Member squad today! Let's get these wins!",
+            type: "youtube",
+            membership: "New Member (Tier 1)"
+          });
+        });
+
+        btnRemove.addEventListener("click", function () {
+          var oldestActive = chatContainer.querySelector(".chat-message:not(.anim-out)");
+          if (oldestActive) removeMessageWithAnimation(oldestActive);
+        });
+
+        btnTimer.addEventListener("click", function () {
+          autoDismissEnabled = !autoDismissEnabled;
+          autoDismissMs = autoDismissEnabled ? 8000 : 0;
+          btnTimer.textContent = "Auto-Dismiss: " + (autoDismissEnabled ? "ON (8s)" : "OFF");
+          btnTimer.style.backgroundColor = autoDismissEnabled ? "#ffe600" : "#d1d5db";
+        });
+
+        btnClear.addEventListener("click", function () {
+          chatContainer.querySelectorAll(".chat-message").forEach(removeMessageWithAnimation);
+        });
+
+        btnClosePanel.addEventListener("click", function () {
+          controlsPanel.style.display = "none";
+        });
+
+        // 'H' key toggles controls panel
+        window.addEventListener("keydown", function (e) {
+          if (e.key === "h" || e.key === "H") {
+            controlsPanel.style.display = controlsPanel.style.display === "none" ? "flex" : "none";
+          }
+        });
+
+        // Initial preview load
+        window.addEventListener("DOMContentLoaded", function () {
+          createChatMessage({
+            chatname: SAMPLE_POOL[0].name,
+            chatmessage: SAMPLE_POOL[0].msg,
+            type: SAMPLE_POOL[0].type,
+            chatbadges: ["moderator"]
+          });
+          sampleIndex++;
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

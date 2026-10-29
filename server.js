@@ -44,7 +44,9 @@ const scoreSchema = new mongoose.Schema({
     username: { type: String, required: true },
     date: { type: String, required: true },
     tries: { type: Number, required: true },
-    guesses: { type: [String], default: [] }
+    guesses: { type: [String], default: [] },
+    trackerUsed: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
 });
 scoreSchema.index({ date: 1, tries: 1, _id: 1 });
 scoreSchema.index({ username: 1, date: -1 });
@@ -62,6 +64,7 @@ const dailyProgressSchema = new mongoose.Schema({
     username: { type: String, required: true },
     date: { type: String, required: true },
     guesses: { type: [String], default: [] },
+    trackerUsed: { type: Boolean, default: false },
     updatedAt: { type: Date, default: Date.now }
 });
 dailyProgressSchema.index({ username: 1, date: 1 }, { unique: true });
@@ -75,6 +78,57 @@ const arcadeScoreSchema = new mongoose.Schema({
 });
 arcadeScoreSchema.index({ score: -1, date: 1 });
 const ArcadeScore = mongoose.model('ArcadeScore', arcadeScoreSchema);
+
+// --- NEW QOL SCHEMAS ---
+const groupSchema = new mongoose.Schema({
+    name: { type: String, required: true, trim: true, maxlength: 40 },
+    code: { type: String, required: true, unique: true, uppercase: true, index: true }, // e.g. "ROV-419"
+    owner: { type: String, required: true, index: true },
+    members: [{ type: String, index: true }],
+    deleted: { type: Boolean, default: false, index: true },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+groupSchema.index({ members: 1, deleted: 1 });
+const Group = mongoose.model('Group', groupSchema);
+
+const discordWebhookSchema = new mongoose.Schema({
+    name: { type: String, required: true, trim: true },
+    url: { type: String, required: true, trim: true },
+    enabled: { type: Boolean, default: false },
+    sendScoreCompletions: { type: Boolean, default: false }, // Player solve alerts
+    announceNewPuzzle: { type: Boolean, default: false },    // Midnight CST reset
+    includeYesterdayRecap: { type: Boolean, default: false },
+    announceWinner: { type: Boolean, default: false },
+    spoilerProtection: { type: Boolean, default: true },
+    pingRole: { type: String, default: '' },
+    customMessage: { type: String, default: '' },
+    templateCompletion: { type: String, default: '' },
+    templateDailyDrop: { type: String, default: '' },
+    templateYesterdayRecap: { type: String, default: '' },
+    templateWinnerShoutout: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+});
+const DiscordWebhook = mongoose.model('DiscordWebhook', discordWebhookSchema);
+
+const systemConfigSchema = new mongoose.Schema({
+    key: { type: String, unique: true, default: 'global_config' },
+    announcement: {
+        active: { type: Boolean, default: false },
+        id: { type: String, default: '' },
+        message: { type: String, default: '', maxlength: 500 },
+        text: { type: String, default: '' },
+        type: { type: String, default: 'teal' }
+    },
+    maintenance: {
+        active: { type: Boolean, default: false },
+        message: { type: String, default: 'Loredle is temporarily under maintenance. Back shortly!' }
+    },
+    maintenanceMode: { type: Boolean, default: false },
+    updatedAt: { type: Date, default: Date.now }
+});
+const SystemConfig = mongoose.model('SystemConfig', systemConfigSchema);
 
 // --- HELPER FUNCTIONS ---
 function getCSTDate(offsetDays = 0) {
@@ -198,8 +252,75 @@ mongoose.connect(process.env.MONGODB_URI)
         const today = getCSTDate();
         const lockedCard = await getOrLockDailyTargetCard(today, true);
         console.log(`Daily Loredle Card for ${today} locked: ${lockedCard}`);
+
+        // Initialize System Config Cache
+        try {
+            const existingConfig = await SystemConfig.findOne({ key: 'global_config' }).lean();
+            if (existingConfig) {
+                const ann = existingConfig.announcement || {};
+                const maint = existingConfig.maintenance || {};
+                systemConfigCache = {
+                    announcement: {
+                        active: Boolean(ann.active),
+                        id: ann.id || '',
+                        message: ann.message || ann.text || '',
+                        text: ann.text || ann.message || '',
+                        type: ann.type || 'teal'
+                    },
+                    maintenance: {
+                        active: Boolean(maint.active ?? existingConfig.maintenanceMode),
+                        message: maint.message || 'Loredle is temporarily under maintenance. Back shortly!'
+                    },
+                    maintenanceMode: Boolean(maint.active ?? existingConfig.maintenanceMode)
+                };
+            } else {
+                await SystemConfig.create({ key: 'global_config' });
+            }
+        } catch (sysErr) {
+            console.error('System config init error:', sysErr);
+        }
+
+        // Initialize Default Discord Webhook from .env if present
+        await initDefaultDiscordWebhook();
     })
     .catch(err => console.error('Database connection error:', err));
+
+let systemConfigCache = {
+    announcement: { active: false, id: '', message: '', text: '', type: 'teal' },
+    maintenance: { active: false, message: 'Loredle is temporarily under maintenance. Back shortly!' },
+    maintenanceMode: false
+};
+
+async function initDefaultDiscordWebhook() {
+    const envUrl = (process.env.DISCORD_WEBHOOK_URL || '').trim();
+    if (!envUrl) return;
+    try {
+        const existing = await DiscordWebhook.findOne({ url: envUrl });
+        if (!existing) {
+            await DiscordWebhook.create({
+                name: 'Primary Discord Server',
+                url: envUrl,
+                enabled: true,
+                sendScoreCompletions: true, // Keep completion alerts active as requested!
+                announceNewPuzzle: false,
+                includeYesterdayRecap: false,
+                announceWinner: false,
+                spoilerProtection: true,
+                pingRole: '',
+                customMessage: ''
+            });
+            console.log('Registered primary Discord webhook from .env with completion alerts active.');
+        } else {
+            // Ensure primary webhook has completion alerts active
+            if (!existing.sendScoreCompletions) {
+                existing.sendScoreCompletions = true;
+                await existing.save();
+            }
+        }
+    } catch (e) {
+        console.error('Error initializing default Discord webhook:', e);
+    }
+}
 
 // --- CARD CATALOG & DAILY STATE ROUTES ---
 
@@ -230,6 +351,16 @@ app.get('/api/cards', async (req, res) => {
 
 app.get('/api/daily-state', async (req, res) => {
     try {
+        const decodedUser = getOptionalUser(req);
+        const isMaint = Boolean(systemConfigCache.maintenance?.active || systemConfigCache.maintenanceMode);
+        if (isMaint && (!decodedUser || decodedUser.role !== 'admin')) {
+            const maintMsg = systemConfigCache.maintenance?.message || systemConfigCache.announcement?.message || systemConfigCache.announcement?.text || 'Loredle is currently under maintenance. Please check back shortly!';
+            return res.status(503).json({
+                maintenance: true,
+                message: maintMsg
+            });
+        }
+
         const today = getCSTDate();
         const targetCardName = await getOrLockDailyTargetCard(today, true);
         if (!targetCardName) {
@@ -237,12 +368,12 @@ app.get('/api/daily-state', async (req, res) => {
         }
 
         const targetToken = encodeTargetToken(targetCardName, today);
-        const decodedUser = getOptionalUser(req);
         const username = decodedUser?.username || req.query.username || null;
 
         let completed = false;
         let completedScore = null;
         let inProgressGuesses = [];
+        let inProgressTrackerUsed = false;
 
         if (username && username !== 'Anonymous User') {
             const existingScore = await Score.findOne({ username, date: today }).lean();
@@ -250,12 +381,14 @@ app.get('/api/daily-state', async (req, res) => {
                 completed = true;
                 completedScore = {
                     tries: existingScore.tries,
-                    guesses: existingScore.guesses || []
+                    guesses: existingScore.guesses || [],
+                    trackerUsed: !!existingScore.trackerUsed
                 };
             } else {
                 const prog = await DailyProgress.findOne({ username, date: today }).lean();
-                if (prog && Array.isArray(prog.guesses)) {
-                    inProgressGuesses = prog.guesses;
+                if (prog) {
+                    if (Array.isArray(prog.guesses)) inProgressGuesses = prog.guesses;
+                    inProgressTrackerUsed = !!prog.trackerUsed;
                 }
             }
         }
@@ -265,7 +398,8 @@ app.get('/api/daily-state', async (req, res) => {
             targetToken,
             completed,
             score: completedScore,
-            inProgressGuesses
+            inProgressGuesses,
+            trackerUsed: inProgressTrackerUsed
         });
     } catch (err) {
         console.error('Error in /api/daily-state:', err);
@@ -277,7 +411,7 @@ app.post('/api/daily-progress', async (req, res) => {
     try {
         const decodedUser = getOptionalUser(req);
         const username = decodedUser?.username || req.body.username;
-        const { guesses } = req.body;
+        const { guesses, trackerUsed } = req.body;
         if (!username || username === 'Anonymous User' || !Array.isArray(guesses)) {
             return res.status(200).json({ saved: false });
         }
@@ -285,7 +419,7 @@ app.post('/api/daily-progress', async (req, res) => {
         const today = getCSTDate();
         await DailyProgress.findOneAndUpdate(
             { username, date: today },
-            { $set: { guesses, updatedAt: new Date() } },
+            { $set: { guesses, trackerUsed: !!trackerUsed, updatedAt: new Date() } },
             { upsert: true }
         );
         res.status(200).json({ saved: true });
@@ -382,6 +516,7 @@ app.get('/api/leaderboard', async (req, res) => {
                     username: 1,
                     date: 1,
                     tries: 1,
+                    trackerUsed: { $ifNull: ['$trackerUsed', false] },
                     avatar: {
                         $ifNull: [{ $arrayElemAt: ['$userDoc.avatar', 0] }, 'default']
                     }
@@ -405,6 +540,7 @@ app.get('/api/hall-of-fame', async (req, res) => {
                     _id: '$date',
                     username: { $first: '$username' },
                     tries: { $first: '$tries' },
+                    trackerUsed: { $first: '$trackerUsed' },
                     date: { $first: '$date' }
                 }
             },
@@ -422,6 +558,7 @@ app.get('/api/hall-of-fame', async (req, res) => {
                     _id: 1,
                     username: 1,
                     tries: 1,
+                    trackerUsed: { $ifNull: ['$trackerUsed', false] },
                     date: 1,
                     avatar: {
                         $ifNull: [{ $arrayElemAt: ['$userDoc.avatar', 0] }, 'default']
@@ -542,7 +679,7 @@ app.get('/api/user/detailed-history/:username', async (req, res) => {
 
 app.post('/api/submit-score', async (req, res) => {
     try {
-        const { username, tries, shareText, targetCard, guesses } = req.body;
+        const { username, tries, shareText, targetCard, guesses, trackerUsed } = req.body;
         const today = getCSTDate();
 
         const isAnonymous = !username || username === 'Anonymous User';
@@ -558,7 +695,8 @@ app.post('/api/submit-score', async (req, res) => {
                 username,
                 date: today,
                 tries: Number(tries) || (Array.isArray(guesses) ? guesses.length : 1),
-                guesses: Array.isArray(guesses) ? guesses : []
+                guesses: Array.isArray(guesses) ? guesses : [],
+                trackerUsed: !!trackerUsed
             });
             await newScore.save();
 
@@ -579,18 +717,37 @@ app.post('/api/submit-score', async (req, res) => {
             }
         }
 
-        if (process.env.DISCORD_WEBHOOK_URL && shareText) {
-            const lines = shareText.split('\n');
-            const gridLines = lines.filter(line => line.includes('🟥') || line.includes('🟩') || line.includes('🟨'));
-            const emojiGrid = gridLines.join('\n');
+        // Webhook dispatch: Send score completion to all active webhooks with sendScoreCompletions: true
+        try {
+            const webhooks = await DiscordWebhook.find({ enabled: true, sendScoreCompletions: true }).lean();
+            if (shareText && webhooks.length > 0) {
+                const lines = shareText.split('\n');
+                const gridLines = lines.filter(line => line.includes('🟥') || line.includes('🟩') || line.includes('🟨'));
+                const emojiGrid = gridLines.join('\n');
+                const trackerTag = trackerUsed ? ' (🔎 Card Tracker)' : '';
+                const triesText = Number(tries) === 1 ? 'try' : 'tries';
 
-            fetch(process.env.DISCORD_WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    content: `🚨 **${displayUsername}** completed today's Loredle in **${tries}** ${Number(tries) === 1 ? 'try' : 'tries'}!\n${emojiGrid}`
-                })
-            }).catch(err => console.error('Discord Webhook Failed:', err));
+                for (const wh of webhooks) {
+                    let formatted = wh.templateCompletion && wh.templateCompletion.trim()
+                        ? wh.templateCompletion
+                            .replace(/{username}/g, displayUsername)
+                            .replace(/{tries}/g, String(tries))
+                            .replace(/{triesText}/g, triesText)
+                            .replace(/{tracker}/g, trackerTag)
+                            .replace(/{grid}/g, emojiGrid)
+                            .replace(/{date}/g, today)
+                        : `🚨 **${displayUsername}**${trackerTag} completed today's Loredle in **${tries}** ${triesText}!\n${emojiGrid}`;
+
+                    const pingText = wh.pingRole ? (wh.pingRole.startsWith('<@') ? `${wh.pingRole} ` : `<@&${wh.pingRole}> `) : '';
+                    fetch(wh.url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: `${pingText}${formatted}` })
+                    }).catch(err => console.error(`Discord dispatch failed for "${wh.name}":`, err));
+                }
+            }
+        } catch (webhookErr) {
+            console.error('Webhook error:', webhookErr);
         }
 
         res.status(201).json({ message: 'Score processed successfully!' });
@@ -1226,6 +1383,813 @@ app.get('/api/admin/ga-data', isAdmin, async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch GA data.' });
     }
 });
+
+// --- SYSTEM ANNOUNCEMENT & MAINTENANCE ROUTES ---
+
+app.get('/api/system/announcement', (req, res) => {
+    res.status(200).json({
+        announcement: systemConfigCache.announcement || { active: false, id: '', message: '', text: '', type: 'teal' },
+        maintenance: systemConfigCache.maintenance || { active: false, message: '' },
+        maintenanceMode: Boolean(systemConfigCache.maintenance?.active || systemConfigCache.maintenanceMode)
+    });
+});
+
+app.put('/api/admin/system/announcement', isAdmin, async (req, res) => {
+    try {
+        const bodyAnn = req.body.announcement || {};
+        const bodyMaint = req.body.maintenance || {};
+
+        // Support both structured { announcement, maintenance } and flat properties
+        const isActive = bodyAnn.active !== undefined ? Boolean(bodyAnn.active) : Boolean(req.body.active);
+        const annId = (bodyAnn.id || req.body.id || 'ann_' + Date.now()).trim();
+        const msg = (bodyAnn.message || bodyAnn.text || req.body.text || req.body.message || '').trim();
+        const rawType = (bodyAnn.type || req.body.type || 'teal').trim().toLowerCase();
+        let themeType = 'teal';
+        if (['gold', 'event'].includes(rawType)) themeType = 'gold';
+        else if (['pink', 'alert'].includes(rawType)) themeType = 'pink';
+        else themeType = 'teal';
+
+        const isMaint = bodyMaint.active !== undefined ? Boolean(bodyMaint.active) : Boolean(req.body.maintenanceMode);
+        const maintMsg = (bodyMaint.message || req.body.maintenanceMessage || 'Loredle is temporarily under maintenance. Back shortly!').trim();
+
+        const updated = await SystemConfig.findOneAndUpdate(
+            { key: 'global_config' },
+            {
+                $set: {
+                    announcement: {
+                        active: isActive,
+                        id: annId,
+                        message: msg,
+                        text: msg,
+                        type: themeType
+                    },
+                    maintenance: {
+                        active: isMaint,
+                        message: maintMsg
+                    },
+                    maintenanceMode: isMaint,
+                    updatedAt: new Date()
+                }
+            },
+            { returnDocument: 'after', upsert: true }
+        );
+
+        systemConfigCache = {
+            announcement: {
+                active: Boolean(updated.announcement?.active),
+                id: updated.announcement?.id || '',
+                message: updated.announcement?.message || updated.announcement?.text || '',
+                text: updated.announcement?.text || updated.announcement?.message || '',
+                type: updated.announcement?.type || 'teal'
+            },
+            maintenance: {
+                active: Boolean(updated.maintenance?.active ?? updated.maintenanceMode),
+                message: updated.maintenance?.message || 'Loredle is temporarily under maintenance. Back shortly!'
+            },
+            maintenanceMode: Boolean(updated.maintenance?.active ?? updated.maintenanceMode)
+        };
+
+        res.status(200).json({ message: 'System settings updated successfully!', config: systemConfigCache });
+    } catch (err) {
+        console.error('System config update error:', err);
+        res.status(500).json({ error: 'Failed to update system settings.' });
+    }
+});
+
+// --- PRIVATE FRIEND GROUPS ROUTES ---
+
+// 1. Get my joined groups
+app.get('/api/groups/my-groups', authenticateUser, async (req, res) => {
+    try {
+        const username = req.user.username;
+        const groups = await Group.find({
+            members: username,
+            deleted: { $ne: true }
+        }).sort({ createdAt: -1 }).lean();
+
+        const formatted = groups.map(g => ({
+            name: g.name,
+            code: g.code,
+            owner: g.owner,
+            isOwner: g.owner === username,
+            membersCount: g.members ? g.members.length : 1,
+            createdAt: g.createdAt
+        }));
+
+        res.status(200).json({ groups: formatted });
+    } catch (err) {
+        console.error('Get my groups error:', err);
+        res.status(500).json({ error: 'Failed to fetch user groups.' });
+    }
+});
+
+// 2. Check code availability
+app.post('/api/groups/check-code', authenticateUser, async (req, res) => {
+    try {
+        const code = (req.body.code || '').trim().toUpperCase();
+        if (!code || !/^[A-Z]{3}-[0-9]{3}$/.test(code)) {
+            return res.status(400).json({ error: 'Invalid code format. Must be 3 letters, a hyphen, and 3 digits.' });
+        }
+        const existing = await Group.findOne({ code, deleted: { $ne: true } }).lean();
+        res.status(200).json({ code, available: !existing });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to verify code.' });
+    }
+});
+
+// 3. Create a group (User can own max 1 active group)
+app.post('/api/groups', authenticateUser, async (req, res) => {
+    try {
+        const username = req.user.username;
+        const name = (req.body.name || '').trim();
+        const prefix = (req.body.prefix || '').trim().toUpperCase();
+        const suffix = (req.body.suffix || '').trim();
+
+        if (!name || name.length > 40) {
+            return res.status(400).json({ error: 'Group name must be between 1 and 40 characters.' });
+        }
+        if (!/^[A-Z]{3}$/.test(prefix)) {
+            return res.status(400).json({ error: 'Prefix must be exactly 3 uppercase letters (A-Z).' });
+        }
+        if (!/^[0-9]{3}$/.test(suffix)) {
+            return res.status(400).json({ error: 'Suffix must be exactly 3 digits (0-9).' });
+        }
+
+        // Check if user already owns an active group
+        const alreadyOwns = await Group.findOne({ owner: username, deleted: { $ne: true } }).lean();
+        if (alreadyOwns) {
+            return res.status(400).json({
+                error: `You are already the owner of "${alreadyOwns.name}" (#${alreadyOwns.code}). You can only own 1 group at a time.`
+            });
+        }
+
+        const code = `${prefix}-${suffix}`;
+        const existingCode = await Group.findOne({ code, deleted: { $ne: true } }).lean();
+        if (existingCode) {
+            return res.status(409).json({ error: `Invite code #${code} is already taken. Please reroll numbers!` });
+        }
+
+        const newGroup = new Group({
+            name,
+            code,
+            owner: username,
+            members: [username], // Owner is automatically a member
+            deleted: false
+        });
+        await newGroup.save();
+
+        res.status(201).json({
+            message: `Group "${name}" created successfully!`,
+            group: {
+                name: newGroup.name,
+                code: newGroup.code,
+                owner: newGroup.owner,
+                isOwner: true,
+                membersCount: 1
+            }
+        });
+    } catch (err) {
+        console.error('Create group error:', err);
+        res.status(500).json({ error: 'Failed to create group.' });
+    }
+});
+
+// 4. Join a group by code
+app.post('/api/groups/join', authenticateUser, async (req, res) => {
+    try {
+        const username = req.user.username;
+        const code = (req.body.code || '').trim().toUpperCase();
+        if (!code) {
+            return res.status(400).json({ error: 'Please enter a group invite code.' });
+        }
+
+        const group = await Group.findOne({ code, deleted: { $ne: true } });
+        if (!group) {
+            return res.status(404).json({ error: `No active group found with code #${code}. Please check the code.` });
+        }
+
+        if (group.members.includes(username)) {
+            return res.status(400).json({ error: `You are already a member of "${group.name}".` });
+        }
+
+        group.members.push(username);
+        group.updatedAt = new Date();
+        await group.save();
+
+        res.status(200).json({
+            message: `Successfully joined "${group.name}"!`,
+            group: {
+                name: group.name,
+                code: group.code,
+                owner: group.owner,
+                isOwner: group.owner === username,
+                membersCount: group.members.length
+            }
+        });
+    } catch (err) {
+        console.error('Join group error:', err);
+        res.status(500).json({ error: 'Failed to join group.' });
+    }
+});
+
+// 5. Leave a group
+app.post('/api/groups/leave', authenticateUser, async (req, res) => {
+    try {
+        const username = req.user.username;
+        const code = (req.body.code || '').trim().toUpperCase();
+        const group = await Group.findOne({ code, deleted: { $ne: true } });
+        if (!group) return res.status(404).json({ error: 'Group not found.' });
+
+        if (group.owner === username) {
+            return res.status(400).json({ error: 'As the group owner, you cannot leave your group. You can delete it in Group Settings.' });
+        }
+
+        group.members = group.members.filter(m => m !== username);
+        group.updatedAt = new Date();
+        await group.save();
+
+        res.status(200).json({ message: `Left "${group.name}".` });
+    } catch (err) {
+        console.error('Leave group error:', err);
+        res.status(500).json({ error: 'Failed to leave group.' });
+    }
+});
+
+// 6. Update group name (owner only)
+app.put('/api/groups/:code', authenticateUser, async (req, res) => {
+    try {
+        const username = req.user.username;
+        const code = req.params.code.trim().toUpperCase();
+        const name = (req.body.name || '').trim();
+
+        if (!name || name.length > 40) {
+            return res.status(400).json({ error: 'Group name must be between 1 and 40 characters.' });
+        }
+
+        const group = await Group.findOne({ code, deleted: { $ne: true } });
+        if (!group) return res.status(404).json({ error: 'Group not found.' });
+        if (group.owner !== username) {
+            return res.status(403).json({ error: 'Only the group owner can change the group name.' });
+        }
+
+        group.name = name;
+        group.updatedAt = new Date();
+        await group.save();
+
+        res.status(200).json({ message: 'Group name updated successfully!', group: { name: group.name, code: group.code } });
+    } catch (err) {
+        console.error('Update group error:', err);
+        res.status(500).json({ error: 'Failed to update group.' });
+    }
+});
+
+// 7. Delete group (soft delete, owner only)
+app.delete('/api/groups/:code', authenticateUser, async (req, res) => {
+    try {
+        const username = req.user.username;
+        const code = req.params.code.trim().toUpperCase();
+
+        const group = await Group.findOne({ code });
+        if (!group) return res.status(404).json({ error: 'Group not found.' });
+        if (group.owner !== username) {
+            return res.status(403).json({ error: 'Only the group owner can delete this group.' });
+        }
+
+        group.deleted = true;
+        group.updatedAt = new Date();
+        await group.save();
+
+        res.status(200).json({ message: `Group "${group.name}" was deleted.` });
+    } catch (err) {
+        console.error('Delete group error:', err);
+        res.status(500).json({ error: 'Failed to delete group.' });
+    }
+});
+
+// 8. Group Leaderboard & Analytics
+app.get('/api/groups/:code/leaderboard', authenticateUser, async (req, res) => {
+    try {
+        const username = req.user.username;
+        const code = req.params.code.trim().toUpperCase();
+
+        const group = await Group.findOne({ code, deleted: { $ne: true } }).lean();
+        if (!group) return res.status(404).json({ error: 'Group not found.' });
+        if (!group.members.includes(username)) {
+            return res.status(403).json({ error: 'You are not a member of this group.' });
+        }
+
+        const today = getCSTDate();
+        const yesterday = getCSTDate(-1);
+        const members = group.members || [];
+
+        // 1. Today's group scores (Ordered by fewest tries, then earliest completion time)
+        const rawTodayScores = await Score.aggregate([
+            { $match: { date: today, username: { $in: members } } },
+            { $sort: { tries: 1, _id: 1 } },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'username',
+                    foreignField: 'username',
+                    as: 'userDoc'
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    username: 1,
+                    tries: 1,
+                    date: 1,
+                    trackerUsed: { $ifNull: ['$trackerUsed', false] },
+                    avatar: { $ifNull: [{ $arrayElemAt: ['$userDoc.avatar', 0] }, 'default'] }
+                }
+            }
+        ]);
+
+        const todayScores = rawTodayScores.map(s => {
+            let completedDate = null;
+            try {
+                completedDate = s._id ? new mongoose.Types.ObjectId(s._id).getTimestamp() : new Date();
+            } catch (e) {
+                completedDate = new Date();
+            }
+            const timeFormatted = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/Chicago',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }).format(completedDate);
+
+            return {
+                _id: s._id,
+                username: s.username,
+                tries: s.tries,
+                date: s.date,
+                trackerUsed: s.trackerUsed,
+                avatar: s.avatar,
+                timeFormatted: `${timeFormatted} CST`
+            };
+        });
+
+        // 2. Member Performance Stats (Win streaks & Average tries)
+        const memberScores = await Score.find({ username: { $in: members } })
+            .select('username date tries _id')
+            .lean();
+
+        const userDocs = await User.find({ username: { $in: members } })
+            .select('username avatar')
+            .lean();
+        const avatarMap = {};
+        userDocs.forEach(u => { avatarMap[u.username] = u.avatar || 'default'; });
+
+        const scoresByMember = {};
+        members.forEach(m => { scoresByMember[m] = []; });
+        memberScores.forEach(s => {
+            if (scoresByMember[s.username]) {
+                scoresByMember[s.username].push(s);
+            }
+        });
+
+        const memberStats = members.map(m => {
+            const list = scoresByMember[m] || [];
+            const totalSolves = list.length;
+            const avgTries = totalSolves > 0
+                ? Number((list.reduce((acc, s) => acc + s.tries, 0) / totalSolves).toFixed(2))
+                : null;
+
+            // Compute current win streak (consecutive daily solves)
+            const dateSet = new Set(list.map(s => s.date));
+            let streak = 0;
+            let offset = 0;
+
+            if (dateSet.has(today)) {
+                streak = 1;
+                offset = 1;
+            } else if (dateSet.has(yesterday)) {
+                streak = 1;
+                offset = 2;
+            }
+
+            if (streak > 0) {
+                while (true) {
+                    const prevDate = getCSTDate(-offset);
+                    if (dateSet.has(prevDate)) {
+                        streak++;
+                        offset++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            return {
+                username: m,
+                avatar: avatarMap[m] || 'default',
+                streak,
+                avgTries,
+                totalSolves
+            };
+        });
+
+        // 3. Activity Feed (Chat-style recent solves)
+        const recentScoreDocs = await Score.find({ username: { $in: members } })
+            .sort({ _id: -1 })
+            .limit(25)
+            .lean();
+
+        const recentActivity = recentScoreDocs.map(s => {
+            let completedDate = null;
+            try {
+                completedDate = s._id ? new mongoose.Types.ObjectId(s._id).getTimestamp() : new Date();
+            } catch (e) {
+                completedDate = new Date();
+            }
+
+            const timeStr = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/Chicago',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            }).format(completedDate);
+
+            let timeFormatted = '';
+            if (s.date === today) {
+                timeFormatted = `Today at ${timeStr} CST`;
+            } else if (s.date === yesterday) {
+                timeFormatted = `Yesterday at ${timeStr} CST`;
+            } else {
+                timeFormatted = `${s.date} • ${timeStr} CST`;
+            }
+
+            let messageText = '';
+            if (s.date === today) {
+                messageText = `solved today's card in ${s.tries} ${s.tries === 1 ? 'try' : 'tries'}!`;
+            } else if (s.date === yesterday) {
+                messageText = `solved yesterday's card in ${s.tries} ${s.tries === 1 ? 'try' : 'tries'}!`;
+            } else {
+                messageText = `solved the ${s.date} card in ${s.tries} ${s.tries === 1 ? 'try' : 'tries'}!`;
+            }
+
+            return {
+                _id: s._id,
+                username: s.username,
+                avatar: avatarMap[s.username] || 'default',
+                date: s.date,
+                tries: s.tries,
+                trackerUsed: !!s.trackerUsed,
+                timeFormatted,
+                messageText
+            };
+        });
+
+        res.status(200).json({
+            group: {
+                name: group.name,
+                code: group.code,
+                owner: group.owner,
+                isOwner: group.owner === username,
+                membersCount: members.length
+            },
+            todayScores,
+            memberStats,
+            recentActivity
+        });
+    } catch (err) {
+        console.error('Group leaderboard error:', err);
+        res.status(500).json({ error: 'Failed to fetch group leaderboard.' });
+    }
+});
+
+// --- MULTI-SERVER DISCORD WEBHOOK ROUTES ---
+
+function buildDiscordComponentMessage(type, wh, sampleData = null) {
+    const date = sampleData?.date || getCSTDate();
+    const yesterdayDate = sampleData?.yesterdayDate || getCSTDate(-1);
+    const yesterdayCardRaw = sampleData?.yesterdayCard || 'Elsa - Spirit of Winter';
+    const cardDisplay = wh.spoilerProtection ? `||${yesterdayCardRaw}||` : yesterdayCardRaw;
+    const winner = sampleData?.winner || 'IllumineerHero';
+    const winnerTries = sampleData?.winnerTries || 3;
+    const winnerTriesText = Number(winnerTries) === 1 ? 'try' : 'tries';
+    const username = sampleData?.username || 'IllumineerHero';
+    const tries = sampleData?.tries || 3;
+    const triesText = Number(tries) === 1 ? 'try' : 'tries';
+    const tracker = sampleData?.tracker || '';
+    const grid = sampleData?.grid || '1️⃣ 🟨 🟥 🟩 🟩 🟩 🟩 🟩\n2️⃣ 🟩 🟩 🟩 🟩 🟩 🟩 🟩';
+
+    if (type === 'completion') {
+        const tpl = wh.templateCompletion && wh.templateCompletion.trim()
+            ? wh.templateCompletion
+            : `🚨 **{username}**{tracker} completed today's Loredle in **{tries}** {triesText}!\n{grid}`;
+        return tpl
+            .replace(/{username}/g, username)
+            .replace(/{tries}/g, String(tries))
+            .replace(/{triesText}/g, triesText)
+            .replace(/{tracker}/g, tracker)
+            .replace(/{grid}/g, grid)
+            .replace(/{date}/g, date);
+    }
+
+    if (type === 'dailyDrop') {
+        const tpl = wh.templateDailyDrop && wh.templateDailyDrop.trim()
+            ? wh.templateDailyDrop
+            : `✨ **A new Loredle daily puzzle is LIVE for {date}!**\nTest your Lorcana knowledge at <https://loredle.com>`;
+        return tpl
+            .replace(/{date}/g, date)
+            .replace(/{url}/g, 'https://loredle.com');
+    }
+
+    if (type === 'yesterdayRecap') {
+        const tpl = wh.templateYesterdayRecap && wh.templateYesterdayRecap.trim()
+            ? wh.templateYesterdayRecap
+            : `📜 **Yesterday's Card ({yesterdayDate}):** {yesterdayCard}`;
+        return tpl
+            .replace(/{yesterdayDate}/g, yesterdayDate)
+            .replace(/{yesterdayCard}/g, cardDisplay);
+    }
+
+    if (type === 'winnerShoutout') {
+        const tpl = wh.templateWinnerShoutout && wh.templateWinnerShoutout.trim()
+            ? wh.templateWinnerShoutout
+            : `🏆 **Yesterday's #1 Winner:** **{winner}** (solved in {winnerTries} {winnerTriesText})!`;
+        return tpl
+            .replace(/{winner}/g, winner)
+            .replace(/{winnerTries}/g, String(winnerTries))
+            .replace(/{winnerTriesText}/g, winnerTriesText)
+            .replace(/{yesterdayDate}/g, yesterdayDate);
+    }
+
+    return '';
+}
+
+app.get('/api/admin/discord-webhooks', isAdmin, async (req, res) => {
+    try {
+        await initDefaultDiscordWebhook();
+        const webhooks = await DiscordWebhook.find().sort({ createdAt: 1 }).lean();
+        // Map property synonyms so frontend receives both standard keys
+        const mapped = webhooks.map(w => ({
+            ...w,
+            webhookUrl: w.url,
+            rolePing: w.pingRole,
+            sendDailyDrop: w.announceNewPuzzle,
+            sendYesterdayRecap: w.includeYesterdayRecap,
+            sendWinnerShoutout: w.announceWinner,
+            sendSpoilerProtection: w.spoilerProtection,
+            templateCompletion: w.templateCompletion || '',
+            templateDailyDrop: w.templateDailyDrop || '',
+            templateYesterdayRecap: w.templateYesterdayRecap || '',
+            templateWinnerShoutout: w.templateWinnerShoutout || ''
+        }));
+        res.status(200).json({ webhooks: mapped });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch Discord webhooks.' });
+    }
+});
+
+app.post('/api/admin/discord-webhooks', isAdmin, async (req, res) => {
+    try {
+        const name = (req.body.name || '').trim();
+        const url = (req.body.url || req.body.webhookUrl || '').trim();
+        const pingRole = (req.body.pingRole || req.body.rolePing || '').trim();
+        const customMessage = (req.body.customMessage || '').trim();
+        const enabled = req.body.enabled !== undefined ? !!req.body.enabled : true;
+
+        const sendScoreCompletions = req.body.sendScoreCompletions !== undefined ? !!req.body.sendScoreCompletions : false;
+        const announceNewPuzzle = req.body.announceNewPuzzle !== undefined ? !!req.body.announceNewPuzzle : !!req.body.sendDailyDrop;
+        const includeYesterdayRecap = req.body.includeYesterdayRecap !== undefined ? !!req.body.includeYesterdayRecap : !!req.body.sendYesterdayRecap;
+        const announceWinner = req.body.announceWinner !== undefined ? !!req.body.announceWinner : !!req.body.sendWinnerShoutout;
+        const spoilerProtection = req.body.spoilerProtection !== undefined ? !!req.body.spoilerProtection : (req.body.sendSpoilerProtection !== undefined ? !!req.body.sendSpoilerProtection : true);
+
+        const templateCompletion = (req.body.templateCompletion || '').trim();
+        const templateDailyDrop = (req.body.templateDailyDrop || '').trim();
+        const templateYesterdayRecap = (req.body.templateYesterdayRecap || '').trim();
+        const templateWinnerShoutout = (req.body.templateWinnerShoutout || '').trim();
+
+        if (!name || !url) {
+            return res.status(400).json({ error: 'Server Name and Webhook URL are required.' });
+        }
+        if (!url.startsWith('https://discord.com/api/webhooks/') && !url.startsWith('https://discordapp.com/api/webhooks/')) {
+            return res.status(400).json({ error: 'Invalid Discord Webhook URL.' });
+        }
+
+        const newWebhook = new DiscordWebhook({
+            name,
+            url,
+            enabled,
+            sendScoreCompletions,
+            announceNewPuzzle,
+            includeYesterdayRecap,
+            announceWinner,
+            spoilerProtection,
+            pingRole,
+            customMessage,
+            templateCompletion,
+            templateDailyDrop,
+            templateYesterdayRecap,
+            templateWinnerShoutout
+        });
+        await newWebhook.save();
+
+        res.status(201).json({ message: 'Discord webhook added successfully!', webhook: newWebhook });
+    } catch (err) {
+        console.error('Create webhook error:', err);
+        res.status(500).json({ error: 'Failed to create Discord webhook.' });
+    }
+});
+
+app.put('/api/admin/discord-webhooks/:id', isAdmin, async (req, res) => {
+    try {
+        const webhook = await DiscordWebhook.findById(req.params.id);
+        if (!webhook) return res.status(404).json({ error: 'Discord webhook not found.' });
+
+        if (req.body.name) webhook.name = req.body.name.trim();
+
+        const newUrl = (req.body.url || req.body.webhookUrl || '').trim();
+        if (newUrl) {
+            if (!newUrl.startsWith('https://discord.com/api/webhooks/') && !newUrl.startsWith('https://discordapp.com/api/webhooks/')) {
+                return res.status(400).json({ error: 'Invalid Discord Webhook URL.' });
+            }
+            webhook.url = newUrl;
+        }
+
+        if (req.body.enabled !== undefined) webhook.enabled = !!req.body.enabled;
+        if (req.body.sendScoreCompletions !== undefined) webhook.sendScoreCompletions = !!req.body.sendScoreCompletions;
+
+        if (req.body.announceNewPuzzle !== undefined) webhook.announceNewPuzzle = !!req.body.announceNewPuzzle;
+        else if (req.body.sendDailyDrop !== undefined) webhook.announceNewPuzzle = !!req.body.sendDailyDrop;
+
+        if (req.body.includeYesterdayRecap !== undefined) webhook.includeYesterdayRecap = !!req.body.includeYesterdayRecap;
+        else if (req.body.sendYesterdayRecap !== undefined) webhook.includeYesterdayRecap = !!req.body.sendYesterdayRecap;
+
+        if (req.body.announceWinner !== undefined) webhook.announceWinner = !!req.body.announceWinner;
+        else if (req.body.sendWinnerShoutout !== undefined) webhook.announceWinner = !!req.body.sendWinnerShoutout;
+
+        if (req.body.spoilerProtection !== undefined) webhook.spoilerProtection = !!req.body.spoilerProtection;
+        else if (req.body.sendSpoilerProtection !== undefined) webhook.spoilerProtection = !!req.body.sendSpoilerProtection;
+
+        const newRole = req.body.pingRole !== undefined ? req.body.pingRole : req.body.rolePing;
+        if (newRole !== undefined) webhook.pingRole = (newRole || '').trim();
+
+        if (req.body.customMessage !== undefined) webhook.customMessage = req.body.customMessage.trim();
+        if (req.body.templateCompletion !== undefined) webhook.templateCompletion = req.body.templateCompletion.trim();
+        if (req.body.templateDailyDrop !== undefined) webhook.templateDailyDrop = req.body.templateDailyDrop.trim();
+        if (req.body.templateYesterdayRecap !== undefined) webhook.templateYesterdayRecap = req.body.templateYesterdayRecap.trim();
+        if (req.body.templateWinnerShoutout !== undefined) webhook.templateWinnerShoutout = req.body.templateWinnerShoutout.trim();
+
+        webhook.updatedAt = new Date();
+
+        await webhook.save();
+        res.status(200).json({ message: 'Webhook updated successfully!', webhook });
+    } catch (err) {
+        console.error('Update webhook error:', err);
+        res.status(500).json({ error: 'Failed to update Discord webhook.' });
+    }
+});
+
+app.post('/api/admin/discord-webhooks/:id/test-message', isAdmin, async (req, res) => {
+    try {
+        const webhook = await DiscordWebhook.findById(req.params.id);
+        if (!webhook) return res.status(404).json({ error: 'Webhook not found.' });
+
+        const { messageType } = req.body;
+        if (!['completion', 'dailyDrop', 'yesterdayRecap', 'winnerShoutout'].includes(messageType)) {
+            return res.status(400).json({ error: 'Invalid message type.' });
+        }
+
+        const formattedBody = buildDiscordComponentMessage(messageType, webhook, {
+            date: getCSTDate(),
+            yesterdayDate: getCSTDate(-1),
+            yesterdayCard: 'Elsa - Spirit of Winter',
+            winner: 'IllumineerTopRank',
+            winnerTries: 2,
+            username: 'TestPlayer',
+            tries: 3,
+            tracker: ' (🔎 Card Tracker)',
+            grid: '1️⃣ 🟨 🟥 🟨 🟩 🟩 🟩 🟩\n2️⃣ 🟩 🟩 🟩 🟩 🟩 🟩 🟩'
+        });
+
+        const pingText = webhook.pingRole
+            ? (webhook.pingRole.startsWith('<@') ? `${webhook.pingRole} ` : `<@&${webhook.pingRole}> `)
+            : '';
+
+        const resp = await fetch(webhook.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: `${pingText}${formattedBody}` })
+        });
+
+        if (!resp.ok) {
+            return res.status(502).json({ error: `Discord returned HTTP ${resp.status}` });
+        }
+
+        res.status(200).json({ message: `Test message for "${messageType}" sent successfully to "${webhook.name}"!` });
+    } catch (err) {
+        console.error('Test component message error:', err);
+        res.status(500).json({ error: 'Failed to send test message to Discord.' });
+    }
+});
+
+app.delete('/api/admin/discord-webhooks/:id', isAdmin, async (req, res) => {
+    try {
+        const deleted = await DiscordWebhook.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: 'Webhook not found.' });
+        res.status(200).json({ message: `Webhook "${deleted.name}" removed.` });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete webhook.' });
+    }
+});
+
+app.post('/api/admin/discord-webhooks/:id/test', isAdmin, async (req, res) => {
+    try {
+        const webhook = await DiscordWebhook.findById(req.params.id);
+        if (!webhook) return res.status(404).json({ error: 'Webhook not found.' });
+
+        const testContent = webhook.pingRole
+            ? `${webhook.pingRole} 🟣 **Rules of Villainy — Loredle Test Ping**\nServer: **${webhook.name}** — Webhook is active and receiving messages! 🐉🔥`
+            : `🟣 **Rules of Villainy — Loredle Test Ping**\nServer: **${webhook.name}** — Webhook is active and receiving messages! 🐉🔥`;
+
+        const resp = await fetch(webhook.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: testContent })
+        });
+
+        if (!resp.ok) {
+            return res.status(502).json({ error: `Discord returned HTTP ${resp.status}` });
+        }
+        res.status(200).json({ message: `Test ping delivered to "${webhook.name}"!` });
+    } catch (err) {
+        console.error('Webhook test error:', err);
+        res.status(500).json({ error: 'Webhook test delivery failed.' });
+    }
+});
+
+// --- MIDNIGHT CST AUTOMATED BROADCAST JOB ---
+let lastBroadcastCstDate = getCSTDate();
+setInterval(async () => {
+    try {
+        const currentCstDate = getCSTDate();
+        if (currentCstDate === lastBroadcastCstDate) return;
+
+        console.log(`Midnight CST rollover detected: ${lastBroadcastCstDate} -> ${currentCstDate}`);
+        const yesterdayDate = lastBroadcastCstDate;
+        lastBroadcastCstDate = currentCstDate;
+
+        // Ensure today's card is locked
+        await getOrLockDailyTargetCard(currentCstDate, true);
+
+        // Fetch all active webhooks
+        const webhooks = await DiscordWebhook.find({ enabled: true }).lean();
+        if (webhooks.length === 0) return;
+
+        // Fetch yesterday's card answer and winner
+        const yesterdayAnswer = await AnswerLog.findOne({ date: yesterdayDate }).lean();
+        const yesterdayCardName = yesterdayAnswer ? yesterdayAnswer.targetCard : 'Unknown Card';
+
+        const yesterdayWinner = await Score.findOne({ date: yesterdayDate }).sort({ tries: 1, _id: 1 }).lean();
+        const winnerName = yesterdayWinner ? yesterdayWinner.username : 'None';
+        const winnerTries = yesterdayWinner ? yesterdayWinner.tries : 0;
+
+        for (const wh of webhooks) {
+            // Only send if at least one midnight broadcast component is enabled
+            if (!wh.announceNewPuzzle && !wh.includeYesterdayRecap && !wh.announceWinner) continue;
+
+            const broadcastData = {
+                date: currentCstDate,
+                yesterdayDate,
+                yesterdayCard: yesterdayCardName,
+                winner: winnerName,
+                winnerTries,
+                url: 'https://loredle.com'
+            };
+
+            let parts = [];
+            if (wh.pingRole) {
+                const roleMention = wh.pingRole.startsWith('<@') ? wh.pingRole : `<@&${wh.pingRole}>`;
+                parts.push(roleMention);
+            }
+
+            if (wh.announceNewPuzzle) {
+                parts.push(buildDiscordComponentMessage('dailyDrop', wh, broadcastData));
+            }
+            if (wh.includeYesterdayRecap) {
+                parts.push(buildDiscordComponentMessage('yesterdayRecap', wh, broadcastData));
+            }
+            if (wh.announceWinner && yesterdayWinner) {
+                parts.push(buildDiscordComponentMessage('winnerShoutout', wh, broadcastData));
+            }
+
+            if (parts.length > 0) {
+                fetch(wh.url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: parts.join('\n\n') })
+                }).catch(e => console.error(`Midnight broadcast failed for "${wh.name}":`, e));
+            }
+        }
+    } catch (broadcastErr) {
+        console.error('Midnight broadcast scheduler error:', broadcastErr);
+    }
+}, 30000); // Check every 30 seconds
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {

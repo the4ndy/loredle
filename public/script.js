@@ -66,6 +66,7 @@ const INK_COLORS = {
 document.addEventListener('DOMContentLoaded', () => {
     ensureSharedShell();
     renderNavbar();
+    checkGlobalAnnouncement();
 
     if (document.getElementById('hub-container')) {
         setupHubPage();
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         setupAvatarGrid();
         setupThemeGrid();
+        setupGameplaySettings();
     }
 
     if (document.getElementById('changelog-page-content')) {
@@ -222,6 +224,7 @@ function renderNavbar() {
                     👤 ${escapeHtml(currentUser)}
                 </div>
                 ${adminHtml}
+                <div class="dropdown-item" onclick="window.location.href='groups.html'">👥 Friend Groups</div>
                 <div class="dropdown-item" onclick="window.location.href='settings.html'">⚙️ Settings</div>
                 <div class="dropdown-item" onclick="window.location.href='history.html'">📜 Guess History</div>
                 <div class="dropdown-item" onclick="window.location.href='feedback.html'">💬 Feedback</div>
@@ -237,6 +240,11 @@ function renderNavbar() {
         loginBtn.onclick = openAuthModal;
         authContainer.appendChild(loginBtn);
     }
+
+    const hubGroupsBtn = document.getElementById('hub-friend-groups-btn');
+    if (hubGroupsBtn) hubGroupsBtn.style.display = currentUser ? 'inline-block' : 'none';
+    const lbGroupsBtn = document.getElementById('lb-friend-groups-btn');
+    if (lbGroupsBtn) lbGroupsBtn.style.display = currentUser ? 'inline-block' : 'none';
 }
 
 function escapeHtml(str) {
@@ -346,6 +354,9 @@ function setupHubPage() {
     if (playSection) playSection.style.display = 'block';
     const welcome = document.getElementById('welcome-message');
     if (welcome) welcome.textContent = getFormattedDateCST();
+
+    const hubGroupsBtn = document.getElementById('hub-friend-groups-btn');
+    if (hubGroupsBtn) hubGroupsBtn.style.display = currentUser ? 'inline-block' : 'none';
 }
 
 // --- AUTH ACTIONS ---
@@ -445,12 +456,14 @@ async function fetchGlobalLeaderboard() {
         scores.forEach((score, index) => {
             const tr = document.createElement('tr');
             const medal = index === 0 ? '👑 #1' : index === 1 ? '🥈 #2' : index === 2 ? '🥉 #3' : `#${index + 1}`;
+            const trackerBadge = score.trackerUsed ? `<span title="Solved with Card Tracker" style="margin-left: 6px; cursor: help; font-size: 0.95rem;">🔎</span>` : '';
             tr.innerHTML = `
                 <td style="font-family: var(--font-mono); font-weight: 700;">${medal}</td>
                 <td>
                     <div style="display: inline-flex; align-items: center; gap: 10px;">
                         ${renderAvatarBadge(score.avatar, score.username)}
                         <span style="font-weight: 700;">${escapeHtml(score.username)}</span>
+                        ${trackerBadge}
                     </div>
                 </td>
                 <td style="font-family: var(--font-mono); font-weight: 700; color: var(--secondary-color);">${score.tries}</td>
@@ -548,12 +561,14 @@ function renderHofRecentPage(page) {
 
     pageWinners.forEach((winner) => {
         const tr = document.createElement('tr');
+        const trackerBadge = winner.trackerUsed ? `<span title="Solved with Card Tracker" style="margin-left: 6px; cursor: help; font-size: 0.95rem;">🔎</span>` : '';
         tr.innerHTML = `
             <td style="font-family: var(--font-mono);">${escapeHtml(winner.date)}</td>
             <td>
                 <div style="display: inline-flex; align-items: center; gap: 10px;">
                     ${renderAvatarBadge(winner.avatar, winner.username)}
                     <span style="font-weight: 700;">${escapeHtml(winner.username)}</span>
+                    ${trackerBadge}
                 </div>
             </td>
             <td style="font-family: var(--font-mono); font-weight: 700; color: var(--secondary-color);">${winner.tries}</td>
@@ -878,9 +893,13 @@ function renderDetailedHistory(historyData) {
         const statsEl = document.createElement('div');
         statsEl.style.fontFamily = 'var(--font-mono)';
         statsEl.style.fontWeight = '700';
+        const trackerBadgeHtml = dayScore.trackerUsed
+            ? ` <span class="brutal-badge" style="background: var(--bg-surface); color: var(--accent-gold);" title="Solved with Card Tracker">🔎 Tracker Used</span>`
+            : '';
         statsEl.innerHTML = `
             <span class="brutal-badge" style="background: var(--bg-surface); color: var(--correct);">Tries: ${dayScore.tries}</span>
             <span class="brutal-badge" style="background: var(--bg-surface); color: var(--close);">Rank: #${dayScore.rank}</span>
+            ${trackerBadgeHtml}
         `;
 
         headerDiv.appendChild(dateEl);
@@ -976,6 +995,27 @@ async function initGamePage() {
         ]);
 
         const dailyState = await dailyStateRes.json();
+
+        if (dailyState.maintenance) {
+            const board = document.getElementById('game-board');
+            if (board) {
+                board.innerHTML = `
+                    <div style="background: var(--bg-card); border: 3px solid #000; border-radius: 8px; box-shadow: 6px 6px 0px #000; padding: 32px 20px; text-align: center; margin: 24px auto; max-width: 520px;">
+                        <div style="font-size: 3.2rem; margin-bottom: 12px;">🔒</div>
+                        <h2 style="font-family: var(--font-display); color: var(--incorrect); margin-top: 0; text-transform: uppercase;">MAINTENANCE MODE</h2>
+                        <p style="font-size: 1.05rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 0;">
+                            ${escapeHtml(dailyState.message || 'Loredle is temporarily under maintenance. Back shortly!')}
+                        </p>
+                    </div>
+                `;
+            }
+            if (cardInput) {
+                cardInput.disabled = true;
+                cardInput.placeholder = 'Gameplay locked during maintenance';
+            }
+            return;
+        }
+
         const todayCST = dailyState.date || getCSTDateISO();
         const decodedTargetName = dailyState.targetToken
             ? decodeTargetToken(dailyState.targetToken, todayCST)
@@ -998,6 +1038,7 @@ async function initGamePage() {
 
         // Restore saved guesses from today (merge localStorage + server state)
         restoreDailySession(todayCST, dailyState);
+        initCardTrackerUI();
     } catch (error) {
         console.error('Error initializing game page:', error);
         if (cardInput) {
@@ -1011,11 +1052,12 @@ function getLocalDailyStorageKey(dateStr) {
     return `loredle_state_v3_${dateStr}_${userScope}`;
 }
 
-function saveLocalDailyState(dateStr, guessesArray, completed) {
+function saveLocalDailyState(dateStr, guessesArray, completed, trackerUsed) {
     try {
+        const isTracker = (trackerUsed !== undefined) ? Boolean(trackerUsed) : Boolean(window.trackerUsedInGame);
         localStorage.setItem(
             getLocalDailyStorageKey(dateStr),
-            JSON.stringify({ date: dateStr, guesses: guessesArray, completed: Boolean(completed) })
+            JSON.stringify({ date: dateStr, guesses: guessesArray, completed: Boolean(completed), trackerUsed: isTracker })
         );
     } catch (e) {}
 }
@@ -1028,8 +1070,10 @@ function restoreDailySession(dateStr, serverState) {
     if (serverState && serverState.completed && serverState.score && Array.isArray(serverState.score.guesses)) {
         savedGuesses = serverState.score.guesses;
         alreadyCompleted = true;
+        if (serverState.score.trackerUsed) window.trackerUsedInGame = true;
     } else if (serverState && Array.isArray(serverState.inProgressGuesses) && serverState.inProgressGuesses.length > 0) {
         savedGuesses = serverState.inProgressGuesses;
+        if (serverState.trackerUsed) window.trackerUsedInGame = true;
     }
 
     // 2. Check localStorage state
@@ -1042,6 +1086,7 @@ function restoreDailySession(dateStr, serverState) {
                     savedGuesses = parsed.guesses;
                 }
                 if (parsed.completed) alreadyCompleted = true;
+                if (parsed.trackerUsed) window.trackerUsedInGame = true;
             }
         }
     } catch (e) {}
@@ -1369,6 +1414,7 @@ function guessCard(card) {
     const guessesArr = Array.from(guessedCards);
 
     saveLocalDailyState(todayCST, guessesArr, isWin);
+    updateCardTracker();
 
     if (isWin) {
         GameVault.setCompleted(true);
@@ -1383,7 +1429,11 @@ function guessCard(card) {
                     'Content-Type': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
-                body: JSON.stringify({ username: currentUser, guesses: guessesArr })
+                body: JSON.stringify({
+                    username: currentUser,
+                    guesses: guessesArr,
+                    trackerUsed: Boolean(window.trackerUsedInGame)
+                })
             }).catch(() => {});
         }
     }
@@ -1608,18 +1658,26 @@ function endGame(isSilentRestore = false) {
     });
 
     if (!isSilentRestore && targetCard) {
+        const token = localStorage.getItem('loredle_token');
         fetch('/api/submit-score', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({
                 username: currentUser || 'Anonymous User',
                 tries: guessedCards.size,
                 shareText: emojiText,
                 targetCard: targetCard.name,
-                guesses: Array.from(guessedCards)
+                guesses: Array.from(guessedCards),
+                trackerUsed: Boolean(window.trackerUsedInGame)
             })
         }).catch(err => console.error('Error submitting score:', err));
     }
+
+    const trackerBar = document.getElementById('card-tracker-bar');
+    if (trackerBar) trackerBar.style.display = 'none';
 
     const copyButton = document.getElementById('copy-emoji-button');
     if (copyButton) {
@@ -1636,6 +1694,11 @@ function endGame(isSilentRestore = false) {
     if (feedbackBox) {
         feedbackBox.style.display = 'block';
         startMidnightCountdown();
+
+        const winGroupsBtn = document.getElementById('win-groups-btn');
+        if (winGroupsBtn) {
+            winGroupsBtn.style.display = currentUser ? 'inline-block' : 'none';
+        }
     }
 }
 
@@ -1647,3 +1710,1154 @@ function showToast(message) {
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 }
+
+// ==========================================================================
+// GAMEPLAY SETTINGS & CARD TRACKER
+// ==========================================================================
+function setupGameplaySettings() {
+    const trackerToggle = document.getElementById('card-tracker-toggle');
+    if (trackerToggle) {
+        trackerToggle.checked = localStorage.getItem('loredle_setting_card_tracker') === 'true';
+        trackerToggle.addEventListener('change', (e) => {
+            localStorage.setItem('loredle_setting_card_tracker', e.target.checked);
+            showToast(e.target.checked ? 'Card Tracker enabled! (🔎 badge will apply to solves)' : 'Card Tracker disabled.');
+        });
+    }
+}
+
+window.trackerUsedInGame = false;
+let currentRemainingCandidates = [];
+
+function initCardTrackerUI() {
+    const trackerBar = document.getElementById('card-tracker-bar');
+    if (!trackerBar) return;
+
+    const isEnabled = localStorage.getItem('loredle_setting_card_tracker') === 'true';
+    if (!isEnabled || GameVault.isCompleted()) {
+        trackerBar.style.display = 'none';
+        return;
+    }
+
+    trackerBar.style.display = 'block';
+    updateCardTracker();
+}
+
+function updateCardTracker() {
+    const target = GameVault.getTarget();
+    if (!target || !Array.isArray(cards) || cards.length === 0) return;
+
+    const trackerCountBadge = document.getElementById('tracker-candidates-count');
+    const modalCountBadge = document.getElementById('tracker-modal-count');
+
+    const guessedNames = guessedCards;
+    const guessedList = Array.from(guessedNames).map(name => findCardByName(name)).filter(Boolean);
+
+    currentRemainingCandidates = cards.filter(cand => {
+        if (guessedNames.has(cand.name)) return false;
+
+        // Candidate must be consistent with all clues revealed so far
+        for (const guess of guessedList) {
+            // 1. Name check
+            if (cand.name === guess.name) return false;
+
+            // 2. Number check
+            if (guess.number === target.number) {
+                if (cand.number !== guess.number) return false;
+            } else {
+                const targetHigher = target.number > guess.number;
+                const candHigher = cand.number > guess.number;
+                if (targetHigher !== candHigher) return false;
+
+                const targetClose = Math.abs(guess.number - target.number) <= 10;
+                const candClose = Math.abs(guess.number - cand.number) <= 10;
+                if (targetClose !== candClose) return false;
+            }
+
+            // 3. Set check
+            const setMatch = (guess.set === target.set);
+            if (setMatch) {
+                if (cand.set !== guess.set) return false;
+            } else {
+                if (cand.set === guess.set) return false;
+            }
+
+            // 4. Cost check
+            const costMatch = (guess.cost === target.cost);
+            if (costMatch) {
+                if (cand.cost !== guess.cost) return false;
+            } else {
+                if (cand.cost === guess.cost) return false;
+            }
+
+            // 5. Inkable check
+            const inkableMatch = (Boolean(guess.inkable) === Boolean(target.inkable));
+            const candInkableMatch = (Boolean(cand.inkable) === Boolean(guess.inkable));
+            if (inkableMatch !== candInkableMatch) return false;
+
+            // 6. Colors check
+            const guessColors = Array.isArray(guess.colors) ? guess.colors : [guess.colors];
+            const targetColors = Array.isArray(target.colors) ? target.colors : [target.colors];
+            const candColors = Array.isArray(cand.colors) ? cand.colors : [cand.colors];
+
+            const targetExact = guessColors.length === targetColors.length && guessColors.every(c => targetColors.includes(c));
+            const targetPartial = !targetExact && guessColors.some(c => targetColors.includes(c));
+
+            const candExact = guessColors.length === candColors.length && guessColors.every(c => candColors.includes(c));
+            const candPartial = !candExact && guessColors.some(c => candColors.includes(c));
+
+            if (targetExact !== candExact) return false;
+            if (targetPartial !== candPartial) return false;
+
+            // 7. Type check
+            const targetTypeExact = guess.type === target.type;
+            const candTypeExact = cand.type === guess.type;
+            if (targetTypeExact !== candTypeExact) return false;
+
+            if (!targetTypeExact) {
+                const guessWords = (guess.type || '').split(/[\s-]+/);
+                const targetWords = (target.type || '').split(/[\s-]+/);
+                const candWords = (cand.type || '').split(/[\s-]+/);
+
+                const targetOverlap = guessWords.some(w => targetWords.includes(w));
+                const candOverlap = guessWords.some(w => candWords.includes(w));
+                if (targetOverlap !== candOverlap) return false;
+            }
+
+            // 8. Rarity check
+            const rarityMatch = (guess.rarity === target.rarity);
+            const candRarityMatch = (cand.rarity === guess.rarity);
+            if (rarityMatch !== candRarityMatch) return false;
+        }
+
+        return true;
+    });
+
+    if (trackerCountBadge) trackerCountBadge.textContent = currentRemainingCandidates.length;
+    if (modalCountBadge) modalCountBadge.textContent = currentRemainingCandidates.length;
+
+    renderTrackerCards(currentRemainingCandidates);
+}
+
+window.openCardTracker = function() {
+    window.trackerUsedInGame = true;
+    const todayCST = GameVault.getDate() || getCSTDateISO();
+    saveLocalDailyState(todayCST, Array.from(guessedCards), GameVault.isCompleted(), true);
+
+    const modal = document.getElementById('card-tracker-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        updateCardTracker();
+        const searchInput = document.getElementById('tracker-search-input');
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+        }
+    }
+};
+
+window.closeCardTracker = function() {
+    const modal = document.getElementById('card-tracker-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.filterTrackerList = function(query) {
+    const q = (query || '').toLowerCase().trim();
+    if (!q) {
+        renderTrackerCards(currentRemainingCandidates);
+        return;
+    }
+    const filtered = currentRemainingCandidates.filter(c => 
+        c.name.toLowerCase().includes(q) ||
+        (c.set && c.set.toLowerCase().includes(q)) ||
+        (c.colors && (Array.isArray(c.colors) ? c.colors.join(' ') : c.colors).toLowerCase().includes(q)) ||
+        (c.type && c.type.toLowerCase().includes(q))
+    );
+    renderTrackerCards(filtered);
+};
+
+function renderTrackerCards(cardList) {
+    const container = document.getElementById('tracker-card-list');
+    if (!container) return;
+
+    if (!cardList || cardList.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 30px;">No cards match your filter or clues.</div>';
+        return;
+    }
+
+    const displayList = cardList.slice(0, 120);
+
+    const INK_HEX_MAP = {
+        Amber: '#F5A623',
+        Amethyst: '#9B51E0',
+        Emerald: '#27AE60',
+        Ruby: '#EB5757',
+        Sapphire: '#2F80ED',
+        Steel: '#828282'
+    };
+
+    container.innerHTML = displayList.map(c => {
+        const isInkable = Boolean(c.inkable);
+        const cardColors = Array.isArray(c.colors) ? c.colors : (c.colors ? [c.colors] : []);
+        const colorDotsHtml = cardColors.map(col => {
+            const hex = INK_HEX_MAP[col] || '#999';
+            return `<span class="tracker-color-dot" style="background-color: ${hex};" title="${col}"></span>`;
+        }).join('');
+
+        const inkIcon = isInkable
+            ? `<img src="/assets/icons/inkable.svg" class="tracker-chip-icon" alt="Inkable" title="Inkable">`
+            : `<img src="/assets/icons/non-inkable.svg" class="tracker-chip-icon" alt="Non-Inkable" title="Non-Inkable">`;
+
+        return `
+            <div class="tracker-card-item" onclick="selectTrackerCard('${escapeHtml(c.name).replace(/'/g, "\\'")}')" title="${escapeHtml(c.name)} • Cost: ${c.cost} • ${isInkable ? 'Inkable' : 'Non-Inkable'} • ${escapeHtml(c.set || '')}">
+                <img src="${c.image}" alt="${escapeHtml(c.name)}" loading="lazy" class="tracker-card-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="tracker-card-fallback">🎴</div>
+
+                <!-- Top Left Chip: Cost & Inkable -->
+                <div class="tracker-chip-cost ${isInkable ? 'inkable' : 'non-inkable'}">
+                    <span>${c.cost}</span>
+                    ${inkIcon}
+                </div>
+
+                <!-- Top Right Chip: Color Dots -->
+                <div class="tracker-chip-colors">
+                    ${colorDotsHtml}
+                </div>
+
+                <!-- Bottom Banner -->
+                <div class="tracker-card-banner">
+                    <div class="tracker-card-name">${escapeHtml(c.name)}</div>
+                    <div class="tracker-card-sub">
+                        <span>${escapeHtml(c.setCode || c.set || '')}</span>
+                        <span>${escapeHtml(c.type || '')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if (cardList.length > 120) {
+        container.innerHTML += `<div style="grid-column: 1 / -1; text-align: center; font-size: 0.8rem; color: var(--text-secondary); padding: 12px;">+ ${cardList.length - 120} more cards (type in the search bar above to narrow down)</div>`;
+    }
+}
+
+window.selectTrackerCard = function(cardName) {
+    const cardInput = document.getElementById('card-input');
+    if (cardInput) {
+        cardInput.value = cardName;
+        closeCardTracker();
+        const cardObj = findCardByName(cardName);
+        if (cardObj) {
+            guessCard(cardObj);
+        }
+    }
+};
+
+// ==========================================================================
+// DYNAMIC CANVAS SHARE GRAPHIC GENERATOR & SOCIAL SHARE BUTTONS
+// ==========================================================================
+async function generateShareGraphicBlob() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    const guessCount = guessedCards.size;
+    const rowsArray = Array.from(document.getElementById('game-board')?.childNodes || []);
+    const computedHeight = Math.max(540, 240 + rowsArray.length * 48);
+    canvas.height = computedHeight;
+
+    const ctx = canvas.getContext('2d');
+
+    // 1. Brutalist Background
+    ctx.fillStyle = '#fdfbf7';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Hard outer border
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#000000';
+    ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+
+    // 2. Header Banner
+    ctx.fillStyle = '#2ce5c6';
+    ctx.fillRect(4, 4, canvas.width - 8, 90);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#000000';
+    ctx.beginPath();
+    ctx.moveTo(4, 94);
+    ctx.lineTo(canvas.width - 4, 94);
+    ctx.stroke();
+
+    // Title
+    ctx.fillStyle = '#000000';
+    ctx.font = '900 36px "Space Grotesk", sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('LOREDLE', 28, 50);
+
+    // Date
+    const options = { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric' };
+    const dateStr = new Intl.DateTimeFormat('en-US', options).format(new Date());
+    ctx.font = '700 16px "JetBrains Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(dateStr, canvas.width - 28, 50);
+
+    // 3. User & Score Summary Box
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(28, 116, canvas.width - 56, 70);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#000000';
+    ctx.strokeRect(28, 116, canvas.width - 56, 70);
+
+    // Drop shadow
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(canvas.width - 28, 122, 6, 64);
+    ctx.fillRect(34, 186, canvas.width - 56, 6);
+
+    // User details inside box
+    const userLabel = (currentUser || 'Anonymous') + (window.trackerUsedInGame ? ' 🔎' : '');
+    ctx.fillStyle = '#000000';
+    ctx.font = '700 20px "Space Grotesk", sans-serif';
+    ctx.fillText(userLabel, 44, 152);
+
+    // Solved Badge
+    const solveBadgeText = `SOLVED IN ${guessCount} ${guessCount === 1 ? 'TRY' : 'TRIES'}!`;
+    ctx.font = '900 16px "JetBrains Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#2ce5c6';
+    const badgeWidth = ctx.measureText(solveBadgeText).width + 24;
+    ctx.fillRect(canvas.width - 44 - badgeWidth, 131, badgeWidth, 40);
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#000000';
+    ctx.strokeRect(canvas.width - 44 - badgeWidth, 131, badgeWidth, 40);
+    ctx.fillStyle = '#000000';
+    ctx.fillText(solveBadgeText, canvas.width - 56, 156);
+
+    // 4. Matrix of guesses
+    const startY = 220;
+    const tileWidth = 44;
+    const tileHeight = 36;
+    const gap = 8;
+    const totalRowWidth = (tileWidth + gap) * 8 - gap;
+    const startX = Math.round((canvas.width - totalRowWidth) / 2);
+
+    rowsArray.forEach((row, rIdx) => {
+        const y = startY + rIdx * (tileHeight + 10);
+        let cIdx = 0;
+        row.childNodes.forEach((cell, cellIndex) => {
+            if (cellIndex > 0) { // skip name cell
+                const x = startX + cIdx * (tileWidth + gap);
+                let fillCol = '#ff5c7c'; // red incorrect
+                if (cell.classList.contains('correct')) {
+                    fillCol = '#2ce5c6'; // green correct
+                } else if (cell.classList.contains('close')) {
+                    fillCol = '#ffd166'; // yellow close
+                }
+
+                // Tile shadow
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(x + 3, y + 3, tileWidth, tileHeight);
+
+                // Tile body
+                ctx.fillStyle = fillCol;
+                ctx.fillRect(x, y, tileWidth, tileHeight);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#000000';
+                ctx.strokeRect(x, y, tileWidth, tileHeight);
+
+                cIdx++;
+            }
+        });
+    });
+
+    // 5. Watermark Footer
+    const footerY = canvas.height - 24;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#666666';
+    ctx.font = '700 14px "Space Grotesk", sans-serif';
+    ctx.fillText('loredle.villainy.ink • Disney Lorcana Daily Challenge', canvas.width / 2, footerY);
+
+    return new Promise(resolve => {
+        canvas.toBlob(blob => resolve(blob), 'image/png');
+    });
+}
+
+window.copyShareGraphicToClipboard = async function(silent = false) {
+    try {
+        const blob = await generateShareGraphicBlob();
+        if (navigator.clipboard && navigator.clipboard.write) {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            if (!silent) showToast('📸 Card image copied to clipboard!');
+            return true;
+        }
+    } catch (e) {
+        console.warn('Clipboard write failed, downloading instead:', e);
+    }
+    if (!silent) {
+        downloadShareGraphic();
+        showToast('Image downloaded!');
+    }
+    return false;
+};
+
+window.downloadShareGraphic = async function() {
+    try {
+        const blob = await generateShareGraphicBlob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const dateStr = GameVault.getDate() || getCSTDateISO();
+        a.download = `Loredle-${dateStr}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        console.error('Error downloading graphic:', e);
+        showToast('Failed to generate image download.');
+    }
+};
+
+window.shareToX = async function() {
+    await copyShareGraphicToClipboard(true);
+    showToast('📋 Image copied! Paste (Ctrl+V) into your tweet.');
+    const tries = guessedCards.size;
+    const trackerText = window.trackerUsedInGame ? ' 🔎' : '';
+    const text = `I solved today's Loredle in ${tries} ${tries === 1 ? 'try' : 'tries'}!${trackerText}\n\nCan you beat my score?\nhttps://loredle.villainy.ink`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer,width=600,height=450');
+};
+
+window.shareToFacebook = function() {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://loredle.villainy.ink')}&quote=${encodeURIComponent(`I solved today's Loredle in ${guessedCards.size} tries!`)}`;
+    window.open(url, '_blank', 'noopener,noreferrer,width=600,height=450');
+};
+
+window.shareNativeOrInstagram = async function() {
+    try {
+        const blob = await generateShareGraphicBlob();
+        const dateStr = GameVault.getDate() || getCSTDateISO();
+        const file = new File([blob], `Loredle-${dateStr}.png`, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'Loredle Daily Solve',
+                text: `I solved today's Loredle in ${guessedCards.size} tries! https://loredle.villainy.ink`
+            });
+            return;
+        }
+    } catch (e) {
+        if (e.name !== 'AbortError') console.warn('Native share failed:', e);
+    }
+    await copyShareGraphicToClipboard(false);
+};
+
+// ==========================================================================
+// FRIEND GROUPS CONTROLLER & LEADERBOARD
+// ==========================================================================
+let cachedMyGroups = [];
+let activeGroupIndex = 0;
+let groupSuffixReroll = Math.floor(100 + Math.random() * 900);
+
+window.initLeaderboardsPage = function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'groups') {
+        window.location.replace('groups.html');
+        return;
+    }
+    fetchGlobalLeaderboard();
+    const lbGroupsBtn = document.getElementById('lb-friend-groups-btn');
+    if (lbGroupsBtn) {
+        lbGroupsBtn.style.display = currentUser ? 'inline-block' : 'none';
+    }
+};
+
+window.switchLeaderboardTab = function(tab) {
+    if (tab === 'groups') {
+        window.location.href = 'groups.html';
+    } else {
+        window.location.href = 'leaderboard.html';
+    }
+};
+
+window.initGroupsPage = async function() {
+    const authGuard = document.getElementById('group-auth-guard');
+    const emptyState = document.getElementById('group-empty-state');
+    const activeContent = document.getElementById('group-active-content');
+
+    if (!currentUser) {
+        if (authGuard) authGuard.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+        if (activeContent) activeContent.style.display = 'none';
+        return;
+    }
+
+    if (authGuard) authGuard.style.display = 'none';
+    await loadMyGroups();
+
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    if (action === 'create') {
+        setTimeout(() => {
+            if (currentUser) openCreateGroupModal();
+        }, 250);
+    } else if (action === 'join') {
+        setTimeout(() => {
+            if (currentUser) openJoinGroupModal();
+        }, 250);
+    }
+};
+
+async function loadMyGroups() {
+    const authGuard = document.getElementById('group-auth-guard');
+    const emptyState = document.getElementById('group-empty-state');
+    const activeContent = document.getElementById('group-active-content');
+
+    if (!currentUser) {
+        if (authGuard) authGuard.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+        if (activeContent) activeContent.style.display = 'none';
+        return;
+    }
+
+    if (authGuard) authGuard.style.display = 'none';
+
+    try {
+        const token = localStorage.getItem('loredle_token');
+        const res = await fetch('/api/groups/my-groups', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        const data = await res.json();
+        cachedMyGroups = Array.isArray(data) ? data : (data.groups || []);
+
+        // Check if user already owns 1 group (limit 1 owned group per user)
+        const ownsGroup = cachedMyGroups.some(g => g.owner === currentUser);
+        const newGroupBtn = document.getElementById('btn-create-group-action');
+        if (newGroupBtn) {
+            newGroupBtn.style.display = ownsGroup ? 'none' : 'inline-block';
+        }
+        const emptyCreateBtn = document.getElementById('btn-empty-create-group');
+        if (emptyCreateBtn) {
+            emptyCreateBtn.style.display = ownsGroup ? 'none' : 'inline-block';
+        }
+
+        if (cachedMyGroups.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+            if (activeContent) activeContent.style.display = 'none';
+            return;
+        }
+
+        if (emptyState) emptyState.style.display = 'none';
+        if (activeContent) activeContent.style.display = 'block';
+
+        const groupSelect = document.getElementById('group-select');
+        if (groupSelect) {
+            groupSelect.innerHTML = cachedMyGroups.map((g) => `
+                <option value="${g.code}">${escapeHtml(g.name)} (#${g.code})</option>
+            `).join('');
+
+            if (activeGroupIndex >= cachedMyGroups.length) activeGroupIndex = 0;
+            groupSelect.value = cachedMyGroups[activeGroupIndex].code;
+        }
+
+        loadGroupLeaderboard(cachedMyGroups[activeGroupIndex].code);
+    } catch (e) {
+        console.error('Error loading my groups:', e);
+    }
+}
+
+window.stepGroupSelection = function(dir) {
+    if (cachedMyGroups.length <= 1) return;
+    activeGroupIndex = (activeGroupIndex + dir + cachedMyGroups.length) % cachedMyGroups.length;
+    const code = cachedMyGroups[activeGroupIndex].code;
+    const select = document.getElementById('group-select');
+    if (select) select.value = code;
+    loadGroupLeaderboard(code);
+};
+
+window.onGroupSelectChange = function(code) {
+    const idx = cachedMyGroups.findIndex(g => g.code === code);
+    if (idx !== -1) activeGroupIndex = idx;
+    loadGroupLeaderboard(code);
+};
+
+let cachedMemberStats = [];
+let currentStatsSort = 'streak'; // default sorting is win streak
+let currentStatsSortAsc = false; // highest streak first
+
+window.toggleGroupStatsSort = function(type) {
+    if (type !== 'streak' && type !== 'avg' && type !== 'solves') return;
+    if (currentStatsSort === type) {
+        currentStatsSortAsc = !currentStatsSortAsc;
+    } else {
+        currentStatsSort = type;
+        currentStatsSortAsc = type === 'avg'; // avg tries is best when lowest
+    }
+    renderGroupStats();
+};
+
+function renderGroupStats() {
+    const tbody = document.getElementById('group-stats-body');
+    if (!tbody) return;
+
+    function getHeaderHtml(title, key) {
+        if (currentStatsSort !== key) {
+            return `<span style="display: inline-flex; align-items: center; vertical-align: middle;">${title}</span>`;
+        }
+        const arrow = currentStatsSortAsc ? '▲' : '▼';
+        return `<span style="display: inline-flex; align-items: center; vertical-align: middle;"><span>${title}</span><span class="sort-chevron-pill">${arrow}</span></span>`;
+    }
+
+    const thStreak = document.getElementById('th-sort-streak');
+    const thAvg = document.getElementById('th-sort-avg');
+    const thSolves = document.getElementById('th-sort-solves');
+    const thUser = document.getElementById('th-sort-username');
+
+    if (thStreak) thStreak.innerHTML = getHeaderHtml('Win Streak', 'streak');
+    if (thAvg) thAvg.innerHTML = getHeaderHtml('Avg. Tries', 'avg');
+    if (thSolves) thSolves.innerHTML = getHeaderHtml('Solves', 'solves');
+    if (thUser) thUser.innerHTML = 'Member';
+
+    if (!cachedMemberStats || cachedMemberStats.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-secondary);">No member stats available.</td></tr>';
+        return;
+    }
+
+    const sorted = [...cachedMemberStats].sort((a, b) => {
+        if (currentStatsSort === 'streak') {
+            const diff = (b.streak || 0) - (a.streak || 0);
+            if (diff !== 0) return currentStatsSortAsc ? -diff : diff;
+            return (a.avgTries || 99) - (b.avgTries || 99);
+        } else if (currentStatsSort === 'avg') {
+            const aVal = a.avgTries !== null && a.avgTries !== undefined ? a.avgTries : 999;
+            const bVal = b.avgTries !== null && b.avgTries !== undefined ? b.avgTries : 999;
+            const diff = aVal - bVal;
+            if (diff !== 0) return currentStatsSortAsc ? diff : -diff;
+            return (b.streak || 0) - (a.streak || 0);
+        } else {
+            // 'solves'
+            const diff = (b.totalSolves || 0) - (a.totalSolves || 0);
+            return currentStatsSortAsc ? -diff : diff;
+        }
+    });
+
+    ['streak', 'avg', 'solves'].forEach(key => {
+        const btn = document.getElementById(`btn-sort-${key}`);
+        if (btn) {
+            btn.classList.toggle('active', currentStatsSort === key);
+        }
+    });
+
+    tbody.innerHTML = sorted.map(m => {
+        const streakBadge = m.streak > 0
+            ? `<span style="font-weight: 800; color: #ff9800;">${m.streak} 🔥</span>`
+            : `<span style="color: var(--text-secondary);">0</span>`;
+        const avgDisplay = m.avgTries !== null
+            ? `<span style="font-weight: 800; color: var(--secondary-color);">${m.avgTries}</span>`
+            : `<span style="color: var(--text-secondary);">--</span>`;
+        const solvesDisplay = `<span style="font-weight: 800; color: var(--close);">${m.totalSolves || 0}</span>`;
+
+        return `
+            <tr>
+                <td style="font-weight: 700;">
+                    <div style="display: inline-flex; align-items: center; gap: 8px;">
+                        ${renderAvatarBadge(m.avatar, m.username)}
+                        <span>${escapeHtml(m.username)}</span>
+                    </div>
+                </td>
+                <td style="text-align: center; font-family: var(--font-mono);">${streakBadge}</td>
+                <td style="text-align: center; font-family: var(--font-mono);">${avgDisplay}</td>
+                <td style="text-align: center; font-family: var(--font-mono);">${solvesDisplay}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function loadGroupLeaderboard(code) {
+    try {
+        const token = localStorage.getItem('loredle_token');
+        const res = await fetch(`/api/groups/${code}/leaderboard`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (!res.ok) throw new Error('Failed to load group leaderboard');
+        const data = await res.json();
+
+        // Header info
+        document.getElementById('group-display-name').textContent = data.group.name;
+        document.getElementById('group-display-owner').textContent = data.group.owner;
+        document.getElementById('group-members-count').textContent = data.group.membersCount || (data.group.members || []).length || 1;
+        document.getElementById('group-display-code').textContent = '#' + data.group.code;
+
+        // Owner settings button vs Member Leave button
+        const settingsBtn = document.getElementById('btn-group-settings');
+        if (settingsBtn) {
+            settingsBtn.style.display = data.group.isOwner ? 'inline-block' : 'none';
+        }
+        const leaveBtn = document.getElementById('btn-leave-group');
+        if (leaveBtn) {
+            leaveBtn.style.display = data.group.isOwner ? 'none' : 'inline-block';
+        }
+
+        // 1. Today's group scores (ordered by fewest tries, then completion time)
+        const todayTbody = document.getElementById('group-today-body');
+        if (todayTbody) {
+            if (!data.todayScores || data.todayScores.length === 0) {
+                todayTbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-secondary);">No one in this group has solved today\'s card yet.</td></tr>';
+            } else {
+                todayTbody.innerHTML = data.todayScores.map((s, idx) => {
+                    const medal = idx === 0 ? '👑 #1' : idx === 1 ? '🥈 #2' : idx === 2 ? '🥉 #3' : `#${idx + 1}`;
+                    const trackerBadge = s.trackerUsed ? '<span title="Solved with Card Tracker" style="margin-left: 6px; cursor: help;">🔎</span>' : '';
+                    return `
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: 700;">${medal}</td>
+                            <td>
+                                <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                    ${renderAvatarBadge(s.avatar, s.username)}
+                                    <span style="font-weight: 700;">${escapeHtml(s.username)}</span>
+                                    ${trackerBadge}
+                                </div>
+                            </td>
+                            <td style="font-family: var(--font-mono); font-weight: 800; color: var(--secondary-color); text-align: center; font-size: 1.1rem;">${s.tries}</td>
+                            <td style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-secondary); text-align: right;">${escapeHtml(s.timeFormatted || '--')}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // 2. Member performance stats (Win streaks & Average tries)
+        cachedMemberStats = Array.isArray(data.memberStats) ? data.memberStats : [];
+        renderGroupStats();
+
+        // 3. Chat-style activity feed
+        const chatFeed = document.getElementById('group-chat-feed');
+        if (chatFeed) {
+            if (!data.recentActivity || data.recentActivity.length === 0) {
+                chatFeed.innerHTML = '<div style="color: var(--text-secondary); font-size: 0.88rem; text-align: center; padding: 20px;">No recent solves yet. Solves from your squad will appear here!</div>';
+            } else {
+                chatFeed.innerHTML = data.recentActivity.map(act => {
+                    const trackerIcon = act.trackerUsed ? ' <span title="Card Tracker used">🔎</span>' : '';
+                    return `
+                        <div class="chat-msg-row">
+                            <div style="flex-shrink: 0; margin-top: 2px;">
+                                ${renderAvatarBadge(act.avatar, act.username)}
+                            </div>
+                            <div class="chat-bubble">
+                                <div class="chat-bubble-header">
+                                    <span class="chat-bubble-author">${escapeHtml(act.username)}</span>
+                                    <span class="chat-bubble-time">${escapeHtml(act.timeFormatted)}</span>
+                                </div>
+                                <div class="chat-bubble-text">
+                                    ${escapeHtml(act.messageText)}${trackerIcon}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching group leaderboard:', e);
+    }
+}
+
+// Group Modals & Actions
+window.openCreateGroupModal = function() {
+    const ownsGroup = cachedMyGroups.some(g => g.owner === currentUser);
+    if (ownsGroup) {
+        showToast('⚠️ You already own 1 group! You can join unlimited groups.');
+        return;
+    }
+
+    const nameInput = document.getElementById('create-group-name');
+    if (nameInput) nameInput.value = '';
+    const prefixInput = document.getElementById('create-group-prefix');
+    if (prefixInput) prefixInput.value = '';
+
+    const isAdmin = localStorage.getItem('loredle_role') === 'admin';
+    const nonAdminBox = document.getElementById('create-group-suffix-nonadmin');
+    const adminBox = document.getElementById('create-group-suffix-admin');
+    const adminSuffixInput = document.getElementById('create-group-admin-suffix');
+    const statusBadge = document.getElementById('create-group-code-status');
+
+    rerollGroupSuffix();
+
+    if (isAdmin) {
+        if (nonAdminBox) nonAdminBox.style.display = 'none';
+        if (adminBox) adminBox.style.display = 'flex';
+        if (adminSuffixInput) adminSuffixInput.value = String(groupSuffixReroll).padStart(3, '0');
+        if (statusBadge) statusBadge.textContent = '';
+        debouncedCheckAvailability();
+    } else {
+        if (nonAdminBox) nonAdminBox.style.display = 'flex';
+        if (adminBox) adminBox.style.display = 'none';
+        if (statusBadge) statusBadge.textContent = '';
+    }
+
+    updateGroupCodePreview();
+    openModal('create-group-modal');
+};
+
+window.rerollGroupSuffix = function() {
+    groupSuffixReroll = Math.floor(100 + Math.random() * 900);
+    const isAdmin = localStorage.getItem('loredle_role') === 'admin';
+    const adminSuffixInput = document.getElementById('create-group-admin-suffix');
+    const suffixEl = document.getElementById('create-group-suffix-preview');
+
+    if (isAdmin && adminSuffixInput) {
+        adminSuffixInput.value = String(groupSuffixReroll).padStart(3, '0');
+        debouncedCheckAvailability();
+    } else if (suffixEl) {
+        suffixEl.textContent = groupSuffixReroll;
+    }
+    updateGroupCodePreview();
+};
+
+window.onGroupAdminSuffixInput = function(input) {
+    input.value = input.value.replace(/[^0-9]/g, '').slice(0, 3);
+    groupSuffixReroll = input.value;
+    updateGroupCodePreview();
+    debouncedCheckAvailability();
+};
+
+window.onGroupPrefixInput = function(input) {
+    input.value = input.value.replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
+    updateGroupCodePreview();
+    const isAdmin = localStorage.getItem('loredle_role') === 'admin';
+    if (isAdmin) debouncedCheckAvailability();
+};
+
+function updateGroupCodePreview() {
+    const prefixInput = document.getElementById('create-group-prefix');
+    const prefix = (prefixInput?.value || 'ROV').toUpperCase().padEnd(3, 'X');
+    const isAdmin = localStorage.getItem('loredle_role') === 'admin';
+    let suffix = groupSuffixReroll;
+    if (isAdmin) {
+        const adminSuffixInput = document.getElementById('create-group-admin-suffix');
+        if (adminSuffixInput && adminSuffixInput.value) {
+            suffix = adminSuffixInput.value.padEnd(3, '0');
+        }
+    }
+    const fullCodeEl = document.getElementById('create-group-full-code');
+    if (fullCodeEl) fullCodeEl.textContent = `#${prefix}-${suffix}`;
+}
+
+let checkAvailabilityTimer = null;
+function debouncedCheckAvailability() {
+    clearTimeout(checkAvailabilityTimer);
+    checkAvailabilityTimer = setTimeout(checkGroupCodeAvailability, 250);
+}
+
+async function checkGroupCodeAvailability() {
+    const isAdmin = localStorage.getItem('loredle_role') === 'admin';
+    if (!isAdmin) return;
+
+    const prefixInput = document.getElementById('create-group-prefix');
+    const prefix = (prefixInput?.value || '').trim().toUpperCase();
+    const adminInput = document.getElementById('create-group-admin-suffix');
+    const suffix = (adminInput?.value || '').trim();
+    const statusBadge = document.getElementById('create-group-code-status');
+    const submitBtn = document.getElementById('btn-submit-create-group');
+
+    if (prefix.length !== 3 || suffix.length !== 3) {
+        if (statusBadge) {
+            statusBadge.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.8rem;">Enter 3 letters &amp; 3 numbers</span>';
+        }
+        return;
+    }
+
+    const fullCode = `${prefix}-${suffix}`;
+    if (statusBadge) statusBadge.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.8rem;">Checking...</span>';
+
+    try {
+        const token = localStorage.getItem('loredle_token');
+        const res = await fetch('/api/groups/check-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ code: fullCode })
+        });
+        const data = await res.json();
+        if (res.ok && data.available) {
+            if (statusBadge) statusBadge.innerHTML = '<span style="color: var(--correct); font-size: 0.82rem; font-weight: 800;">✓ Available!</span>';
+            if (submitBtn) submitBtn.disabled = false;
+        } else {
+            if (statusBadge) statusBadge.innerHTML = '<span style="color: var(--wrong); font-size: 0.82rem; font-weight: 800;">✗ Taken! Pick another</span>';
+        }
+    } catch (e) {
+        if (statusBadge) statusBadge.innerHTML = '';
+    }
+}
+
+window.submitCreateGroup = async function() {
+    const name = (document.getElementById('create-group-name')?.value || '').trim();
+    const prefix = (document.getElementById('create-group-prefix')?.value || '').trim().toUpperCase();
+    const isAdmin = localStorage.getItem('loredle_role') === 'admin';
+
+    let suffix = '';
+    if (isAdmin) {
+        const adminInput = document.getElementById('create-group-admin-suffix');
+        suffix = (adminInput?.value || '').trim();
+    } else {
+        suffix = String(groupSuffixReroll).trim();
+    }
+
+    if (!name) {
+        showToast('⚠️ Please enter a group name');
+        return;
+    }
+    if (prefix.length !== 3) {
+        showToast('⚠️ Group invite prefix must be exactly 3 letters');
+        return;
+    }
+    if (!/^[0-9]{3}$/.test(suffix)) {
+        showToast('⚠️ Group invite code suffix must be exactly 3 digits (0-9)');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('loredle_token');
+        const res = await fetch('/api/groups', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ name, prefix, suffix })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(`🎉 Group created! Invite Code: #${data.group.code}`);
+            closeModal('create-group-modal');
+            await loadMyGroups();
+            const groupSelect = document.getElementById('group-select');
+            if (groupSelect) {
+                groupSelect.value = data.group.code;
+                onGroupSelectChange(data.group.code);
+            }
+        } else {
+            showToast(`❌ ${data.error || 'Failed to create group'}`);
+        }
+    } catch (e) {
+        console.error('Error creating group:', e);
+        showToast('❌ Network error creating group');
+    }
+};
+
+window.openJoinGroupModal = function() {
+    document.getElementById('join-group-code').value = '';
+    openModal('join-group-modal');
+};
+
+window.submitJoinGroup = async function() {
+    let code = document.getElementById('join-group-code').value.trim().toUpperCase().replace('#', '');
+    if (!code) {
+        showToast('⚠️ Please enter an invite code');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('loredle_token');
+        const res = await fetch('/api/groups/join', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(`🚀 Successfully joined ${data.group.name}!`);
+            closeModal('join-group-modal');
+            await loadMyGroups();
+            const groupSelect = document.getElementById('group-select');
+            if (groupSelect) {
+                groupSelect.value = data.group.code;
+                onGroupSelectChange(data.group.code);
+            }
+        } else {
+            showToast(`❌ ${data.error || 'Failed to join group'}`);
+        }
+    } catch (e) {
+        console.error('Error joining group:', e);
+        showToast('❌ Network error joining group');
+    }
+};
+
+window.openGroupSettingsModal = function() {
+    const activeGroup = cachedMyGroups[activeGroupIndex];
+    if (!activeGroup) return;
+
+    document.getElementById('settings-group-name').value = activeGroup.name;
+    document.getElementById('settings-group-static-code').textContent = '#' + activeGroup.code;
+    openModal('group-settings-modal');
+};
+
+window.copyActiveGroupCode = function() {
+    const activeGroup = cachedMyGroups[activeGroupIndex];
+    if (!activeGroup) return;
+    navigator.clipboard.writeText(activeGroup.code)
+        .then(() => showToast(`📋 Copied invite code: #${activeGroup.code}`))
+        .catch(() => showToast('Failed to copy.'));
+};
+
+window.copySettingsGroupCode = function() {
+    const activeGroup = cachedMyGroups[activeGroupIndex];
+    if (!activeGroup) return;
+    navigator.clipboard.writeText(activeGroup.code)
+        .then(() => showToast(`📋 Copied invite code: #${activeGroup.code}`))
+        .catch(() => showToast('Failed to copy.'));
+};
+
+window.submitRenameGroup = async function() {
+    const activeGroup = cachedMyGroups[activeGroupIndex];
+    if (!activeGroup) return;
+    const newName = document.getElementById('settings-group-name').value.trim();
+    if (!newName) {
+        showToast('⚠️ Group name cannot be blank');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('loredle_token');
+        const res = await fetch(`/api/groups/${activeGroup.code}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ name: newName })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('💾 Group name updated!');
+            closeModal('group-settings-modal');
+            await loadMyGroups();
+        } else {
+            showToast(`❌ ${data.error || 'Failed to rename group'}`);
+        }
+    } catch (e) {
+        showToast('❌ Error renaming group');
+    }
+};
+
+window.submitDeleteGroup = async function() {
+    const activeGroup = cachedMyGroups[activeGroupIndex];
+    if (!activeGroup) return;
+
+    if (!confirm(`Are you sure you want to delete the group "${activeGroup.name}"? This cannot be undone.`)) return;
+
+    try {
+        const token = localStorage.getItem('loredle_token');
+        const res = await fetch(`/api/groups/${activeGroup.code}`, {
+            method: 'DELETE',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('🗑️ Group deleted');
+            closeModal('group-settings-modal');
+            activeGroupIndex = 0;
+            await loadMyGroups();
+        } else {
+            showToast(`❌ ${data.error || 'Failed to delete group'}`);
+        }
+    } catch (e) {
+        showToast('❌ Error deleting group');
+    }
+};
+
+window.promptLeaveActiveGroup = function() {
+    const activeGroup = cachedMyGroups[activeGroupIndex];
+    if (!activeGroup) return;
+    if (activeGroup.isOwner || activeGroup.owner === currentUser) {
+        showToast('⚠️ As the owner, you cannot leave your group. You can delete it in Settings.');
+        return;
+    }
+    const modalName = document.getElementById('leave-group-modal-name');
+    if (modalName) modalName.textContent = activeGroup.name;
+    const modalCode = document.getElementById('leave-group-modal-code');
+    if (modalCode) modalCode.textContent = '#' + activeGroup.code;
+    openModal('leave-group-modal');
+};
+
+window.confirmLeaveGroup = async function() {
+    const activeGroup = cachedMyGroups[activeGroupIndex];
+    if (!activeGroup) return;
+
+    try {
+        const token = localStorage.getItem('loredle_token');
+        const res = await fetch('/api/groups/leave', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ code: activeGroup.code })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(`🚪 You left "${activeGroup.name}".`);
+            closeModal('leave-group-modal');
+            activeGroupIndex = 0;
+            await loadMyGroups();
+        } else {
+            showToast(`❌ ${data.error || 'Failed to leave group'}`);
+        }
+    } catch (e) {
+        console.error('Error leaving group:', e);
+        showToast('❌ Network error leaving group');
+    }
+};
+
+// ==========================================================================
+// GLOBAL ANNOUNCEMENTS
+// ==========================================================================
+async function checkGlobalAnnouncement() {
+    try {
+        const res = await fetch('/api/system/announcement');
+        if (!res.ok) return;
+        const data = await res.json();
+        const ann = data.announcement;
+
+        const message = (ann?.message || ann?.text || '').trim();
+        if (!ann || !ann.active || !message) return;
+
+        const annId = ann.id || 'banner-active';
+        const dismissedId = localStorage.getItem('loredle_dismissed_announcement');
+        if (dismissedId === annId) return;
+
+        let container = document.getElementById('global-announcement-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'global-announcement-container';
+            document.body.insertBefore(container, document.body.firstChild);
+        }
+
+        let theme = (ann.type || 'teal').toLowerCase();
+        if (theme === 'info') theme = 'teal';
+        else if (theme === 'event') theme = 'gold';
+        else if (theme === 'alert') theme = 'pink';
+
+        const icon = theme === 'gold' ? '🏆' : (theme === 'pink' ? '⚠️' : '💡');
+
+        container.innerHTML = `
+            <div class="global-announcement-banner theme-${escapeHtml(theme)}" id="announcement-banner-el">
+                <div class="banner-content">
+                    <span class="banner-icon">${icon}</span>
+                    <span class="banner-text">${escapeHtml(message)}</span>
+                </div>
+                <button type="button" class="banner-close-btn" onclick="dismissAnnouncement('${escapeHtml(annId)}')">&times;</button>
+            </div>
+        `;
+    } catch (e) {
+        // Announcement fetch fails silently if offline
+    }
+}
+
+window.dismissAnnouncement = function(id) {
+    try {
+        localStorage.setItem('loredle_dismissed_announcement', id);
+    } catch (e) {}
+    const banner = document.getElementById('announcement-banner-el');
+    if (banner) banner.remove();
+};

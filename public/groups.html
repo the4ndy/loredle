@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loredle — Friend Groups</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8C76E2T1CC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-8C76E2T1CC');
+    </script>
+</head>
+
+<body>
+    <div id="global-announcement-container"></div>
+    <nav class="navbar">
+        <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
+        <div id="nav-auth-container" class="nav-auth"></div>
+    </nav>
+
+    <div id="nav-dropdown" class="nav-dropdown"></div>
+
+    <div class="menu-container" style="max-width: 680px; width: 95%;">
+        <!-- PAGE HEADER -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+            <h2 style="color: var(--secondary-color); margin: 0; font-size: 2rem; text-shadow: 2px 2px 0px #000;">👥 Friend Groups</h2>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0; margin-bottom: 22px;">
+            Compete privately with your friends and local scene! Track daily scores and compare head-to-head stats.
+        </p>
+
+        <!-- STATE 1: AUTH GUARD (NOT LOGGED IN) -->
+        <div id="group-auth-guard" style="display: none; text-align: center; padding: 36px 20px; background: var(--bg-card); border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0px #000; margin-top: 10px;">
+            <div style="font-size: 3rem; margin-bottom: 12px;">🔐</div>
+            <h3 style="margin-top: 0; font-family: var(--font-display); text-transform: uppercase; font-size: 1.45rem;">Login Required</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+                You must be logged in with a Loredle account to view, join, or create private friend groups.
+            </p>
+            <button type="button" class="btn primary-btn" onclick="openAuthModal()" style="font-size: 1.05rem; padding: 12px 24px;">Log In / Register</button>
+        </div>
+
+        <!-- STATE 2: EMPTY STATE (LOGGED IN, BUT NO GROUPS) -->
+        <div id="group-empty-state" style="display: none; text-align: center; padding: 36px 20px; background: var(--bg-card); border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0px #000; margin-top: 10px;">
+            <div style="font-size: 3rem; margin-bottom: 12px;">👥</div>
+            <h3 style="margin-top: 0; font-family: var(--font-display); text-transform: uppercase; font-size: 1.45rem;">No Groups Joined Yet</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+                Create a squad for your friend circle or local Lorcana scene, or join an existing group with an invite code!
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <button type="button" id="btn-empty-create-group" class="btn secondary-btn" style="padding: 12px 22px; font-size: 1rem;" onclick="openCreateGroupModal()">+ Create a Group</button>
+                <button type="button" class="btn minimal-btn" style="padding: 12px 22px; font-size: 1rem;" onclick="openJoinGroupModal()">🔑 Join with Code</button>
+            </div>
+        </div>
+
+        <!-- STATE 3: ACTIVE GROUP CONTENT -->
+        <div id="group-active-content" style="display: none;">
+            <!-- NAVIGATION & ACTIONS BAR -->
+            <div class="group-nav-bar">
+                <button type="button" class="group-arrow-btn" title="Previous Group" onclick="stepGroupSelection(-1)">◀</button>
+                <select id="group-select" class="input-field" style="margin: 0; flex: 1; padding: 8px 12px; font-weight: 700; font-size: 0.95rem;" onchange="onGroupSelectChange(this.value)">
+                    <!-- Populated dynamically -->
+                </select>
+                <button type="button" class="group-arrow-btn" title="Next Group" onclick="stepGroupSelection(1)">▶</button>
+                <button type="button" id="btn-group-settings" class="btn minimal-btn" style="padding: 6px 12px; font-size: 0.95rem; display: none;" title="Group Settings (Owner Only)" onclick="openGroupSettingsModal()">⚙️</button>
+            </div>
+
+            <!-- ACTION BUTTONS: CREATE (ONLY IF NO OWNED GROUP) & JOIN -->
+            <div style="display: flex; gap: 10px; margin-bottom: 18px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" id="btn-create-group-action" class="btn minimal-btn" style="padding: 7px 14px; font-size: 0.85rem;" onclick="openCreateGroupModal()">+ Create a Group</button>
+                <button type="button" class="btn minimal-btn" style="padding: 7px 14px; font-size: 0.85rem;" onclick="openJoinGroupModal()">🔑 Join with Code</button>
+            </div>
+
+            <!-- GROUP HEADER CARD -->
+            <div style="background: var(--bg-card); border: 2.5px solid #000; border-radius: 8px; box-shadow: 4px 4px 0px #000; padding: 14px 16px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                    <div>
+                        <h3 id="group-display-name" style="margin: 0; font-family: var(--font-display); font-size: 1.45rem; color: var(--secondary-color);">Group Name</h3>
+                        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 3px;">
+                            Owner: <strong id="group-display-owner" style="color: var(--text-primary);">...</strong> • <span id="group-members-count">1</span> Member(s)
+                        </div>
+                    </div>
+                    <!-- STACKED RIGHT SIDE -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
+                        <div class="group-code-badge" id="group-invite-badge" title="Click to copy invite code" onclick="copyActiveGroupCode()">
+                            <span>Invite:</span>
+                            <span id="group-display-code" style="letter-spacing: 0.5px;">#ROV-000</span>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin-left: 2px;">
+                                <rect width="20" height="16" x="2" y="4" rx="2"/>
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                            </svg>
+                        </div>
+                        <button type="button" id="btn-leave-group" class="btn minimal-btn" style="padding: 2px 8px; font-size: 0.75rem; display: none; color: var(--incorrect); border-color: #000;" onclick="promptLeaveActiveGroup()" title="Leave this squad">🚪 Leave Group</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TODAY'S GROUP RANK -->
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 8px 0;">
+                <h4 style="font-family: var(--font-display); text-transform: uppercase; margin: 0; color: var(--close); font-size: 1.15rem;">🏆 Today's Group Rank</h4>
+                <span style="font-size: 0.78rem; color: var(--text-secondary); font-family: var(--font-mono);">Ranked by Fewest Tries &amp; Time</span>
+            </div>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">Rank</th>
+                        <th>Solver</th>
+                        <th style="text-align: center; width: 80px;">Tries</th>
+                        <th style="text-align: right; width: 120px;">Solved At</th>
+                    </tr>
+                </thead>
+                <tbody id="group-today-body">
+                    <tr>
+                        <td colspan="4" style="color: var(--text-secondary);">No one in this group has solved today's card yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- GROUP STATS (SORTABLE BY WIN STREAK OR AVG TRIES) -->
+            <div style="margin-top: 28px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                    <h4 style="font-family: var(--font-display); text-transform: uppercase; margin: 0; color: var(--primary-color); font-size: 1.15rem;">📊 Group Stats</h4>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; user-select: none;">SORT:</span>
+                        <button type="button" id="btn-sort-streak" class="btn minimal-btn active" style="padding: 4px 8px; font-size: 0.78rem; user-select: none; -webkit-user-select: none;" onclick="toggleGroupStatsSort('streak')">🔥 Win Streak</button>
+                        <button type="button" id="btn-sort-avg" class="btn minimal-btn" style="padding: 4px 8px; font-size: 0.78rem; user-select: none; -webkit-user-select: none;" onclick="toggleGroupStatsSort('avg')">🎯 Avg. Tries</button>
+                        <button type="button" id="btn-sort-solves" class="btn minimal-btn" style="padding: 4px 8px; font-size: 0.78rem; user-select: none; -webkit-user-select: none;" onclick="toggleGroupStatsSort('solves')">🏆 Solves</button>
+                    </div>
+                </div>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th style="white-space: nowrap; user-select: none; -webkit-user-select: none;" id="th-sort-username">Member</th>
+                            <th style="cursor: pointer; text-align: center; white-space: nowrap; user-select: none; -webkit-user-select: none;" onclick="toggleGroupStatsSort('streak')" id="th-sort-streak">Win Streak</th>
+                            <th style="cursor: pointer; text-align: center; white-space: nowrap; user-select: none; -webkit-user-select: none;" onclick="toggleGroupStatsSort('avg')" id="th-sort-avg">Avg. Tries</th>
+                            <th style="cursor: pointer; text-align: center; white-space: nowrap; user-select: none; -webkit-user-select: none;" onclick="toggleGroupStatsSort('solves')" id="th-sort-solves">Solves</th>
+                        </tr>
+                    </thead>
+                    <tbody id="group-stats-body">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CHAT-STYLE ACTIVITY FEED -->
+            <div style="margin-top: 28px;">
+                <h4 style="font-family: var(--font-display); text-transform: uppercase; margin-bottom: 8px; color: var(--accent-color); font-size: 1.15rem;">💬 Friends Activity Feed</h4>
+                <div id="group-chat-feed" class="group-chat-feed">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER NAV -->
+        <div style="margin-top: 28px;">
+            <button onclick="location.href='/index.html'" class="btn secondary-btn">← Back to Hub</button>
+        </div>
+    </div>
+
+    <!-- CREATE GROUP MODAL -->
+    <div id="create-group-modal" class="modal">
+        <div class="modal-content" style="max-width: 460px;">
+            <div class="modal-header">
+                <h2>Create a Group</h2>
+                <span class="close-btn" onclick="closeModal('create-group-modal')">&times;</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: -4px;">
+                You can create and own 1 group. Choose a 3-letter prefix and your 3-digit invite code!
+            </p>
+            <div style="margin-bottom: 14px;">
+                <label style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">GROUP NAME:</label>
+                <input type="text" id="create-group-name" class="input-field" placeholder="e.g. Dallas Lorcana Crew" maxlength="40">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">CUSTOM INVITE CODE:</label>
+                
+                <!-- PREFIX INPUT -->
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="create-group-prefix" class="input-field" placeholder="ROV" maxlength="3" style="width: 80px; text-transform: uppercase; text-align: center; font-weight: 800; font-family: var(--font-mono); margin: 0;" oninput="onGroupPrefixInput(this)">
+                    <span style="font-weight: 800; font-size: 1.3rem;">-</span>
+
+                    <!-- NON-ADMIN SUFFIX (LOCKED WITH REROLL) -->
+                    <div id="create-group-suffix-nonadmin" style="display: flex; gap: 8px; align-items: center;">
+                        <span id="create-group-suffix-preview" style="font-family: var(--font-mono); font-size: 1.2rem; font-weight: 800; background: var(--bg-card); padding: 8px 14px; border: 2px solid #000; border-radius: 4px; box-shadow: 2px 2px 0px #000;">419</span>
+                        <button type="button" class="btn minimal-btn" style="padding: 8px 12px; font-size: 0.82rem;" onclick="rerollGroupSuffix()" title="Unlimited Rerolls">🎲 Reroll</button>
+                    </div>
+
+                    <!-- ADMIN SUFFIX (CUSTOM EDITABLE + LIVE AVAILABILITY CHECK + REROLL) -->
+                    <div id="create-group-suffix-admin" style="display: none; align-items: center; gap: 8px;">
+                        <input type="text" id="create-group-admin-suffix" class="input-field" placeholder="007" maxlength="3" style="width: 80px; text-align: center; font-weight: 800; font-family: var(--font-mono); margin: 0;" oninput="onGroupAdminSuffixInput(this)">
+                        <button type="button" class="btn minimal-btn" style="padding: 8px 12px; font-size: 0.82rem;" onclick="rerollGroupSuffix()" title="Reroll random number">🎲 Reroll</button>
+                        <span id="create-group-admin-badge" class="badge-new" style="font-size: 0.7rem; background: var(--secondary-color); color: #000;">ADMIN</span>
+                    </div>
+                </div>
+
+                <!-- LIVE CODE STATUS & PREVIEW -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 6px;">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        Invite Code Preview: <strong id="create-group-full-code" style="color: var(--close); font-family: var(--font-mono);">#ROV-419</strong>
+                    </div>
+                    <div id="create-group-code-status" style="font-size: 0.82rem; font-weight: 700;"></div>
+                </div>
+            </div>
+            <button type="button" id="btn-submit-create-group" class="btn secondary-btn" style="width: 100%; padding: 12px; font-size: 1rem;" onclick="submitCreateGroup()">
+                🔒 Create & Lock In Group
+            </button>
+        </div>
+    </div>
+
+    <!-- JOIN GROUP MODAL -->
+    <div id="join-group-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Join a Group</h2>
+                <span class="close-btn" onclick="closeModal('join-group-modal')">&times;</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: -4px;">
+                Enter a 6-character invite code provided by a group owner (e.g. <code>ROV-419</code>):
+            </p>
+            <input type="text" id="join-group-code" class="input-field" placeholder="e.g. ROV-419" maxlength="7" style="text-transform: uppercase; font-family: var(--font-mono); font-size: 1.15rem; text-align: center; font-weight: 800;">
+            <button type="button" class="btn primary-btn" style="width: 100%; padding: 12px; font-size: 1rem;" onclick="submitJoinGroup()">
+                🚀 Join Group
+            </button>
+        </div>
+    </div>
+
+    <!-- GROUP SETTINGS MODAL (OWNER ONLY) -->
+    <div id="group-settings-modal" class="modal">
+        <div class="modal-content" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2>Group Settings</h2>
+                <span class="close-btn" onclick="closeModal('group-settings-modal')">&times;</span>
+            </div>
+            <div style="margin-bottom: 14px;">
+                <label style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">GROUP NAME:</label>
+                <input type="text" id="settings-group-name" class="input-field" maxlength="40">
+                <button type="button" class="btn secondary-btn" style="width: 100%; padding: 8px 12px; margin-top: 4px;" onclick="submitRenameGroup()">💾 Save Name</button>
+            </div>
+            <div style="margin-bottom: 18px; background: var(--bg-card); border: 2px solid #000; border-radius: 6px; padding: 10px 12px;">
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Permanent Static Invite Code:</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <span id="settings-group-static-code" style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; color: var(--close);">#ROV-419</span>
+                    <button type="button" class="btn minimal-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="copySettingsGroupCode()">Copy Code</button>
+                </div>
+            </div>
+            <div style="border-top: 2px solid #000; padding-top: 14px;">
+                <button type="button" class="btn pink-btn" style="width: 100%; padding: 10px;" onclick="submitDeleteGroup()">🗑️ Delete Group</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEAVE GROUP CONFIRMATION MODAL (FOR MEMBERS) -->
+    <div id="leave-group-modal" class="modal">
+        <div class="modal-content" style="max-width: 420px; text-align: center;">
+            <div class="modal-header">
+                <h2 style="color: var(--incorrect); margin: 0;">Leave Group?</h2>
+                <span class="close-btn" onclick="closeModal('leave-group-modal')">&times;</span>
+            </div>
+            <div style="font-size: 2.8rem; margin: 8px 0 10px 0;">🚪</div>
+            <p style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 8px;">
+                Are you sure you want to leave <strong id="leave-group-modal-name" style="color: var(--secondary-color);">...</strong>?
+            </p>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 22px; line-height: 1.4;">
+                You won't see this squad's scores or feed anymore, but you can always join back later using code <strong id="leave-group-modal-code" style="font-family: var(--font-mono); color: var(--close);">#...</strong>.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" class="btn minimal-btn" style="flex: 1; padding: 12px; font-weight: 700;" onclick="closeModal('leave-group-modal')">
+                    Cancel
+                </button>
+                <button type="button" class="btn pink-btn" style="flex: 1; padding: 12px; font-weight: 800;" onclick="confirmLeaveGroup()">
+                    Yes, Leave
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast">Message</div>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initGroupsPage === 'function') {
+                initGroupsPage();
+            }
+        });
+    </script>
+</body>
+
+</html>

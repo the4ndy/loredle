@@ -19,6 +19,7 @@
 </head>
 
 <body>
+    <div id="global-announcement-container"></div>
     <!-- TOP NAVIGATION BAR -->
     <nav class="navbar">
         <div class="nav-brand" onclick="window.location.href='index.html'">Loredle</div>
@@ -51,7 +52,10 @@
         <!-- LEADERBOARDS -->
         <div style="display: flex; flex-direction: column; gap: 32px; margin-top: 32px;">
             <div>
-                <h3 style="color: var(--secondary-color); margin-bottom: 12px; text-shadow: 2px 2px 0px #000;">🏆 Today's Daily Leaderboard</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="color: var(--secondary-color); margin: 0; text-shadow: 2px 2px 0px #000;">🏆 Today's Daily Leaderboard</h3>
+                    <button id="hub-friend-groups-btn" onclick="window.location.href='groups.html'" class="btn minimal-btn" style="padding: 6px 12px; font-size: 0.85rem; display: none;">👥 Friend Groups →</button>
+                </div>
                 <table class="leaderboard-table">
                     <thead>
                         <tr>
