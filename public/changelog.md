@@ -1,6 +1,23 @@
 # v3.1.0 - October 28, 2026
 
 ### ✨ Gameplay & Features
+* **Added friend groups**
+  * *Each registered user can create/manage 1 group*
+  * *Registered users can join as many groups as they wish*
+  * *Group specific stats are available in the Groups page*
+
+### 🛠️ Quality of Life
+* **Card Tracker (Loredle Solving Tool)**
+  * *When enabled in settings, you get an auto filtered list of available cards*
+  * *Games played with this mode enabled will get the card tracker icon in the leaderboard*
+  * *This feature is disabled by default*
+  * *chore: update gitignore*
+
+---
+
+# v3.1.0 - October 28, 2026
+
+### ✨ Gameplay & Features
 * **Friend Groups & Private Leaderboards:**
   * *Dedicated standalone Friend Groups page (`groups.html`) for private squad leaderboards, member solve performance stats, and a live recent group activity feed.*
   * *Loop-around navigation (`◀` / `▶`) and group dropdown selector.*
