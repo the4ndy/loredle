@@ -1516,22 +1516,26 @@ h2, h3 {
     box-sizing: border-box;
 }
 
-.global-announcement-banner.info {
+.global-announcement-banner.info,
+.global-announcement-banner.theme-teal {
     background-color: var(--secondary-color);
     color: #000;
 }
 
-.global-announcement-banner.event {
+.global-announcement-banner.event,
+.global-announcement-banner.theme-gold {
     background-color: var(--close);
     color: #000;
 }
 
-.global-announcement-banner.alert {
+.global-announcement-banner.alert,
+.global-announcement-banner.theme-pink {
     background-color: var(--incorrect);
     color: #fff;
 }
 
-.announcement-dismiss-btn {
+.announcement-dismiss-btn,
+.banner-close-btn {
     background: transparent;
     border: none;
     font-size: 1.25rem;
