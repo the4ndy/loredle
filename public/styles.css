@@ -1358,6 +1358,13 @@ h2, h3 {
     color: var(--accent-color);
 }
 
+.footer-version {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+
 /* ==========================================================================
    MOBILE-FIRST RESPONSIVE GAME BOARD & NAVIGATION
    ========================================================================== */

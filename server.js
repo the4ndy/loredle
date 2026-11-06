@@ -349,6 +349,15 @@ app.get('/api/cards', async (req, res) => {
     });
 });
 
+app.get('/api/version', (req, res) => {
+    try {
+        const pkg = require('./package.json');
+        res.status(200).json({ version: pkg.version });
+    } catch (e) {
+        res.status(200).json({ version: '3.0.1' });
+    }
+});
+
 app.get('/api/daily-state', async (req, res) => {
     try {
         const decodedUser = getOptionalUser(req);

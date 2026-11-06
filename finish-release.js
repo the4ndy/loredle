@@ -9,7 +9,8 @@ try {
     console.log(`Locking in release v${version}...`);
 
     // Stage the files
-    execSync('git add public/changelog.md package.json');
+    execSync('git add public/changelog.md package.json public/version.json');
+    execSync('git add public/*.html');
 
     // Commit the files
     execSync(`git commit -m "chore: release v${version}"`);

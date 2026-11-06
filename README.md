@@ -142,6 +142,8 @@ npm run changelog 3.1.0
 1. Parses all `feat:`, `qol:`, and `fix:` commits since the last Git tag.
 2. Formats and prepends `# v3.1.0 - <Date>` to `public/changelog.md`.
 3. Bumps `"version": "3.1.0"` in `package.json`.
+4. Writes the new version to `public/version.json`.
+5. Updates the footer version (`<span class="footer-version">v3.1.0</span>`) across all HTML pages in `public/`.
 
 *(Optional: Open `public/changelog.md` to review or add any extra narrative notes).*
 
@@ -151,7 +153,7 @@ Run:
 npm run release:finish
 ```
 **What happens automatically:**
-1. Stages `public/changelog.md` and `package.json`.
+1. Stages `public/changelog.md`, `package.json`, `public/version.json`, and updated `public/*.html` files.
 2. Creates the release commit: `chore: release v3.1.0`.
 3. Creates the Git tag: `git tag v3.1.0`.
 

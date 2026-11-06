@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ensureSharedShell();
     renderNavbar();
     checkGlobalAnnouncement();
+    syncFooterVersion();
 
     if (document.getElementById('hub-container')) {
         setupHubPage();
@@ -157,6 +158,22 @@ function ensureSharedShell() {
         };
         if (authUserInp) authUserInp.addEventListener('keydown', handler);
         authPassInp.addEventListener('keydown', handler);
+    }
+}
+
+async function syncFooterVersion() {
+    try {
+        const res = await fetch('/version.json');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.version) {
+            const label = `v${data.version}`;
+            document.querySelectorAll('.footer-version').forEach(el => {
+                if (el.textContent !== label) el.textContent = label;
+            });
+        }
+    } catch (e) {
+        // Silently preserve pre-rendered HTML footer version
     }
 }
 
