@@ -1,3 +1,11 @@
+# v3.0.2 - November 6, 2026
+
+### 🐛 Bug Fixes
+* **fixed a bug with versioning**
+  * *updated release process to properly update game version*
+
+---
+
 # v3.0.1 - November 6, 2026
 
 ### 🐛 Bug Fixes
