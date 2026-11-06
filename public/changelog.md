@@ -1,3 +1,14 @@
+# v3.0.1 - November 6, 2026
+
+### 🐛 Bug Fixes
+* **Normalized punctuation and accented characters**
+  * *Previously you could not search names with accented characters without using the specific character.*
+  * *This has been resolved. Now an accented A can be substituted for a standard A*
+  * *chore: fix toast*
+  * *chore: update readme*
+
+---
+
 # v3.1.0 - October 28, 2026
 
 ### ✨ Gameplay & Features
