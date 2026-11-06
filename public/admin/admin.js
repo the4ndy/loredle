@@ -251,6 +251,16 @@ async function ensureAdminCardsLoaded() {
     return adminCardsCatalog;
 }
 
+function normalizeSearchText(str) {
+    return (str || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[\u2018\u2019\u02BC']/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
+
 function setupScheduleAutocomplete() {
     const input = document.getElementById('sched-card-input');
     const list = document.getElementById('sched-suggestions');
@@ -258,16 +268,30 @@ function setupScheduleAutocomplete() {
 
     input.addEventListener('input', async () => {
         await ensureAdminCardsLoaded();
-        const val = input.value.trim().toLowerCase();
+        const val = normalizeSearchText(input.value);
         list.innerHTML = '';
         if (!val) {
             list.style.display = 'none';
             return;
         }
-        const tokens = val.split(/[\s-]+/).filter(Boolean);
+        const tokens = val.split(/\s+/).filter(Boolean);
+        const compactVal = val.replace(/\s+/g, '');
         const matches = adminCardsCatalog.filter(c => {
-            const hay = c.name.toLowerCase();
-            return tokens.every(t => hay.includes(t));
+            const hay = normalizeSearchText(c.name);
+            const tokenMatch = tokens.every(t => hay.includes(t));
+            if (tokenMatch) return true;
+            if (compactVal.length >= 3 && hay.replace(/\s+/g, '').includes(compactVal)) return true;
+            return false;
+        }).sort((a, b) => {
+            const normA = normalizeSearchText(a.name);
+            const normB = normalizeSearchText(b.name);
+            if (normA === val) return -1;
+            if (normB === val) return 1;
+            const aStarts = normA.startsWith(val);
+            const bStarts = normB.startsWith(val);
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+            return a.name.length - b.name.length;
         }).slice(0, 30);
 
         if (matches.length === 0) {

@@ -271,8 +271,18 @@
             });
         }
 
+        function normalizeSearchText(str) {
+            return (str || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[\u2018\u2019\u02BC']/g, '')
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+        }
+
         guessInput.addEventListener('input', function () {
-            const val = this.value.trim().toLowerCase();
+            const val = normalizeSearchText(this.value);
             vtSuggestions.innerHTML = '';
             vtActiveIdx = -1;
             vtCurrentMatches = [];
@@ -282,7 +292,26 @@
                 return;
             }
 
-            vtCurrentMatches = uniqueBaseNames.filter(name => name.toLowerCase().includes(val)).slice(0, 40);
+            const tokens = val.split(/\s+/).filter(Boolean);
+            const compactVal = val.replace(/\s+/g, '');
+
+            vtCurrentMatches = uniqueBaseNames.filter(name => {
+                const hay = normalizeSearchText(name);
+                const tokenMatch = tokens.every(t => hay.includes(t));
+                if (tokenMatch) return true;
+                if (compactVal.length >= 3 && hay.replace(/\s+/g, '').includes(compactVal)) return true;
+                return false;
+            }).sort((a, b) => {
+                const normA = normalizeSearchText(a);
+                const normB = normalizeSearchText(b);
+                if (normA === val) return -1;
+                if (normB === val) return 1;
+                const aStarts = normA.startsWith(val);
+                const bStarts = normB.startsWith(val);
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+                return a.length - b.length;
+            }).slice(0, 40);
             if (vtCurrentMatches.length > 0) {
                 vtSuggestions.style.display = 'block';
                 vtCurrentMatches.forEach((match, idx) => {
@@ -337,10 +366,11 @@
         });
 
         function handleGuess() {
-            const guess = guessInput.value.trim().toLowerCase();
+            const guess = normalizeSearchText(guessInput.value);
             if (!guess) return;
             const currentCard = questionPool[currentRound];
             const correctAnswer = currentCard.baseName;
+            const normCorrect = normalizeSearchText(correctAnswer);
 
             guessInput.disabled = true;
             submitBtn.disabled = true;
@@ -351,7 +381,7 @@
                 revealWrap.style.display = 'block';
             }
 
-            if (guess === correctAnswer.toLowerCase()) {
+            if (guess === normCorrect || guess.replace(/\s+/g, '') === normCorrect.replace(/\s+/g, '')) {
                 guessInput.classList.add('input-correct');
                 score++;
                 updateStatsUI();

@@ -59,8 +59,11 @@ function normalizeText(str) {
 
 function makeLooseKey(str) {
     return normalizeText(str)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
-        .replace(/['"`]/g, '')
+        .replace(/[\u2018\u2019\u02BC']/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 }

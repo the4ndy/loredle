@@ -757,13 +757,23 @@ async function submitPasswordChange() {
 }
 
 // --- CARD CATALOG LOADING & LOOKUP ---
+function normalizeSearchText(str) {
+    return (str || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[\u2018\u2019\u02BC']/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
+
 function makeLooseLookupKey(str) {
     return (str || '')
-        .replace(/[\u2018\u2019\u02BC]/g, "'")
-        .replace(/[\u201C\u201D]/g, '"')
-        .replace(/[\u2013\u2014]/g, '-')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
-        .replace(/['"`]/g, '')
+        .replace(/[\u2018\u2019\u02BC']/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 }
@@ -773,6 +783,8 @@ function indexCardsArray(cardsList) {
     cardLookupExact.clear();
     cardLookupLoose.clear();
     for (const c of cards) {
+        c._normName = normalizeSearchText(c.name);
+        c._compactName = c._normName.replace(/\s+/g, '');
         cardLookupExact.set(c.name, c);
         cardLookupLoose.set(makeLooseLookupKey(c.name), c);
     }
@@ -1261,22 +1273,55 @@ function setupInputListener() {
             document.getElementById('image-container')?.classList.remove('mobile-card-staged');
         }
 
-        const rawVal = e.target.value.trim().toLowerCase();
+        const rawVal = e.target.value;
         suggestions.innerHTML = '';
         activeIndex = -1;
         currentMatches = [];
 
-        if (!rawVal) {
+        const normVal = normalizeSearchText(rawVal);
+        if (!normVal) {
             if (!GameVault.isCompleted()) showPreviewImage(null);
             return;
         }
 
-        // Tokenized fuzzy search: "elsa fifth" matches "Elsa - The Fifth Spirit"
-        const tokens = rawVal.split(/[\s\-]+/).filter(Boolean);
-        currentMatches = cards.filter(card => {
+        // Tokenized fuzzy search: ignores case, accents/diacritics, and punctuation
+        const tokens = normVal.split(/\s+/).filter(Boolean);
+        const compactVal = normVal.replace(/\s+/g, '');
+
+        const matches = cards.filter(card => {
             if (guessedCards.has(card.name)) return false;
-            const hay = card.name.toLowerCase();
-            return tokens.every(tok => hay.includes(tok));
+            const normName = card._normName || normalizeSearchText(card.name);
+            const tokenMatch = tokens.every(tok => normName.includes(tok));
+            if (tokenMatch) return true;
+
+            if (compactVal.length >= 3) {
+                const compactName = card._compactName || normName.replace(/\s+/g, '');
+                if (compactName.includes(compactVal)) return true;
+            }
+            return false;
+        });
+
+        // Rank suggestions: exact > starts-with > word boundary > shorter name
+        currentMatches = matches.sort((a, b) => {
+            const normA = a._normName || normalizeSearchText(a.name);
+            const normB = b._normName || normalizeSearchText(b.name);
+
+            if (normA === normVal) return -1;
+            if (normB === normVal) return 1;
+
+            const aStarts = normA.startsWith(normVal);
+            const bStarts = normB.startsWith(normVal);
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+
+            const escapedVal = normVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp('(?:^|\\s)' + escapedVal);
+            const aWord = regex.test(normA);
+            const bWord = regex.test(normB);
+            if (aWord && !bWord) return -1;
+            if (!aWord && bWord) return 1;
+
+            return a.name.length - b.name.length;
         }).slice(0, 60);
 
         currentMatches.forEach((card, idx) => {
@@ -1338,7 +1383,18 @@ function setupInputListener() {
             return;
         }
 
-        if (!currentMatches.length) return;
+        if (!currentMatches.length) {
+            if (e.key === 'Enter') {
+                const found = findCardByName(cardInput.value);
+                if (found && !guessedCards.has(found.name)) {
+                    e.preventDefault();
+                    cardInput.value = '';
+                    suggestions.innerHTML = '';
+                    guessCard(found);
+                }
+            }
+            return;
+        }
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();
@@ -1861,17 +1917,29 @@ window.closeCardTracker = function() {
 };
 
 window.filterTrackerList = function(query) {
-    const q = (query || '').toLowerCase().trim();
+    const q = normalizeSearchText(query);
     if (!q) {
         renderTrackerCards(currentRemainingCandidates);
         return;
     }
-    const filtered = currentRemainingCandidates.filter(c => 
-        c.name.toLowerCase().includes(q) ||
-        (c.set && c.set.toLowerCase().includes(q)) ||
-        (c.colors && (Array.isArray(c.colors) ? c.colors.join(' ') : c.colors).toLowerCase().includes(q)) ||
-        (c.type && c.type.toLowerCase().includes(q))
-    );
+    const qTokens = q.split(/\s+/).filter(Boolean);
+    const compactQ = q.replace(/\s+/g, '');
+
+    const filtered = currentRemainingCandidates.filter(c => {
+        const normName = c._normName || normalizeSearchText(c.name);
+        const normSet = normalizeSearchText(c.set || '');
+        const normColors = normalizeSearchText(Array.isArray(c.colors) ? c.colors.join(' ') : (c.colors || ''));
+        const normType = normalizeSearchText(c.type || '');
+        const hay = `${normName} ${normSet} ${normColors} ${normType}`;
+
+        const tokenMatch = qTokens.every(tok => hay.includes(tok));
+        if (tokenMatch) return true;
+
+        if (compactQ.length >= 3 && hay.replace(/\s+/g, '').includes(compactQ)) {
+            return true;
+        }
+        return false;
+    });
     renderTrackerCards(filtered);
 };
 
