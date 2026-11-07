@@ -7,15 +7,6 @@
 
 ---
 
-# v3.1.0 - November 7, 2026
-
-### 🐛 Bug Fixes
-* **Corrected bug in version trainer**
-  * *Previously guessing the exact card was required. Now guessing any card with the shown version name is awarded points..*
-  * *All correct answers are shown on versions with multiple cards..*
-
----
-
 # v3.0.2 - November 6, 2026
 
 ### 🐛 Bug Fixes
