@@ -92,7 +92,7 @@
             </div>
 
             <div id="vt-card-reveal" style="display: none; margin-bottom: 18px;">
-                <img id="vt-reveal-img" src="" alt="Card Reveal" style="height: 200px; border: 3px solid #000; border-radius: 10px; box-shadow: 5px 5px 0px #000;">
+                <img id="vt-reveal-img" src="" alt="Card Reveal" style="height: 200px; max-width: 100%; object-fit: contain; border: 3px solid #000; border-radius: 10px; box-shadow: 5px 5px 0px #000;">
             </div>
 
             <div style="position: relative; margin-bottom: 18px;">
@@ -103,7 +103,7 @@
 
             <button id="submit-btn" class="btn secondary-btn" style="width: 100%;" onclick="handleGuess()">Submit Guess</button>
             <div id="correct-answer-display"
-                style="display: none; color: var(--incorrect); font-weight: 700; margin-top: 18px; font-size: 1.15rem;">
+                style="display: none; margin-top: 18px; font-size: 1.05rem; text-align: center;">
             </div>
         </div>
     </div>
@@ -114,6 +114,24 @@
         <h2 id="end-title" style="font-size: 2.5rem; color: var(--incorrect); margin-top: 0; text-shadow: 3px 3px 0px #000;">Game Over!</h2>
         <div style="font-size: 1.35rem; margin-bottom: 24px;">Your streak ended at <strong id="final-right"
                 style="color: var(--correct); font-family: var(--font-mono);">0</strong>.</div>
+
+        <div id="vt-end-recap"
+            style="display: none; background: var(--bg-card); border: 3px solid #000; box-shadow: 5px 5px 0px #000; border-radius: 10px; padding: 20px; margin-bottom: 24px; width: 100%; text-align: center; box-sizing: border-box;">
+            <div style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                Version you missed:
+            </div>
+            <div id="vt-recap-version"
+                style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; color: var(--secondary-color); text-shadow: 2px 2px 0px #000; margin-bottom: 14px; line-height: 1.25;">
+            </div>
+            <div id="vt-recap-img-wrap" style="margin-bottom: 14px;">
+                <img id="vt-recap-img" src="" alt="Missed Card" style="height: 180px; max-width: 100%; object-fit: contain; border: 3px solid #000; border-radius: 8px; box-shadow: 4px 4px 0px #000;">
+            </div>
+            <div id="vt-recap-title" style="font-size: 0.85rem; font-family: var(--font-mono); font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px;">
+                Valid Answer(s):
+            </div>
+            <div id="vt-recap-answers" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-height: 150px; overflow-y: auto; padding: 4px;">
+            </div>
+        </div>
 
         <div id="arcade-submission"
             style="background: var(--bg-card); border: 3px solid #000; box-shadow: 5px 5px 0px #000; padding: 20px; border-radius: 10px; margin-bottom: 24px; width: 100%;">
@@ -195,13 +213,58 @@
         const revealWrap = document.getElementById('vt-card-reveal');
         const revealImg = document.getElementById('vt-reveal-img');
 
+        function escapeHTML(str) {
+            return (str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function normalizeSearchText(str) {
+            return (str || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[\u2018\u2019\u02BC']/g, '')
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
             fetchArcadeLeaderboard();
             try {
                 const catalog = await loadCardsCatalog();
                 const validCards = catalog.filter(c => c.version && c.baseName);
-                uniqueBaseNames = [...new Set(validCards.map(c => c.baseName))].sort();
-                questionPool = validCards;
+                uniqueBaseNames = [...new Set(validCards.map(c => c.baseName))].sort((a, b) => a.localeCompare(b));
+
+                const versionGroups = new Map();
+                for (const card of validCards) {
+                    const vKey = normalizeSearchText(card.version);
+                    if (!vKey) continue;
+
+                    if (!versionGroups.has(vKey)) {
+                        versionGroups.set(vKey, {
+                            version: card.version.trim(),
+                            normVersion: vKey,
+                            answers: [],
+                            normAnswers: [],
+                            cardMap: new Map(),
+                            primaryCard: card
+                        });
+                    }
+
+                    const group = versionGroups.get(vKey);
+                    const bKey = normalizeSearchText(card.baseName);
+                    if (!group.cardMap.has(bKey)) {
+                        group.answers.push(card.baseName);
+                        group.normAnswers.push(bKey);
+                        group.cardMap.set(bKey, card);
+                    }
+                }
+
+                questionPool = Array.from(versionGroups.values());
             } catch (e) {
                 console.error('Error loading cards for Version Trainer:', e);
             }
@@ -235,6 +298,9 @@
             currentRound = 0;
             score = 0;
 
+            const endRecap = document.getElementById('vt-end-recap');
+            if (endRecap) endRecap.style.display = 'none';
+
             vtHub.style.display = 'none';
             vtEnd.style.display = 'none';
             vtGame.style.display = 'flex';
@@ -251,12 +317,16 @@
             guessInput.classList.remove('input-correct', 'input-incorrect');
 
             correctAnswerDisplay.style.display = 'none';
+            correctAnswerDisplay.innerHTML = '';
             revealWrap.style.display = 'none';
+            revealImg.src = '';
+            revealImg.alt = '';
             vtSuggestions.style.display = 'none';
             submitBtn.disabled = false;
 
+            const currentQ = questionPool[currentRound];
+            questionText.textContent = `"${currentQ.version}"`;
             guessInput.focus();
-            questionText.textContent = `"${questionPool[currentRound].version}"`;
         }
 
         function updateVTHighlight() {
@@ -269,16 +339,6 @@
                     li.classList.remove('active-suggestion');
                 }
             });
-        }
-
-        function normalizeSearchText(str) {
-            return (str || '')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .replace(/[\u2018\u2019\u02BC']/g, '')
-                .replace(/[^a-z0-9]+/g, ' ')
-                .trim();
         }
 
         guessInput.addEventListener('input', function () {
@@ -366,32 +426,123 @@
         });
 
         function handleGuess() {
-            const guess = normalizeSearchText(guessInput.value);
+            const rawGuess = guessInput.value.trim();
+            const guess = normalizeSearchText(rawGuess);
             if (!guess) return;
-            const currentCard = questionPool[currentRound];
-            const correctAnswer = currentCard.baseName;
-            const normCorrect = normalizeSearchText(correctAnswer);
+
+            const currentQ = questionPool[currentRound];
+            if (!currentQ) return;
 
             guessInput.disabled = true;
             submitBtn.disabled = true;
             vtSuggestions.style.display = 'none';
 
-            if (currentCard.image) {
-                revealImg.src = currentCard.image;
-                revealWrap.style.display = 'block';
+            const compactGuess = guess.replace(/\s+/g, '');
+            let matchedIdx = -1;
+            for (let i = 0; i < currentQ.normAnswers.length; i++) {
+                const normAns = currentQ.normAnswers[i];
+                if (guess === normAns || (compactGuess.length >= 3 && compactGuess === normAns.replace(/\s+/g, ''))) {
+                    matchedIdx = i;
+                    break;
+                }
             }
 
-            if (guess === normCorrect || guess.replace(/\s+/g, '') === normCorrect.replace(/\s+/g, '')) {
+            const isCorrect = (matchedIdx !== -1);
+
+            if (isCorrect) {
+                const matchedBaseName = currentQ.answers[matchedIdx];
+                const matchedKey = currentQ.normAnswers[matchedIdx];
+                const matchedCard = currentQ.cardMap.get(matchedKey) || currentQ.primaryCard;
+
+                if (matchedCard && matchedCard.image) {
+                    revealImg.src = matchedCard.image;
+                    revealImg.alt = matchedCard.name || matchedBaseName;
+                    revealWrap.style.display = 'block';
+                }
+
                 guessInput.classList.add('input-correct');
                 score++;
                 updateStatsUI();
-                currentRound++;
-                setTimeout(loadQuestion, 1100);
-            } else {
-                guessInput.classList.add('input-incorrect');
-                correctAnswerDisplay.textContent = `Correct Answer: ${correctAnswer} (${currentCard.name})`;
+
+                if (currentQ.answers.length > 1) {
+                    correctAnswerDisplay.innerHTML = `
+                        <div style="margin-top: 4px;">
+                            <div style="color: var(--correct); font-weight: 700; font-size: 1.15rem; margin-bottom: 6px;">
+                                ✓ Correct!
+                            </div>
+                            <div style="font-size: 0.8rem; font-family: var(--font-mono); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                All ${currentQ.answers.length} characters with this version:
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; max-height: 160px; overflow-y: auto; padding: 4px;">
+                                ${currentQ.answers.map(ans => {
+                                    const isUserChoice = (ans === matchedBaseName);
+                                    if (isUserChoice) {
+                                        return `<span style="background: var(--correct); color: #000; padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 2px solid #000; box-shadow: 2px 2px 0px #000; display: inline-flex; align-items: center; gap: 4px;">
+                                            ★ ${escapeHTML(ans)} (Your Guess)
+                                        </span>`;
+                                    }
+                                    return `<span style="background: var(--bg-card); color: var(--text-primary); padding: 4px 10px; border-radius: 6px; font-weight: 500; border: 2px solid #000; box-shadow: 2px 2px 0px #000;">
+                                        ${escapeHTML(ans)}
+                                    </span>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    correctAnswerDisplay.innerHTML = `
+                        <div style="color: var(--correct); font-weight: 700; font-size: 1.15rem;">
+                            ✓ Correct!
+                        </div>
+                    `;
+                }
                 correctAnswerDisplay.style.display = 'block';
-                setTimeout(() => endVTGame(false), 1800);
+
+                currentRound++;
+                const delay = currentQ.answers.length > 1 ? 2600 : 1100;
+                setTimeout(loadQuestion, delay);
+            } else {
+                if (currentQ.primaryCard && currentQ.primaryCard.image) {
+                    revealImg.src = currentQ.primaryCard.image;
+                    revealImg.alt = currentQ.primaryCard.name || currentQ.version;
+                    revealWrap.style.display = 'block';
+                }
+
+                guessInput.classList.add('input-incorrect');
+
+                if (currentQ.answers.length > 1) {
+                    correctAnswerDisplay.innerHTML = `
+                        <div style="margin-top: 4px;">
+                            <div style="color: var(--incorrect); font-weight: 700; font-size: 1.15rem; margin-bottom: 6px;">
+                                ✕ Incorrect!
+                            </div>
+                            <div style="font-size: 0.8rem; font-family: var(--font-mono); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                All ${currentQ.answers.length} valid answers:
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; max-height: 160px; overflow-y: auto; padding: 4px;">
+                                ${currentQ.answers.map(ans => `
+                                    <span style="background: var(--bg-card); color: var(--secondary-color); padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 2px solid #000; box-shadow: 2px 2px 0px #000;">
+                                        ${escapeHTML(ans)}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const singleAns = currentQ.answers[0];
+                    correctAnswerDisplay.innerHTML = `
+                        <div style="color: var(--incorrect); font-weight: 700; font-size: 1.15rem;">
+                            ✕ Incorrect!
+                        </div>
+                        <div style="color: var(--text-primary); margin-top: 6px; font-size: 1.05rem;">
+                            Correct Answer: <strong style="color: var(--secondary-color);">${escapeHTML(singleAns)}</strong>
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;">(${escapeHTML(currentQ.primaryCard.name)})</span>
+                        </div>
+                    `;
+                }
+                correctAnswerDisplay.style.display = 'block';
+
+                const endDelay = currentQ.answers.length > 1 ? 3000 : 2000;
+                setTimeout(() => endVTGame(false, currentQ), endDelay);
             }
         }
 
@@ -400,17 +551,47 @@
             document.getElementById('final-right').innerText = score;
         }
 
-        function endVTGame(isWin) {
+        function endVTGame(isWin, lastQ) {
             vtGame.style.display = 'none';
             vtEnd.style.display = 'flex';
 
             const title = document.getElementById('end-title');
+            const endRecap = document.getElementById('vt-end-recap');
+
             if (isWin) {
                 title.style.color = 'var(--correct)';
                 title.textContent = 'Flawless Victory!';
+                if (endRecap) endRecap.style.display = 'none';
             } else {
                 title.style.color = 'var(--incorrect)';
                 title.textContent = 'Game Over!';
+
+                if (endRecap && lastQ) {
+                    document.getElementById('vt-recap-version').textContent = `"${lastQ.version}"`;
+                    const recapImg = document.getElementById('vt-recap-img');
+                    if (lastQ.primaryCard && lastQ.primaryCard.image) {
+                        recapImg.src = lastQ.primaryCard.image;
+                        recapImg.alt = lastQ.primaryCard.name || lastQ.version;
+                        document.getElementById('vt-recap-img-wrap').style.display = 'block';
+                    } else {
+                        document.getElementById('vt-recap-img-wrap').style.display = 'none';
+                    }
+
+                    const recapTitle = document.getElementById('vt-recap-title');
+                    recapTitle.textContent = lastQ.answers.length > 1
+                        ? `All ${lastQ.answers.length} Valid Answers:`
+                        : 'Correct Answer:';
+
+                    const answersContainer = document.getElementById('vt-recap-answers');
+                    answersContainer.innerHTML = lastQ.answers.map(ans => `
+                        <span style="background: var(--bg-surface); color: var(--secondary-color); padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 2px solid #000; box-shadow: 2px 2px 0px #000;">
+                            ${escapeHTML(ans)}
+                        </span>
+                    `).join('');
+                    endRecap.style.display = 'block';
+                } else if (endRecap) {
+                    endRecap.style.display = 'none';
+                }
             }
         }
 
@@ -450,6 +631,9 @@
         function resetVTGame() {
             selectedEmojis = [];
             updateEmojiDisplay();
+
+            const endRecap = document.getElementById('vt-end-recap');
+            if (endRecap) endRecap.style.display = 'none';
 
             document.getElementById('submit-score-btn').style.display = 'inline-flex';
             document.getElementById('submit-score-btn').disabled = false;
